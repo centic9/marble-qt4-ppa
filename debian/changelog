@@ -1,0 +1,103 @@
+marble (4:4.8.2-0ubuntu2) precise-proposed; urgency=low
+
+  * Rebuild for .pot generation
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 12 Apr 2012 16:32:08 +0100
+
+marble (4:4.8.2-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Fri, 30 Mar 2012 20:14:23 +0200
+
+marble (4:4.8.1-0ubuntu1) precise; urgency=low
+
+  * New upstream release 
+    - update marble-plugins.install for new install location of qml plugins
+    - remove missing private symbols from libmarblewidget13.symobls
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sat, 03 Mar 2012 18:28:57 +0100
+
+marble (4:4.8.0-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 19 Jan 2012 12:01:27 +0000
+
+marble (4:4.7.97-0ubuntu1) precise; urgency=low
+
+  [ Jonathan Riddell ]
+  * New upstream RC release
+
+  [ Felix Geyer ]
+  * Update symbols files.
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 04 Jan 2012 13:15:02 +0000
+
+marble (4:4.7.95-0ubuntu1) precise; urgency=low
+
+  [ Philip Muškovac ]
+  * New upstream release candidate
+    - update marble-plugins.install
+  
+  [ Felix Geyer ]
+  * Update symbols files.
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sat, 24 Dec 2011 17:12:32 +0100
+
+marble (4:4.7.90-0ubuntu1) precise; urgency=low
+
+  * New upstream beta release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 14 Dec 2011 13:28:07 +0000
+
+marble (4:4.7.3-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+  * Merge with Debian
+   - Drop build-dep on qtmobility-dev, in universe
+   - Drop debian/marble-plugins.install.linux, not built
+   - marble-plugins replaces/breaks marble
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 23 Nov 2011 23:46:51 +0000
+
+marble (4:4.7.2-0r1) UNRELEASED; urgency=low
+
+  * Initial release. Start from the Ubuntu packaging, thanks!
+
+ -- José Manuel Santamaría Lema <panfaust@gmail.com>  Sun, 25 Sep 2011 19:04:36 +0200
+
+marble (4:4.7.2-0ubuntu1) oneiric-proposed; urgency=low
+
+  * New upstream release (LP: #872506)
+
+ -- Jonathan Kolberg <bulldog98@kubuntu-de.org>  Fri, 14 Oct 2011 23:45:32 +0200
+
+marble (4:4.7.1-0ubuntu2) oneiric; urgency=low
+
+  * No-change rebuild so translations aren't stripped from .desktop
+    files anymore.
+
+ -- Felix Geyer <debfx-pkg@fobos.de>  Fri, 16 Sep 2011 01:16:33 +0200
+
+marble (4:4.7.1-0ubuntu1) oneiric; urgency=low
+
+  * New upstream release
+
+ -- Jonathan Kolberg <bulldog98@kubuntu-de.org>  Fri, 02 Sep 2011 23:41:05 +0200
+
+marble (4:4.7.0-0ubuntu1) oneiric; urgency=low
+
+  * New upstream release 
+    - remove missing private symbols from libmarblewidget12.symbols and
+      add new symbols.
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Fri, 22 Jul 2011 23:08:42 +0200
+
+marble (4:4.6.90+repack-0ubuntu1) oneiric; urgency=low
+
+  * New upstrem release candidate
+  * Update packaging for split tarball
+  * Repack upstream source to include missing license copies
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Mon, 11 Jul 2011 15:43:02 +0200
