@@ -1,3 +1,31 @@
+marble (4:4.8.5-0ubuntu0.2) precise-proposed; urgency=low
+
+  * Install GeoDataTreeModel.h (LP: #1049473).
+
+ -- Dmitry Shachnev <mitya57@ubuntu.com>  Sat, 30 Mar 2013 14:40:49 +0400
+
+marble (4:4.8.5-0ubuntu0.1) precise-proposed; urgency=low
+
+  [ Scott Kitterman ]
+  * New upstream bugfix release (LP: #1047417)
+
+  [ Felix Geyer ]
+  * Update libmarblewidget13 symbols file.
+
+ -- Felix Geyer <debfx@ubuntu.com>  Fri, 07 Sep 2012 16:54:08 +0200
+
+marble (4:4.8.4-0ubuntu0.1) precise-proposed; urgency=low
+
+  * New upstream release. (LP: #1007798)
+
+ -- Felix Geyer <debfx@ubuntu.com>  Sat, 23 Jun 2012 22:42:46 +0200
+
+marble (4:4.8.3-0ubuntu0.1) precise-proposed; urgency=low
+
+  * New upstream release (LP: #1002336)
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Wed, 02 May 2012 20:33:48 +0200
+
 marble (4:4.8.2-0ubuntu2) precise-proposed; urgency=low
 
   * Rebuild for .pot generation

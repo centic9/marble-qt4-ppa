@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Kubuntu Developers <kubuntu-devel@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>
 Uploaders: José Manuel Santamaría Lema <panfaust@gmail.com>
-Build-Depends: kde-sc-dev-latest (>= 4:4.8.2),
+Build-Depends: kde-sc-dev-latest (>= 4:4.8.5),
  cmake,
  debhelper (>= 7.3.16),
  pkg-kde-tools (>= 0.12),

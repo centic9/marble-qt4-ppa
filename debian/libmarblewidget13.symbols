@@ -3267,6 +3267,7 @@ libmarblewidget.so.13 libmarblewidget13 #MINVER#
  _ZNK6Marble20DownloadRegionDialog6regionEv@Base 4:4.7.90
  (subst)_ZNK6Marble20DownloadRegionDialog7Private10rad2PixelXE{qreal}@Base 4:4.7.90
  (subst)_ZNK6Marble20DownloadRegionDialog7Private10rad2PixelYE{qreal}@Base 4:4.7.90
+ _ZNK6Marble20DownloadRegionDialog7Private15hasTextureLayerEv@Base 4:4.8.5
  _ZNK6Marble20DownloadRegionDialog7Private8hasRouteEv@Base 4:4.7.90
  _ZNK6Marble20ExternalEditorDialog10metaObjectEv@Base 4:4.7.90
  _ZNK6Marble20ExternalEditorDialog11saveDefaultEv@Base 4:4.7.90
