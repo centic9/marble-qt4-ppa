@@ -1,5 +1,5 @@
 //
-// This file is part of the Marble Desktop Globe.
+// This file is part of the Marble Virtual Globe.
 //
 // This program is free software licensed under the GNU LGPL. You can
 // find a copy of this license in LICENSE.txt in the top directory of
@@ -13,11 +13,11 @@
 #define TCCORE_H
 
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDebug>
-#include <QtCore/QObject>
+#include <QCoreApplication>
+#include <QDebug>
+#include <QObject>
 
-#include "../lib/TileCreator.h"
+#include "TileCreator.h"
 
 namespace Marble
 {

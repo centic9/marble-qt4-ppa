@@ -28,7 +28,6 @@ class AbstractFloatItem : Marble::RenderPlugin /Abstract/
 %End
 
 public:
-    explicit                AbstractFloatItem (const QPointF& point = QPointF(10.0,10.0), const QSizeF& size = QSizeF(150.0,50.0));
     QPen                    pen () const;
     void                    setPen (const QPen& pen);
     QFont                   font () const;
@@ -43,16 +42,23 @@ protected:
 public:
     virtual ~AbstractFloatItem ();
     bool                    render (Marble::GeoPainter* painter, Marble::ViewportParams* viewport, const QString& renderPos = "FLOAT_ITEM", Marble::GeoSceneLayer* layer = 0);
-    virtual bool            renderOnMap (Marble::GeoPainter* painter, Marble::ViewportParams* viewport, const QString& renderPos, Marble::GeoSceneLayer* layer = 0);
     void                    setVisible (bool visible);
     bool                    visible () const;
-    bool                    positionLocked ();
     void                    show ();
     void                    hide ();
 protected:
     virtual void            contextMenuEvent (QWidget* w, QContextMenuEvent* e);
     virtual void            toolTipEvent (QHelpEvent* e);
     QMenu*                  contextMenu ();
+public:
+    explicit                AbstractFloatItem (const Marble::MarbleModel* marbleModel, const QPointF& point = QPointF(10.0,10.0), const QSizeF& size = QSizeF(150.0,50.0));
+protected:
+    virtual void            changeViewport (Marble::ViewportParams* viewport);
+public:
+    virtual QHash<QString,QVariant>  settings () const;
+    virtual void            setSettings (const QHash<QString,QVariant>& settings);
+    virtual Marble::RenderPlugin::RenderType  renderType () const;
+    bool                    positionLocked () const;
 };
 // AbstractFloatItem
 

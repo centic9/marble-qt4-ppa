@@ -12,43 +12,67 @@
 #define OPENDESKTOPPLUGIN_H
 
 #include "AbstractDataPlugin.h"
-#include "RenderPlugin.h"
-#include "RenderPluginInterface.h"
-#include <QtGui/QIcon>
+#include "DialogConfigurationInterface.h"
+
+namespace Ui {
+    class OpenDesktopConfigWidget;
+}
  
 namespace Marble {
 
-class PluginAboutDialog;
+const int defaultItemsOnScreen = 15;
  
-class OpenDesktopPlugin : public AbstractDataPlugin {
+class OpenDesktopPlugin : public AbstractDataPlugin, public DialogConfigurationInterface
+{
 
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.OpenDesktopPlugin" )
 
     Q_INTERFACES(Marble::RenderPluginInterface)
+    Q_INTERFACES(Marble::DialogConfigurationInterface)
 
     MARBLE_PLUGIN(OpenDesktopPlugin)
  
  public:
     OpenDesktopPlugin();
-    
+
+    explicit OpenDesktopPlugin( const MarbleModel *marbleModel );
+
     virtual void initialize();
-    
-    virtual bool isInitialized() const;
-    
+
     QString name() const;
     
     QString guiString() const;
+
+    QString nameId() const;
     
+    QString version() const;
+
     QString description() const;
-    
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
     QIcon icon() const;
 
-    QDialog *aboutDialog();
+    QDialog *configDialog();
+
+    QHash<QString,QVariant> settings() const;
+
+    void setSettings( const QHash<QString,QVariant> &settings );
+
+protected:
+    bool eventFilter(QObject *object, QEvent *event);
+
+private Q_SLOTS:
+    void readSettings();
+
+    void writeSettings();
  
  private:
-    bool m_isInitialized;
-    
-    PluginAboutDialog *m_aboutDialog;
+    QDialog * m_configDialog;
+    Ui::OpenDesktopConfigWidget * m_uiConfigWidget;
 };
  
 }

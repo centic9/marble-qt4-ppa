@@ -29,26 +29,28 @@
 #include "routing/RoutingManager.h"
 #include "routing/RoutingModel.h"
 #include "routing/RouteRequest.h"
+#include "routing/SpeakersModel.h"
 #include "ViewportParams.h"
 #include "WidgetGraphicsItem.h"
 
-#include <QtCore/QRect>
-#include <QtGui/QWidget>
-#include <QtGui/QToolButton>
-#include <QtGui/QFont>
-#include <QtGui/QActionGroup>
-#include <QtGui/QPixmap>
-#include <QtGui/QPlastiqueStyle>
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
-#include <QtGui/QSpacerItem>
+#include <QRect>
+#include <QWidget>
+#include <QToolButton>
+#include <QFont>
+#include <QActionGroup>
+#include <QPixmap>
+#include <QDialog>
+#include <QPushButton>
+#include <QSpacerItem>
+#if QT_VERSION < 0x050000
+#include <QPlastiqueStyle>
+#endif
 
 namespace Marble
 {
 
 namespace
 {
-int const thresholdTime = 3; // in minutes
 int const thresholdDistance = 1000; // in meter
 }
 
@@ -62,10 +64,10 @@ public:
     bool m_nearNextInstruction;
     bool m_guidanceModeEnabled;
     AudioOutput* m_audio;
-    QHash<QString,QVariant> m_settings;
     QDialog *m_configDialog;
     Ui::RoutingConfigDialog m_configUi;
     bool m_routeCompleted;
+    SpeakersModel* m_speakersModel;
 
     RoutingPluginPrivate( RoutingPlugin* parent );
 
@@ -112,12 +114,11 @@ RoutingPluginPrivate::RoutingPluginPrivate( RoutingPlugin *parent ) :
     m_audio( new AudioOutput( parent ) ),
     m_configDialog( 0 ),
     m_routeCompleted( false ),
+    m_speakersModel( 0 ),
     m_parent( parent )
-
 {
-    m_settings["muted"] = false;
-    m_settings["sound"] = true;
-    m_settings["speaker"] = QString();
+    m_audio->setMuted( false );
+    m_audio->setSoundEnabled( true );
 }
 
 QString RoutingPluginPrivate::richText( const QString &source ) const
@@ -128,14 +129,15 @@ QString RoutingPluginPrivate::richText( const QString &source ) const
 QString RoutingPluginPrivate::fuzzyDistance( qreal length ) const
 {
     int precision = 0;
-    QString distanceUnit = "m";
+    QString distanceUnit = QLatin1String( "m" );
 
-    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() == QLocale::ImperialSystem ) {
+    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() != MarbleLocale::MetricSystem ) {
         precision = 1;
         distanceUnit = "mi";
         length *= METER2KM;
         length *= KM2MI;
-    } else {
+    } else if (MarbleGlobal::getInstance()->locale()->measurementSystem() ==
+               MarbleLocale::MetricSystem) {
         if ( length >= 1000 ) {
             length /= 1000;
             distanceUnit = "km";
@@ -147,6 +149,12 @@ QString RoutingPluginPrivate::fuzzyDistance( qreal length ) const
         } else {
             length = 10 * qRound( length / 10 );
         }
+    } else if (MarbleGlobal::getInstance()->locale()->measurementSystem() ==
+               MarbleLocale::NauticalSystem) {
+        precision = 2;
+        distanceUnit = "nm";
+        length *= METER2KM;
+        length *= KM2NM;
     }
 
     return QString( "%1 %2" ).arg( length, 0, 'f', precision ).arg( distanceUnit );
@@ -172,20 +180,13 @@ void RoutingPluginPrivate::updateGuidanceModeButton()
 {
     bool const hasRoute = m_routingModel->rowCount() > 0;
     m_widget.routingButton->setEnabled( hasRoute );
-    m_widgetItem->update();
+    forceRepaint();
 }
 
 void RoutingPluginPrivate::forceRepaint()
 {
-    m_widgetItem->update();
-    if ( m_marbleWidget ) {
-        // Trigger a repaint of the float item. Otherwise button state updates are delayed
-        m_marbleWidget->setAttribute( Qt::WA_NoSystemBackground, false );
-        m_parent->update();
-        m_marbleWidget->update();
-        bool const mapCoversViewport = m_marbleWidget->viewport()->mapCoversViewport();
-        m_marbleWidget->setAttribute( Qt::WA_NoSystemBackground, mapCoversViewport );
-    }
+    m_parent->update();
+    emit m_parent->repaintNeeded();
 }
 
 void RoutingPluginPrivate::updateButtonVisibility()
@@ -241,11 +242,11 @@ void RoutingPluginPrivate::toggleGuidanceMode( bool enabled )
     updateButtonVisibility();
 
     if( enabled ) {
-        QObject::connect( m_routingModel, SIGNAL( positionChanged() ),
-                 m_parent, SLOT( updateDestinationInformation() ) );
+        QObject::connect( m_routingModel, SIGNAL(positionChanged()),
+                 m_parent, SLOT(updateDestinationInformation()) );
     } else {
-        QObject::disconnect( m_routingModel, SIGNAL( positionChanged() ),
-                    m_parent, SLOT( updateDestinationInformation() ) );
+        QObject::disconnect( m_routingModel, SIGNAL(positionChanged()),
+                    m_parent, SLOT(updateDestinationInformation()) );
     }
 
     if ( enabled ) {
@@ -271,7 +272,6 @@ void RoutingPluginPrivate::toggleGuidanceMode( bool enabled )
 
     if ( enabled ) {
         m_routeCompleted = false;
-        m_audio->announceStart();
     }
 
     forceRepaint();
@@ -282,7 +282,7 @@ void RoutingPluginPrivate::updateDestinationInformation()
     if ( m_routingModel->route().currentSegment().isValid() ) {
         qreal remaining = remainingDistance();
         qreal distanceLeft = nextInstructionDistance();
-        m_audio->update( m_routingModel->route(), distanceLeft );
+        m_audio->update( m_routingModel->route(), distanceLeft, remaining, m_routingModel->deviatedFromRoute() );
 
         m_nearNextInstruction = distanceLeft < thresholdDistance;
 
@@ -322,7 +322,6 @@ void RoutingPluginPrivate::updateDestinationInformation()
                 m_routeCompleted = false;
             } else {
                 if ( !m_routeCompleted ) {
-                    m_audio->announceDestination();
                     QString content = QObject::tr( "Arrived at destination. <a href=\"#reverse\">Calculate the way back.</a>" );
                     m_widget.instructionLabel->setText( richText( "%1" ).arg( content ) );
                 }
@@ -330,7 +329,7 @@ void RoutingPluginPrivate::updateDestinationInformation()
             }
         }
 
-        m_widgetItem->update();
+        forceRepaint();
     }
 }
 
@@ -345,11 +344,10 @@ void RoutingPluginPrivate::togglePositionTracking( bool enabled )
     PositionProviderPlugin* plugin = 0;
     if ( enabled ) {
         const PluginManager* pluginManager = m_marbleWidget->model()->pluginManager();
-        QList<PositionProviderPlugin*> plugins = pluginManager->createPositionProviderPlugins();
+        QList<const PositionProviderPlugin*> plugins = pluginManager->positionProviderPlugins();
         if ( plugins.size() > 0 ) {
-            plugin = plugins.takeFirst();
+            plugin = plugins.first()->newInstance();
         }
-        qDeleteAll( plugins );
     }
     m_parent->marbleModel()->positionTracking()->setPositionProviderPlugin( plugin );
 }
@@ -363,27 +361,16 @@ void RoutingPluginPrivate::reverseRoute()
 
 void RoutingPluginPrivate::readSettings()
 {
-    bool const muted = m_settings["muted"].toBool();
-    m_audio->setMuted( muted );
-    bool const sound = m_settings["sound"].toBool();
-    m_audio->setSoundEnabled( sound );
-    QString const speaker = m_settings["speaker"].toString();
-    m_audio->setSpeaker( speaker );
-
     if ( m_configDialog ) {
-        QStringList const speakerPaths = m_audio->speakers();
-        QStringList speakers;
-        foreach( const QString &speaker, speakerPaths ) {
-            speakers << QFileInfo( speaker ).fileName();
+        if ( !m_speakersModel ) {
+            m_speakersModel = new SpeakersModel( m_parent );
         }
-
-        int const index = speakerPaths.indexOf( speaker );
-        m_configUi.speakerComboBox->clear();
-        m_configUi.speakerComboBox->addItems( speakers );
+        int const index = m_speakersModel->indexOf( m_audio->speaker() );
+        m_configUi.speakerComboBox->setModel( m_speakersModel );
         m_configUi.speakerComboBox->setCurrentIndex( index );
-        m_configUi.voiceNavigationCheckBox->setChecked( !muted );
-        m_configUi.soundRadioButton->setChecked( sound );
-        m_configUi.speakerRadioButton->setChecked( !sound );
+        m_configUi.voiceNavigationCheckBox->setChecked( !m_audio->isMuted() );
+        m_configUi.soundRadioButton->setChecked( m_audio->isSoundEnabled() );
+        m_configUi.speakerRadioButton->setChecked( !m_audio->isSoundEnabled() );
     }
 }
 
@@ -422,20 +409,29 @@ qreal RoutingPluginPrivate::remainingDistance() const
 void RoutingPlugin::writeSettings()
 {
     Q_ASSERT( d->m_configDialog );
-    QStringList const speakerPaths = d->m_audio->speakers();
     int const index = d->m_configUi.speakerComboBox->currentIndex();
-    if ( index >= 0 && index < speakerPaths.size() ) {
-        d->m_settings["speaker"] = speakerPaths.at( index );
+    if ( index >= 0 ) {
+        QModelIndex const idx = d->m_speakersModel->index( index );
+        d->m_audio->setSpeaker( d->m_speakersModel->data( idx, SpeakersModel::Path ).toString() );
+        if ( !d->m_speakersModel->data( idx, SpeakersModel::IsLocal ).toBool() ) {
+            d->m_speakersModel->install( index );
+        }
     }
-    d->m_settings["muted"] = !d->m_configUi.voiceNavigationCheckBox->isChecked();
-    d->m_settings["sound"] = d->m_configUi.soundRadioButton->isChecked();
+    d->m_audio->setMuted( !d->m_configUi.voiceNavigationCheckBox->isChecked() );
+    d->m_audio->setSoundEnabled( d->m_configUi.soundRadioButton->isChecked() );
     d->readSettings();
     emit settingsChanged( nameId() );
 }
 
 
-RoutingPlugin::RoutingPlugin( const QPointF &position ) :
-    AbstractFloatItem( position ),
+RoutingPlugin::RoutingPlugin() :
+    AbstractFloatItem( 0 ),
+    d( 0 )
+{
+}
+
+RoutingPlugin::RoutingPlugin( const MarbleModel *marbleModel ) :
+    AbstractFloatItem( marbleModel, QPointF( -10, -10 ) ),
     d( new RoutingPluginPrivate( this ) )
 {
     setEnabled( true );
@@ -471,14 +467,31 @@ QString RoutingPlugin::nameId() const
     return QString( "routing" );
 }
 
+QString RoutingPlugin::version() const
+{
+    return "1.0";
+}
+
 QString RoutingPlugin::description() const
 {
     return tr( "Routing information and navigation controls" );
 }
 
+QString RoutingPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> RoutingPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Siddharth Srivastava", "akssps011@gmail.com" )
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
 QIcon RoutingPlugin::icon() const
 {
-    return QIcon();
+    return QIcon(":/icons/routeplanning.png");
 }
 
 void RoutingPlugin::initialize()
@@ -487,18 +500,18 @@ void RoutingPlugin::initialize()
     d->m_widget.setupUi( widget );
     d->m_widgetItem = new WidgetGraphicsItem( this );
     d->m_widgetItem->setWidget( widget );
-    d->m_widgetItem->setCacheMode( MarbleGraphicsItem::DeviceCoordinateCache );
 
     PositionProviderPlugin* activePlugin = marbleModel()->positionTracking()->positionProviderPlugin();
     d->updateGpsButton( activePlugin );
     connect( marbleModel()->positionTracking(),
-             SIGNAL( positionProviderPluginChanged( PositionProviderPlugin* ) ),
-             this, SLOT( updateGpsButton( PositionProviderPlugin* ) ) );
+             SIGNAL(positionProviderPluginChanged(PositionProviderPlugin*)),
+             this, SLOT(updateGpsButton(PositionProviderPlugin*)) );
 
     d->m_widget.routingButton->setEnabled( false );
-    connect( d->m_widget.instructionLabel, SIGNAL( linkActivated( QString ) ),
-             this, SLOT( reverseRoute() ) );
+    connect( d->m_widget.instructionLabel, SIGNAL(linkActivated(QString)),
+             this, SLOT(reverseRoute()) );
 
+#if QT_VERSION < 0x050000
     bool const smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
     if ( smallScreen ) {
         /** @todo: The maemo styling of the progressbar adds a black background and some frame
@@ -508,6 +521,7 @@ void RoutingPlugin::initialize()
           */
         d->m_widget.progressBar->setStyle( new QPlastiqueStyle );
     }
+#endif
 
     MarbleGraphicsGridLayout *layout = new MarbleGraphicsGridLayout( 1, 1 );
     layout->addItem( d->m_widgetItem, 0, 0 );
@@ -532,20 +546,20 @@ bool RoutingPlugin::eventFilter( QObject *object, QEvent *e )
         d->m_marbleWidget = widget;
         d->m_routingModel = d->m_marbleWidget->model()->routingManager()->routingModel();
 
-        connect( d->m_widget.routingButton, SIGNAL( clicked( bool ) ),
-                 this, SLOT( toggleGuidanceMode( bool ) ) );
-        connect( d->m_widget.gpsButton, SIGNAL( clicked( bool ) ),
-                 this, SLOT( togglePositionTracking( bool ) ) );
-        connect( d->m_widget.zoomInButton, SIGNAL( clicked() ),
-                 d->m_marbleWidget, SLOT( zoomIn() ) );
-        connect( d->m_widget.zoomOutButton, SIGNAL( clicked() ),
-                 d->m_marbleWidget, SLOT( zoomOut() ) );
-        connect( d->m_marbleWidget, SIGNAL( themeChanged( QString ) ),
-                 this, SLOT( updateZoomButtons() ) );
-        connect( d->m_marbleWidget, SIGNAL( zoomChanged( int ) ),
-                 this, SLOT( updateZoomButtons( int ) ) );
-        connect( d->m_routingModel, SIGNAL( currentRouteChanged() ),
-                this, SLOT( updateGuidanceModeButton() ) );
+        connect( d->m_widget.routingButton, SIGNAL(clicked(bool)),
+                 this, SLOT(toggleGuidanceMode(bool)) );
+        connect( d->m_widget.gpsButton, SIGNAL(clicked(bool)),
+                 this, SLOT(togglePositionTracking(bool)) );
+        connect( d->m_widget.zoomInButton, SIGNAL(clicked()),
+                 d->m_marbleWidget, SLOT(zoomIn()) );
+        connect( d->m_widget.zoomOutButton, SIGNAL(clicked()),
+                 d->m_marbleWidget, SLOT(zoomOut()) );
+        connect( d->m_marbleWidget, SIGNAL(themeChanged(QString)),
+                 this, SLOT(updateZoomButtons()) );
+        connect( d->m_marbleWidget, SIGNAL(zoomChanged(int)),
+                 this, SLOT(updateZoomButtons(int)) );
+        connect( d->m_routingModel, SIGNAL(currentRouteChanged()),
+                this, SLOT(updateGuidanceModeButton()) );
         d->updateGuidanceModeButton();
     }
     return AbstractFloatItem::eventFilter( object, e );
@@ -553,18 +567,23 @@ bool RoutingPlugin::eventFilter( QObject *object, QEvent *e )
 
 QHash<QString,QVariant> RoutingPlugin::settings() const
 {
-    return d->m_settings;
+    QHash<QString, QVariant> result = AbstractFloatItem::settings();
+
+    result.insert( "muted", d->m_audio->isMuted() );
+    result.insert( "sound", d->m_audio->isSoundEnabled() );
+    result.insert( "speaker", d->m_audio->speaker() );
+
+    return result;
 }
 
-void RoutingPlugin::setSettings( QHash<QString,QVariant> settings )
+void RoutingPlugin::setSettings( const QHash<QString,QVariant> &settings )
 {
-    d->m_settings = settings;
-    if (!d->m_settings.contains("muted")) {
-        d->m_settings["muted"] = false;
-    }
-    if (!d->m_settings.contains("sound")) {
-        d->m_settings["sound"] = true;
-    }
+    AbstractFloatItem::setSettings( settings );
+
+    d->m_audio->setMuted( settings.value( "muted", false ).toBool() );
+    d->m_audio->setSoundEnabled( settings.value( "sound", true ).toBool() );
+    d->m_audio->setSpeaker( settings.value( "speaker" ).toString() );
+
     d->readSettings();
 }
 
@@ -575,10 +594,10 @@ QDialog *RoutingPlugin::configDialog()
         d->m_configUi.setupUi( d->m_configDialog );
         d->readSettings();
 
-        connect( d->m_configDialog, SIGNAL( accepted() ), this, SLOT( writeSettings() ) );
-        connect( d->m_configDialog, SIGNAL( rejected() ), this, SLOT( readSettings() ) );
-        connect( d->m_configUi.buttonBox->button( QDialogButtonBox::Reset ), SIGNAL( clicked () ),
-                 SLOT( restoreDefaultSettings() ) );
+        connect( d->m_configDialog, SIGNAL(accepted()), this, SLOT(writeSettings()) );
+        connect( d->m_configDialog, SIGNAL(rejected()), this, SLOT(readSettings()) );
+        connect( d->m_configUi.buttonBox->button( QDialogButtonBox::Reset ), SIGNAL(clicked()),
+                 SLOT(restoreDefaultSettings()) );
     }
 
     return d->m_configDialog;

@@ -11,15 +11,15 @@
 #ifndef APRSPLUGIN_H
 #define APRSPLUGIN_H
 
-#include <QtCore/QObject>
-#include <QtCore/QMutex>
-#include <QtGui/QDialog>
+#include <QObject>
+#include <QMutex>
+#include <QDialog>
 
 #include "RenderPlugin.h"
+#include "DialogConfigurationInterface.h"
 #include "AprsObject.h"
 #include "AprsGatherer.h"
 #include "GeoDataLatLonAltBox.h"
-#include "PluginAboutDialog.h"
 
 #include "ui_AprsConfigWidget.h"
 
@@ -35,14 +35,17 @@ namespace Marble
  * \brief This class displays a layer of aprs (which aprs TBD).
  *
  */
-    class AprsPlugin : public RenderPlugin
+    class AprsPlugin : public RenderPlugin, public DialogConfigurationInterface
     {
         Q_OBJECT
-            Q_INTERFACES( Marble::RenderPluginInterface )
-            MARBLE_PLUGIN( AprsPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.AprsPlugin" )
+        Q_INTERFACES( Marble::RenderPluginInterface )
+        Q_INTERFACES( Marble::DialogConfigurationInterface )
+        MARBLE_PLUGIN( AprsPlugin )
 
             public:
         AprsPlugin();
+        explicit AprsPlugin( const MarbleModel *marbleModel );
         ~AprsPlugin();
         QStringList backendTypes() const;
         QString renderPolicy() const;
@@ -50,9 +53,16 @@ namespace Marble
         QString name() const;
         QString guiString() const;
         QString nameId() const;
+
+        QString version() const;
+
         QString description() const;
+
+        QString copyrightYears() const;
+
+        QList<PluginAuthor> pluginAuthors() const;
+
         QIcon icon () const;
-        QDialog *aboutDialog();
 
         void initialize ();
         bool isInitialized () const;
@@ -62,7 +72,7 @@ namespace Marble
         QAction       *action() const;
 
         QHash<QString,QVariant> settings() const;
-        void setSettings( QHash<QString,QVariant> settings );
+        void setSettings( const QHash<QString,QVariant> &settings );
 
         void stopGatherers();
         void restartGatherers();
@@ -71,7 +81,7 @@ namespace Marble
         private Q_SLOTS: 
         void readSettings();
         void writeSettings();
-        void updateVisibility( QString nameId, bool visible );
+        void updateVisibility( bool visible );
         virtual RenderType renderType() const;
 
       private:
@@ -86,10 +96,21 @@ namespace Marble
         QString                        m_filter;
         QAction                       *m_action;
 
-        PluginAboutDialog     *m_aboutDialog;
+        bool m_useInternet;
+        bool m_useTty;
+        bool m_useFile;
+        QString m_aprsHost;
+        int m_aprsPort;
+        QString m_tncTty;
+        QString m_aprsFile;
+        bool m_dumpTcpIp;
+        bool m_dumpTty;
+        bool m_dumpFile;
+        int m_fadeTime;
+        int m_hideTime;
+
         QDialog               *m_configDialog;
         Ui::AprsConfigWidget  *ui_configWidget;
-        QHash<QString,QVariant>        m_settings;
 
     };
 

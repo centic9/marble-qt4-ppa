@@ -8,16 +8,18 @@
 // Copyright 2009      Andrew Manson <g.real.ate@gmail.com>
 //
 
-#include <QtCore/QObject>
-#include <QtTest/QtTest>
+#include <QObject>
 
 #include "GeoDataParser.h"
 #include "GeoDataDocument.h"
 #include "GeoDataColorStyle.h"
 #include "GeoWriter.h"
 
-#include <QtCore/QDir>
-#include <QtCore/QFile>
+#include <QDir>
+#include <QFile>
+#include <QTest>
+#include <QTemporaryFile>
+#include <QTextStream>
 
 using namespace Marble;
 
@@ -52,11 +54,9 @@ void TestGeoDataWriter::initTestCase()
     dataDir.cd( "data" );
     //check there are files in the data dir
     QVERIFY( dataDir.count() > 0 );
-    
-    QString filename;
 
     //test the loading of each file in the data dir
-    foreach( filename, dataDir.entryList(filters, QDir::Files) ){
+    foreach( const QString &filename, dataDir.entryList(filters, QDir::Files) ){
 
         //Add example files
         QFile file( dataDir.filePath(filename));
@@ -73,7 +73,7 @@ void TestGeoDataWriter::initTestCase()
         QVERIFY( file.open( QIODevice::ReadOnly ) );
 
         //Parser and verify
-        QVERIFY2( parser->read( &file ), filename.toAscii() );
+        QVERIFY2( parser->read( &file ), filename.toLatin1() );
 
         parsers.insert( filename, parserPointer );
 
@@ -93,6 +93,13 @@ void TestGeoDataWriter::countFeatures_data()
     QTest::newRow("New York") << parsers.value("NewYork.kml") << 1;
     QTest::newRow("New York Document") << parsers.value("NewYorkDocument.kml") << 2;
     QTest::newRow("CDATATest") << parsers.value("CDATATest.kml") << 1;
+    QTest::newRow("NetworkLink") << parsers.value("NetworkLink.kml") << 1;
+    QTest::newRow("NetworkLinkDocument") << parsers.value("NetworkLinkDocument.kml") << 2;
+    QTest::newRow("MackyModel") << parsers.value("MackyModel.kml") << 1;
+    QTest::newRow("Tour") << parsers.value("Tour.kml") << 1;
+    QTest::newRow("AltitudeMode") << parsers.value("AltitudeMode.kml") << 1;
+    QTest::newRow("ScreenOverlay_Folder") << parsers.value("ScreenOverlay_Folder.kml") << 1;
+    QTest::newRow("ScreenOverlay_kml") << parsers.value("ScreenOverlay_kml.kml") << 1;
 }
 
 void TestGeoDataWriter::countFeatures()
@@ -114,6 +121,13 @@ void TestGeoDataWriter::saveFile_data()
     QTest::newRow( "NewYork" ) << parsers.value("NewYork.kml");
     QTest::newRow( "NewYorkDocument") << parsers.value("NewYorkDocument.kml");
     QTest::newRow("CDATATest") << parsers.value("CDATATest.kml");
+    QTest::newRow("NetworkLink") << parsers.value("NetworkLink.kml");
+    QTest::newRow("NetworkLinkDocument") << parsers.value("NetworkLinkDocument.kml");
+    QTest::newRow("MackyModel") << parsers.value("MackyModel.kml");
+    QTest::newRow("Tour") << parsers.value("Tour.kml");
+    QTest::newRow("AltitudeMode") << parsers.value("AltitudeMode.kml");
+    QTest::newRow("ScreenOverlay_Folder") << parsers.value("ScreenOverlay_Folder.kml");
+    QTest::newRow("ScreenOverlay_kml") << parsers.value("ScreenOverlay_kml.kml");
 }
 
 void TestGeoDataWriter::saveFile()
@@ -141,6 +155,13 @@ void TestGeoDataWriter::saveAndLoad_data()
     QTest::newRow("NewYork") << parsers.value( "NewYork.kml" ) ;
     QTest::newRow("NewYorkDocument") << parsers.value( "NewYorkDocument.kml" );
     QTest::newRow("CDATATest") << parsers.value("CDATATest.kml");
+    QTest::newRow("NetworkLink") << parsers.value("NetworkLink.kml");
+    QTest::newRow("NetworkLinkDocument") << parsers.value("NetworkLinkDocument.kml");
+    QTest::newRow("MackyModel") << parsers.value("MackyModel.kml");
+    QTest::newRow("Tour") << parsers.value("Tour.kml");
+    QTest::newRow("AltitudeMode") << parsers.value("AltitudeMode.kml");
+    QTest::newRow("ScreenOverlay_Folder") << parsers.value("ScreenOverlay_Folder.kml");
+    QTest::newRow("ScreenOverlay_kml") << parsers.value("ScreenOverlay_kml.kml");
 }
 
 void TestGeoDataWriter::saveAndLoad()
@@ -171,6 +192,13 @@ void TestGeoDataWriter::saveAndCompare_data()
 
     QTest::newRow("NewYork") << parsers.value( "NewYork.kml" ) << "NewYork.kml";
     QTest::newRow("NewYorkDocument") << parsers.value( "NewYorkDocument.kml" ) << "NewYorkDocument.kml";
+    QTest::newRow("NetworkLink") << parsers.value( "NetworkLink.kml" ) << "NetworkLink.kml";
+    QTest::newRow("NetworkLinkDocument") << parsers.value( "NetworkLinkDocument.kml" ) << "NetworkLinkDocument.kml";
+    QTest::newRow("MackyModel") << parsers.value("MackyModel.kml") << "MackyModel.kml";
+    QTest::newRow("Tour") << parsers.value("Tour.kml") << "Tour.kml";
+    QTest::newRow("AltitudeMode") << parsers.value("AltitudeMode.kml") << "AltitudeMode.kml";
+    QTest::newRow("ScreenOverlay_Folder") << parsers.value("ScreenOverlay_Folder.kml") << "ScreenOverlay_Folder.kml";
+    QTest::newRow("ScreenOverlay_kml") << parsers.value("ScreenOverlay_kml.kml") << "ScreenOverlay_kml.kml";
 }
 
 void TestGeoDataWriter::saveAndCompare()
@@ -202,8 +230,10 @@ void TestGeoDataWriter::saveAndCompare()
 
 void TestGeoDataWriter::cleanupTestCase()
 {
-    foreach (QSharedPointer<GeoDataParser> parser, parsers.values()) {
-        delete parser->releaseDocument();
+    QMap<QString, QSharedPointer<GeoDataParser> >::iterator itpoint = parsers.begin();
+    QMap<QString, QSharedPointer<GeoDataParser> >::iterator const endpoint = parsers.end();
+    for (; itpoint != endpoint; ++itpoint ) {
+        delete itpoint.value()->releaseDocument();
     }
 }
 

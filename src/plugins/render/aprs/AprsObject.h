@@ -11,12 +11,11 @@
 #ifndef APRSOBJECT_H
 #define APRSOBJECT_H
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
+#include <QObject>
+#include <QString>
 
 #include "GeoAprsCoordinates.h"
 #include "GeoPainter.h"
-#include "GeoSceneLayer.h"
 
 namespace Marble
 {
@@ -25,24 +24,15 @@ namespace Marble
     {
 
       public:
-        AprsObject();
-        AprsObject( const GeoAprsCoordinates &at, QString &name );
-        AprsObject( const qreal &lon, const qreal &lat, const QString &name,
-                    int where = GeoAprsCoordinates::FromNowhere );
+        AprsObject( const GeoAprsCoordinates &at, const QString &name );
         ~AprsObject();
 
-        void setLocation( GeoAprsCoordinates location );
-        void setLocation( qreal lon, qreal lat, int from );
+        void setLocation( const GeoAprsCoordinates &location );
         void setPixmapId( QString &pixmap );
-        void setSeenFrom( int where );
-        GeoAprsCoordinates location();
+        GeoAprsCoordinates location() const;
 
-        QColor calculatePaintColor( GeoPainter *painter ) const;
-        QColor calculatePaintColor( GeoPainter *painter, int from,
-                                    const QTime &time,
-                                    int fadetime = 10*60*1000 ) const;
+        QColor calculatePaintColor( int from, const QTime &time, int fadetime = 10*60*1000 ) const;
         void render( GeoPainter *painter, ViewportParams *viewport,
-                     const QString& renderPos, GeoSceneLayer * layer,
                      int fadeTime = 10*60, int hideTime = 30*60 );
 
       private:

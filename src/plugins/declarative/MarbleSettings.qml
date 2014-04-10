@@ -7,7 +7,7 @@
 // Copyright 2011 Dennis Nienhüser <earthwings@gentoo.org>
 // Copyright 2011 Daniel Marth <danielmarth@gmx.at>
 
-import Qt 4.7
+import QtQuick 1.0
 import org.kde.edu.marble 0.11
 
 /*
@@ -29,9 +29,9 @@ Item {
     property real quitLatitude: settings.value( "MarbleWidget", "quitLatitude", 0.0 )
     property real lastKnownLongitude: settings.value( "MarbleWidget", "lastKnownLongitude", 0.0 )
     property real lastKnownLatitude: settings.value( "MarbleWidget", "lastKnownLatitude", 0.0 )
-    property real quitZoom: settings.value( "MarbleWidget", "quitZoom", 1000.0 )
+    property real quitRadius: settings.value( "MarbleWidget", "quitRadius", 148.0 )
     property bool gpsTracking: settings.value( "MarbleWidget", "gpsTracking", false )
-    property bool showPosition: settings.value( "MarbleWidget", "showPosition", false )
+    property bool showPositionIndicator: settings.value( "MarbleWidget", "showPositionIndicator", false )
     property bool showTrack: settings.value( "MarbleWidget", "showTrack", false )
     property string projection: settings.value( "MarbleWidget", "projection", "Spherical" )
     property variant defaultRenderPlugins: ["compass", "coordinate-grid", "progress",
@@ -39,7 +39,17 @@ Item {
     property variant activeRenderPlugins: settings.value( "MarbleWidget", "activeRenderPlugins", defaultRenderPlugins )
     property string lastActivity: settings.value( "MarbleTouch", "lastActivity", "" )
     property bool inhibitScreensaver: settings.value( "MarbleTouch", "inhibitScreensaver", true )
-    
+    property bool voiceNavigationMuted: settings.value( "MarbleTouch", "voiceNavigationMuted", false)
+    property bool voiceNavigationSoundEnabled: settings.value( "MarbleTouch", "voiceNavigationSoundEnabled", false)
+    property string voiceNavigationSpeaker: settings.value( "MarbleTouch", "voiceNavigationSpeaker", "English - Bugsbane")
+    property bool navigationStartupWarning: settings.value( "MarbleTouch", "navigationStartupWarning", false)
+    property bool navigationStartupWarningEverShown: settings.value( "MarbleTouch", "navigationStartupWarningEverShown", false)
+    property string changelogShown: settings.value( "MarbleTouch", "changelogShown", "" )
+    property string owncloudSync: settings.value( "MarbleTouch", "owncloudSync", false )
+    property string owncloudServer: settings.value( "MarbleTouch", "owncloudServer", "" )
+    property string owncloudUsername: settings.value( "MarbleTouch", "owncloudUsername", "" )
+    property string owncloudPassword: settings.value( "MarbleTouch", "owncloudPassword", "" )
+
     // Save settings to file.
     Component.onDestruction: {
         settings.setValue( "MarbleWidget", "mapTheme", root.mapTheme )
@@ -48,15 +58,25 @@ Item {
         settings.setValue( "MarbleWidget", "quitLatitude", root.quitLatitude )
         settings.setValue( "MarbleWidget", "lastKnownLongitude", root.lastKnownLongitude )
         settings.setValue( "MarbleWidget", "lastKnownLatitude", root.lastKnownLatitude )
-        settings.setValue( "MarbleWidget", "quitZoom", root.quitZoom )
+        settings.setValue( "MarbleWidget", "quitRadius", root.quitRadius )
         settings.setValue( "MarbleWidget", "gpsTracking", root.gpsTracking )
-        settings.setValue( "MarbleWidget", "showPosition", root.showPosition )
+        settings.setValue( "MarbleWidget", "showPositionIndicator", root.showPositionIndicator )
         settings.setValue( "MarbleWidget", "showTrack", root.showTrack )
         settings.setValue( "MarbleWidget", "projection", root.projection )
         settings.setValue( "MarbleWidget", "activeRenderPlugins", root.activeRenderPlugins )
         settings.setValue( "MarbleTouch", "lastActivity", root.lastActivity )
         settings.setValue( "MarbleTouch", "streetMapTheme", root.streetMapTheme )
         settings.setValue( "MarbleTouch", "inhibitScreensaver", root.inhibitScreensaver )
+        settings.setValue( "MarbleTouch", "voiceNavigationMuted", root.voiceNavigationMuted )
+        settings.setValue( "MarbleTouch", "voiceNavigationSoundEnabled", root.voiceNavigationSoundEnabled )
+        settings.setValue( "MarbleTouch", "voiceNavigationSpeaker", root.voiceNavigationSpeaker )
+        settings.setValue( "MarbleTouch", "navigationStartupWarning", root.navigationStartupWarning )
+        settings.setValue( "MarbleTouch", "navigationStartupWarningEverShown", root.navigationStartupWarningEverShown )
+        settings.setValue( "MarbleTouch", "changelogShown", root.changelogShown )
+        settings.setValue( "MarbleTouch", "owncloudSync", root.owncloudSync )
+        settings.setValue( "MarbleTouch", "owncloudServer", root.owncloudServer )
+        settings.setValue( "MarbleTouch", "owncloudUsername", root.owncloudUsername )
+        settings.setValue( "MarbleTouch", "owncloudPassword", root.owncloudPassword )
     }
 
     function removeElementsFromArray(array, elements) {

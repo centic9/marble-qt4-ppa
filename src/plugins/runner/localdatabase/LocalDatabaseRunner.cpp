@@ -6,11 +6,11 @@
 // the source code.
 //
 // Copyright 2010 Torsten Rahn <rahn@kde.org>
+// Copyright 2013      Bernhard Beschow  <bbeschow@cs.tu-berlin.de>
 //
 
 #include "LocalDatabaseRunner.h"
 
-#include "MarbleAbstractRunner.h"
 #include "MarbleModel.h"
 #include "MarblePlacemarkModel.h"
 #include "GeoDataFeature.h"
@@ -18,22 +18,18 @@
 #include "GeoDataCoordinates.h"
 
 #include "MarbleDebug.h"
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-#include <QtCore/QVector>
+#include <QString>
+#include <QStringList>
+#include <QVector>
 
-#include <QtCore/QtDebug>
+#include <QtDebug>
 
 namespace Marble
 {
 
-LocalDatabaseRunner::LocalDatabaseRunner(QObject *parent) : MarbleAbstractRunner(parent)
+LocalDatabaseRunner::LocalDatabaseRunner(QObject *parent) :
+    SearchRunner(parent)
 {
-}
-
-GeoDataFeature::GeoDataVisualCategory LocalDatabaseRunner::category() const
-{
-    return GeoDataFeature::Coordinate;
 }
 
 LocalDatabaseRunner::~LocalDatabaseRunner()
@@ -41,12 +37,12 @@ LocalDatabaseRunner::~LocalDatabaseRunner()
 
 }
 
-void LocalDatabaseRunner::search( const QString &searchTerm )
+void LocalDatabaseRunner::search( const QString &searchTerm, const GeoDataLatLonAltBox &preferred )
 {
     QVector<GeoDataPlacemark*> vector;
 
     if (model()) {
-        QAbstractItemModel * placemarkModel = model()->placemarkModel();
+        const QAbstractItemModel * placemarkModel = model()->placemarkModel();
 
         if (placemarkModel) {
             QModelIndexList resultList;
@@ -62,7 +58,8 @@ void LocalDatabaseRunner::search( const QString &searchTerm )
                     continue;
                 }
                 GeoDataPlacemark *placemark = dynamic_cast<GeoDataPlacemark*>(qvariant_cast<GeoDataObject*>( index.data( MarblePlacemarkModel::ObjectPointerRole )));
-                if ( placemark ) {
+                if ( placemark &&
+                     ( preferred.isEmpty() || preferred.contains( placemark->coordinate() ) ) ) {
                     vector.append( new GeoDataPlacemark( *placemark ));
                 }
             }

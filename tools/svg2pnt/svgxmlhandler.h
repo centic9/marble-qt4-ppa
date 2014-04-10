@@ -11,16 +11,16 @@
 
 
 #ifndef SVGXMLHANDLER_H
-#define SVGXMLHHANDLER_H
+#define SVGXMLHANDLER_H
 
 
-#include <QtXml/QXmlDefaultHandler>
+#include <QXmlDefaultHandler>
 
 
 class SVGXmlHandler : public QXmlDefaultHandler
 {
  public:
-    SVGXmlHandler(const QString&);
+    explicit SVGXmlHandler(const QString&);
     // virtual bool startDocument();
     // virtual bool endDocument();
     virtual bool  startElement(const QString&, const QString&, const QString&,

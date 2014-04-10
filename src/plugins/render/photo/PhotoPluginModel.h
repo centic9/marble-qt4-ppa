@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2009      Bastian Holst <bastianholst@gmx.de>
+// Copyright 2012      Mohammed Nafees <nafees.technocool@gmail.com>
 //
 
 #ifndef PHOTOPLUGINMODEL_H
@@ -16,7 +17,7 @@
 namespace Marble
 {
 
-class MarbleModel;
+class MarbleWidget;
 
 const quint32 numberOfImagesPerFetch = 15;
   
@@ -25,11 +26,15 @@ class PhotoPluginModel : public AbstractDataPluginModel
     Q_OBJECT
     
  public:
-    explicit PhotoPluginModel( const PluginManager *pluginManager, QObject *parent = 0 );
+    explicit PhotoPluginModel( const MarbleModel *marbleModel, QObject *parent = 0 );
     
     static QUrl generateUrl( const QString& service,
                              const QString& method,
                              const QHash<QString,QString>& options );
+
+    void setMarbleWidget( MarbleWidget* widget );
+
+    void setLicenseValues( const QString &licenses );
  
  protected:
     /**
@@ -37,7 +42,6 @@ class PhotoPluginModel : public AbstractDataPluginModel
      * the @p box surrounding the view and the @p number of files to show.
      **/
     void getAdditionalItems( const GeoDataLatLonAltBox& box,
-                             const MarbleModel *model,
                              qint32 number = 10 );
        
     /**
@@ -46,6 +50,11 @@ class PhotoPluginModel : public AbstractDataPluginModel
      * depending on if they have to download information to be shown.
      **/
     void parseFile( const QByteArray& file );
+
+ private:
+    MarbleWidget *m_marbleWidget;
+
+    QString m_licenses;
 };
 
 }

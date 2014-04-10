@@ -12,11 +12,12 @@
 #define WIKIPEDIAPLUGIN_H
 
 #include "AbstractDataPlugin.h"
+#include "DialogConfigurationInterface.h"
 #include "RenderPlugin.h"
 #include "RenderPluginInterface.h"
 
-#include <QtCore/QHash>
-#include <QtGui/QIcon>
+#include <QHash>
+#include <QIcon>
 
 namespace Ui
 {
@@ -26,31 +27,38 @@ namespace Ui
 namespace Marble
 {
 
-class PluginAboutDialog;
-
-class WikipediaPlugin : public AbstractDataPlugin
+class WikipediaPlugin : public AbstractDataPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.WikipediaPlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( WikipediaPlugin )
     
  public:
     WikipediaPlugin();
+    explicit WikipediaPlugin( const MarbleModel *marbleModel );
     ~WikipediaPlugin();
      
     void initialize();
 
-    bool isInitialized() const;
-
     QString name() const;
     
     QString guiString() const;
-    
-    QString description() const;
-    
-    QIcon icon() const;
 
-    QDialog *aboutDialog();
+    QString nameId() const;
+    
+    QString version() const;
+
+    QString copyrightYears() const;
+
+    QString description() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QString aboutDataText() const;
+
+    QIcon icon() const;
 
     QDialog *configDialog();
 
@@ -62,7 +70,10 @@ class WikipediaPlugin : public AbstractDataPlugin
     /**
      * Set the settings of the item.
      */
-    virtual void setSettings( QHash<QString,QVariant> settings );
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
+
+ protected:
+    bool eventFilter( QObject *object, QEvent *event );
 
  private Q_SLOTS:
     void readSettings();
@@ -72,13 +83,10 @@ class WikipediaPlugin : public AbstractDataPlugin
     void checkNumberOfItems( quint32 number );
 
  private:
-    bool m_isInitialized;
-
-    QIcon m_icon;
-    PluginAboutDialog *m_aboutDialog;
+    const QIcon m_icon;
     Ui::WikipediaConfigWidget *ui_configWidget;
     QDialog *m_configDialog;
-    QHash<QString,QVariant> m_settings;
+    bool m_showThumbnails;
 };
 
 }

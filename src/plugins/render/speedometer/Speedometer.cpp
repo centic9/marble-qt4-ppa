@@ -10,7 +10,7 @@
 
 #include "Speedometer.h"
 
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleDebug.h"
 #include "MarbleLocale.h"
 #include "MarbleModel.h"
@@ -19,17 +19,24 @@
 #include "MarbleGraphicsGridLayout.h"
 #include "ViewportParams.h"
 
-#include <QtGui/QLCDNumber>
+#include <QLCDNumber>
 
 namespace Marble
 {
 
-Speedometer::Speedometer( const QPointF &point, const QSizeF &size )
-    : AbstractFloatItem( point, size ),
+Speedometer::Speedometer()
+    : AbstractFloatItem( 0 ),
+      m_locale( 0 ),
+      m_widgetItem( 0 )
+{
+}
+
+Speedometer::Speedometer( const MarbleModel *marbleModel )
+    : AbstractFloatItem( marbleModel, QPointF( 10.5, 110 ), QSizeF( 135.0, 80.0 ) ),
+      m_locale( 0 ),
       m_widgetItem( 0 )
 {
     setVisible( false );
-    setCacheMode( NoCache );
 
     const bool smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
     if ( smallScreen ) {
@@ -61,14 +68,30 @@ QString Speedometer::nameId() const
     return QString( "speedometer" );
 }
 
+QString Speedometer::version() const
+{
+    return "1.0";
+}
+
 QString Speedometer::description() const
 {
-    return tr( "A float item showing current travelling speed." );
+    return tr( "Display the current cruising speed." );
+}
+
+QString Speedometer::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> Speedometer::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Bernhard Beschow", "bbeschow@cs.tu-berlin.de" );
 }
 
 QIcon Speedometer::icon () const
 {
-    return QIcon();
+    return QIcon(":/icons/speedometer.png");
 }
 
 void Speedometer::initialize ()
@@ -78,7 +101,6 @@ void Speedometer::initialize ()
         m_widget.setupUi( widget );
         m_widgetItem = new WidgetGraphicsItem( this );
         m_widgetItem->setWidget( widget );
-        m_widgetItem->setCacheMode( MarbleGraphicsItem::DeviceCoordinateCache );
 
         MarbleGraphicsGridLayout *layout = new MarbleGraphicsGridLayout( 1, 1 );
         layout->addItem( m_widgetItem, 0, 0 );
@@ -86,8 +108,8 @@ void Speedometer::initialize ()
         setPadding( 0 );
 
         m_locale = MarbleGlobal::getInstance()->locale();
-        connect( marbleModel()->positionTracking(), SIGNAL( gpsLocation(GeoDataCoordinates,qreal) ),
-                this, SLOT( updateLocation(GeoDataCoordinates,qreal) ) );
+        connect( marbleModel()->positionTracking(), SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
+                this, SLOT(updateLocation(GeoDataCoordinates,qreal)) );
     }
 }
 
@@ -104,21 +126,28 @@ void Speedometer::updateLocation( GeoDataCoordinates coordinates, qreal speed )
     QString speedUnit;
 
     switch ( m_locale->measurementSystem() ) {
-    case QLocale::ImperialSystem:
+    case MarbleLocale::ImperialSystem:
         //miles per hour
         speedUnit = tr("mph");
         speed *= KM2MI;
         break;
 
-    case QLocale::MetricSystem:
+    case MarbleLocale::MetricSystem:
         //kilometers per hour
         speedUnit = tr("km/h");
+        break;
+
+    case MarbleLocale::NauticalSystem:
+        // nm per hour (kt)
+        speedUnit = tr("kt");
+        speed *= KM2NM;
         break;
     }
 
     m_widget.speed->display( speed );
     m_widget.speedUnit->setText( speedUnit );
-    m_widgetItem->update();
+
+    update();
     emit repaintNeeded();
 }
 

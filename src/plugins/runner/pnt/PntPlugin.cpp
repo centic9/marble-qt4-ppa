@@ -13,16 +13,53 @@
 namespace Marble
 {
 
-PntPlugin::PntPlugin( QObject *parent ) : RunnerPlugin( parent )
+PntPlugin::PntPlugin( QObject *parent ) :
+    ParseRunnerPlugin( parent )
 {
-    setCapabilities( Parsing );
-    setName( tr( "Pnt File Parser" ) );
-    setNameId( "Pnt" );
-    setDescription( tr( "Create GeoDataDocument from Pnt Files" ) );
-    setGuiString( tr( "Pnt Parser" ) );
 }
 
-MarbleAbstractRunner* PntPlugin::newRunner() const
+QString PntPlugin::name() const
+{
+    return tr( "Pnt File Parser" );
+}
+
+QString PntPlugin::nameId() const
+{
+    return "Pnt";
+}
+
+QString PntPlugin::version() const
+{
+    return "1.0";
+}
+
+QString PntPlugin::description() const
+{
+    return tr( "Create GeoDataDocument from Pnt Files" );
+}
+
+QString PntPlugin::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> PntPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Thibaut Gridel", "tgridel@free.fr" );
+}
+
+QString PntPlugin::fileFormatDescription() const
+{
+    return tr( "Micro World Database II" );
+}
+
+QStringList PntPlugin::fileExtensions() const
+{
+    return QStringList() << "pnt";
+}
+
+ParsingRunner* PntPlugin::newRunner() const
 {
     return new PntRunner;
 }

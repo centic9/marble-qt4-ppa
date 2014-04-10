@@ -13,16 +13,53 @@
 namespace Marble
 {
 
-OsmPlugin::OsmPlugin( QObject *parent ) : RunnerPlugin( parent )
+OsmPlugin::OsmPlugin( QObject *parent ) :
+    ParseRunnerPlugin( parent )
 {
-    setCapabilities( Parsing );
-    setName( tr( "Osm File Parser" ) );
-    setNameId( "Osm" );
-    setDescription( tr( "Create GeoDataDocument from Osm Files" ) );
-    setGuiString( tr( "Osm Parser" ) );
 }
 
-MarbleAbstractRunner* OsmPlugin::newRunner() const
+QString OsmPlugin::name() const
+{
+    return tr( "Osm File Parser" );
+}
+
+QString OsmPlugin::nameId() const
+{
+    return "Osm";
+}
+
+QString OsmPlugin::version() const
+{
+    return "1.0";
+}
+
+QString OsmPlugin::description() const
+{
+    return tr( "Create GeoDataDocument from Osm Files" );
+}
+
+QString OsmPlugin::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> OsmPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Thibaut Gridel", "tgridel@free.fr" );
+}
+
+QString OsmPlugin::fileFormatDescription() const
+{
+    return tr( "OpenStreetMap Data" );
+}
+
+QStringList OsmPlugin::fileExtensions() const
+{
+    return QStringList() << "osm";
+}
+
+ParsingRunner* OsmPlugin::newRunner() const
 {
     return new OsmRunner;
 }

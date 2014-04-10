@@ -28,14 +28,12 @@ class GeoDataLatLonAltBox : Marble::GeoDataLatLonBox
 public:
                             GeoDataLatLonAltBox ();
                             GeoDataLatLonAltBox (const Marble::GeoDataLatLonAltBox& other);
-                            GeoDataLatLonAltBox (const Marble::GeoDataLatLonBox& other);
     qreal                   minAltitude () const;
     void                    setMinAltitude (const qreal minAltitude);
     qreal                   maxAltitude () const;
     void                    setMaxAltitude (const qreal maxAltitude);
     Marble::AltitudeMode    altitudeMode () const;
     void                    setAltitudeMode (const Marble::AltitudeMode altitudeMode);
-    virtual bool            contains (const Marble::GeoDataPoint&) const;
     virtual bool            contains (const Marble::GeoDataCoordinates&) const;
     bool                    contains (const Marble::GeoDataLatLonAltBox&) const;
     virtual bool            intersects (const Marble::GeoDataLatLonAltBox&) const;
@@ -44,14 +42,18 @@ public:
     bool                    isNull () const;
     virtual void            pack (QDataStream& stream) const;
     virtual void            unpack (QDataStream& stream);
-                            GeoDataLatLonAltBox (const Marble::GeoDataCoordinates& coordinates);
     virtual ~GeoDataLatLonAltBox ();
     virtual const char*     nodeType () const;
     virtual Marble::GeoDataCoordinates  center () const;
+    virtual void            clear ();
+                            GeoDataLatLonAltBox (const Marble::GeoDataLatLonBox& other, qreal minAltitude, qreal maxAltitude);
+    explicit                GeoDataLatLonAltBox (const Marble::GeoDataCoordinates& coordinates);
+//ig    uint                    qHash (const Marble::GeoDataLatLonAltBox&);
 };
 // GeoDataLatLonAltBox
 
 //ig bool                    operator == (const Marble::GeoDataLatLonAltBox& lhs, const Marble::GeoDataLatLonAltBox& rhs);
+//ig uint                    qHash (const Marble::GeoDataLatLonAltBox& r);
 };
 // Marble
 

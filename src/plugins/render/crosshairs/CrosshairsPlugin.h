@@ -16,12 +16,10 @@
 #ifndef MARBLE_CROSSHAIRSPLUGIN_H
 #define MARBLE_CROSSHAIRSPLUGIN_H
 
-#include <QtCore/QObject>
-
-#include "AbstractFloatItem.h"
-#include "PluginAboutDialog.h"
+#include <QObject>
 
 #include "RenderPlugin.h"
+#include "DialogConfigurationInterface.h"
 
 class QSvgRenderer;
 
@@ -38,14 +36,18 @@ namespace Marble
  *
  */
 
-class CrosshairsPlugin : public RenderPlugin
+class CrosshairsPlugin : public RenderPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.CrosshairsPlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN(CrosshairsPlugin)
 
  public:
     CrosshairsPlugin();
+
+    explicit CrosshairsPlugin( const MarbleModel *marbleModel );
 
     ~CrosshairsPlugin();
 
@@ -55,17 +57,23 @@ class CrosshairsPlugin : public RenderPlugin
 
     QStringList renderPosition() const;
 
+    virtual RenderType renderType() const;
+
     QString name() const;
 
     QString guiString() const;
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
 
-    QIcon icon () const;
+    QString copyrightYears() const;
 
-    QDialog *aboutDialog();
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QIcon icon () const;
 
     void initialize ();
 
@@ -77,7 +85,7 @@ class CrosshairsPlugin : public RenderPlugin
 
     QHash<QString,QVariant> settings() const;
 
-    void setSettings( QHash<QString,QVariant> settings );
+    void setSettings( const QHash<QString,QVariant> &settings );
 
 private Q_SLOTS:
    void readSettings();
@@ -89,12 +97,10 @@ private Q_SLOTS:
 
     bool m_isInitialized;
 
-    PluginAboutDialog *m_aboutDialog;
-
     QSvgRenderer *m_svgobj;
     QPixmap m_crosshairs;
+    int m_themeIndex;
 
-    QHash<QString,QVariant> m_settings;
     QDialog * m_configDialog;
     Ui::CrosshairsConfigWidget * m_uiConfigWidget;
 };

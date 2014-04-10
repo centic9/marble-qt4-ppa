@@ -12,14 +12,14 @@
 #include "StationListParser.h"
 
 // Marble
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "BBCStation.h"
 #include "GeoDataCoordinates.h"
 #include "MarbleDebug.h"
 
 // Qt
-#include <QtCore/QFile>
-#include <QtCore/QString>
+#include <QFile>
+#include <QString>
 
 using namespace Marble;
 

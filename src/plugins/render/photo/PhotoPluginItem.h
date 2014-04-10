@@ -13,7 +13,9 @@
 
 #include "AbstractDataPluginItem.h"
 
-#include <QtGui/QImage>
+#include "LabelGraphicsItem.h"
+
+#include <QImage>
 
 class QAction;
 class QUrl;
@@ -21,21 +23,21 @@ class QUrl;
 namespace Marble
 {
 
-class LabelGraphicsItem;
+class MarbleWidget;
 class TinyWebBrowser;
  
 class PhotoPluginItem : public AbstractDataPluginItem
 {
     Q_OBJECT
  public:
-    explicit PhotoPluginItem( QObject *parent );
+    explicit PhotoPluginItem( MarbleWidget *widget, QObject *parent );
     ~PhotoPluginItem();
     
     QString name() const;
     
     QString itemType() const;
     
-    bool initialized();
+    bool initialized() const;
     
     void addDownloadedFile( const QString& url, const QString& type );
                  
@@ -71,8 +73,9 @@ class PhotoPluginItem : public AbstractDataPluginItem
     void openBrowser();
     
  private:
-    LabelGraphicsItem *m_image;
-    bool m_hasCoordinates;
+    MarbleWidget *m_marbleWidget;
+
+    LabelGraphicsItem m_image;
     QImage m_smallImage;
     QImage m_microImage;
     TinyWebBrowser *m_browser;

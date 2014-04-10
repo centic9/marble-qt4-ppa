@@ -11,8 +11,9 @@
 
 #include "GeoDataDocument.h"
 #include "GeoDataExtendedData.h"
+#include "GeoDataPlacemark.h"
 
-#include <QtCore/QFile>
+#include <QFile>
 
 namespace Marble
 {
@@ -20,7 +21,7 @@ namespace Marble
 const quint32 MarbleMagicNumber = 0x31415926;
 
 CacheRunner::CacheRunner(QObject *parent) :
-    MarbleAbstractRunner(parent)
+    ParsingRunner(parent)
 {
 }
 
@@ -28,14 +29,15 @@ CacheRunner::~CacheRunner()
 {
 }
 
-GeoDataFeature::GeoDataVisualCategory CacheRunner::category() const
-{
-    return GeoDataFeature::Folder;
-}
-
 void CacheRunner::parseFile( const QString &fileName, DocumentRole role = UnknownDocument )
 {
     QFile file( fileName );
+    if ( !file.exists() ) {
+        qWarning( "File does not exist!" );
+        emit parsingFinished( 0 );
+        return;
+    }
+
     file.open( QIODevice::ReadOnly );
     QDataStream in( &file );
 
@@ -103,8 +105,7 @@ void CacheRunner::parseFile( const QString &fileName, DocumentRole role = Unknow
 
         document->append( mark );
     }
-
-    document->setVisible( false );
+    document->setFileName( fileName );
 
     file.close();
     emit parsingFinished( document );

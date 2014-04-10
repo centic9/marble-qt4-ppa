@@ -15,24 +15,25 @@
 #include "MarbleDirs.h"
 #include "MarbleModel.h"
 #include "MarbleWidget.h"
-#include "GeoPainter.h"
 #include "ViewportParams.h"
 #include "HttpDownloadManager.h"
 
-#include <QtCore/QRect>
-#include <QtGui/QColor>
-#include <QtCore/QMutexLocker>
-#include <QtGui/QPaintDevice>
+#include <QRect>
+#include <QColor>
+#include <QMutexLocker>
+#include <QPaintDevice>
+#include <QPainter>
 
 namespace Marble
 {
 
-ProgressFloatItem::ProgressFloatItem ( const QPointF &point, const QSizeF &size )
-    : AbstractFloatItem( point, size ),
+ProgressFloatItem::ProgressFloatItem( const MarbleModel *marbleModel )
+    : AbstractFloatItem( marbleModel, QPointF( -10.5, -150.5 ), QSizeF( 40.0, 40.0 ) ),
       m_isInitialized( false ),
       m_totalJobs( 0 ),
       m_completedJobs ( 0 ),
-      m_progressResetTimer(),
+      m_completed( 1 ),
+      m_progressHideTimer(),
       m_progressShowTimer(),
       m_active( false ),
       m_fontSize( 0 ),
@@ -41,17 +42,17 @@ ProgressFloatItem::ProgressFloatItem ( const QPointF &point, const QSizeF &size 
     // This timer is responsible to activate the automatic display with a small delay
     m_progressShowTimer.setInterval( 250 );
     m_progressShowTimer.setSingleShot( true );
-    connect( &m_progressShowTimer, SIGNAL( timeout() ), this, SLOT( show() ) );
+    connect( &m_progressShowTimer, SIGNAL(timeout()), this, SLOT(show()) );
 
     // This timer is responsible to hide the automatic display when downloads are finished
-    m_progressResetTimer.setInterval( 750 );
-    m_progressResetTimer.setSingleShot( true );
-    connect( &m_progressResetTimer, SIGNAL( timeout() ), this, SLOT( resetProgress() ) );
+    m_progressHideTimer.setInterval( 750 );
+    m_progressHideTimer.setSingleShot( true );
+    connect( &m_progressHideTimer, SIGNAL(timeout()), this, SLOT(hideProgress()) );
 
     // Repaint timer
     m_repaintTimer.setSingleShot( true );
     m_repaintTimer.setInterval( 1000 );
-    connect( &m_repaintTimer, SIGNAL( timeout() ), this, SIGNAL( repaintNeeded() ) );
+    connect( &m_repaintTimer, SIGNAL(timeout()), this, SIGNAL(repaintNeeded()) );
 
     // The icon resembles the pie chart
     QImage canvas( 16, 16, QImage::Format_ARGB32 );
@@ -97,9 +98,26 @@ QString ProgressFloatItem::nameId() const
     return QString( "progress" );
 }
 
+QString ProgressFloatItem::version() const
+{
+    return "1.0";
+}
+
 QString ProgressFloatItem::description() const
 {
     return tr( "Shows a pie chart download progress indicator" );
+}
+
+QString ProgressFloatItem::copyrightYears() const
+{
+    return "2010, 2011";
+}
+
+QList<PluginAuthor> ProgressFloatItem::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" )
+            << PluginAuthor( "Bernhard Beschow", "bbeschow@cs.tu-berlin.de" );
 }
 
 QIcon ProgressFloatItem::icon() const
@@ -111,8 +129,18 @@ void ProgressFloatItem::initialize()
 {
     const HttpDownloadManager* manager = marbleModel()->downloadManager();
     Q_ASSERT( manager );
-    connect( manager, SIGNAL( jobAdded() ), this, SLOT( addProgressItem() ), Qt::UniqueConnection );
-    connect( manager, SIGNAL( jobRemoved() ), this, SLOT( removeProgressItem() ), Qt::UniqueConnection );
+    connect( manager, SIGNAL(progressChanged(int,int)), this, SLOT(handleProgress(int,int)) , Qt::UniqueConnection );
+    connect( manager, SIGNAL(jobRemoved()), this, SLOT(removeProgressItem()), Qt::UniqueConnection );
+
+    // Calculate font size
+    QFont myFont = font();
+    const QString text = "100%";
+    int fontSize = myFont.pointSize();
+    while( QFontMetrics( myFont ).boundingRect( text ).width() < contentRect().width() - 2 ) {
+        ++fontSize;
+        myFont.setPointSize( fontSize );
+    }
+    m_fontSize = fontSize - 1;
 
     m_isInitialized = true;
 }
@@ -137,13 +165,8 @@ QPainterPath ProgressFloatItem::backgroundShape() const
     return path;
 }
 
-void ProgressFloatItem::paintContent( GeoPainter *painter, ViewportParams *viewport,
-                                     const QString& renderPos, GeoSceneLayer * layer )
+void ProgressFloatItem::paintContent( QPainter *painter )
 {
-    Q_UNUSED( viewport )
-    Q_UNUSED( layer )
-    Q_UNUSED( renderPos )
-
     // Stop repaint timer if it is already running
     m_repaintTimer.stop();
 
@@ -152,21 +175,10 @@ void ProgressFloatItem::paintContent( GeoPainter *painter, ViewportParams *viewp
     }
 
     painter->save();
-    painter->setRenderHint( QPainter::Antialiasing, true );
-
-    qreal completed = 1.0;
-    if ( m_totalJobs && m_completedJobs <= m_totalJobs ) {
-        completed = (qreal) m_completedJobs / (qreal) m_totalJobs;
-
-        if ( m_completedJobs == m_totalJobs ) {
-            m_progressShowTimer.stop();
-            m_progressResetTimer.start();
-        }
-    }
 
     // Paint progress pie
     int startAngle =  90 * 16; // 12 o' clock
-    int spanAngle = -ceil ( 360 * 16 * completed );
+    int spanAngle = -ceil ( 360 * 16 * m_completed );
     QRectF rect( contentRect() );
     rect.adjust( 1, 1, -1, -1 );
 
@@ -174,21 +186,10 @@ void ProgressFloatItem::paintContent( GeoPainter *painter, ViewportParams *viewp
     painter->setPen( Qt::NoPen );
     painter->drawPie( rect, startAngle, spanAngle );
 
-    // Calculate font size
-    QFont myFont = font();
-    if ( m_fontSize == 0 ) {
-        QString text = "100%";
-        int fontSize = myFont.pointSize();
-        while( QFontMetrics( myFont ).boundingRect( text ).width() < rect.width() - 4 ) {
-            ++fontSize;
-            myFont.setPointSize( fontSize );
-        }
-        m_fontSize = fontSize - 1;
-    }
-
     // Paint progress label
+    QFont myFont = font();
     myFont.setPointSize( m_fontSize );
-    QString done = QString::number( (int) ( completed * 100 ) ) + "%";
+    QString done = QString::number( (int) ( m_completed * 100 ) ) + '%';
     int fontWidth = QFontMetrics( myFont ).boundingRect( done ).width();
     QPointF baseline( padding() + 0.5 * ( rect.width() - fontWidth ), 0.75 * rect.height() );
     QPainterPath path;
@@ -199,7 +200,6 @@ void ProgressFloatItem::paintContent( GeoPainter *painter, ViewportParams *viewp
     painter->setPen( QPen() );
     painter->drawPath( path );
 
-    painter->autoMapQuality();
     painter->restore();
 }
 
@@ -212,23 +212,6 @@ bool ProgressFloatItem::eventFilter(QObject *object, QEvent *e)
     return AbstractFloatItem::eventFilter( object, e );
 }
 
-void ProgressFloatItem::addProgressItem()
-{
-    m_jobMutex.lock();
-    ++m_totalJobs;
-    m_jobMutex.unlock();
-
-    if ( enabled() ) {
-        if ( !active() && !m_progressShowTimer.isActive() ) {
-            m_progressShowTimer.start();
-            m_progressResetTimer.stop();
-        } else if ( active() ) {
-            update();
-            scheduleRepaint();
-        }
-    }
-}
-
 void ProgressFloatItem::removeProgressItem()
 {
     m_jobMutex.lock();
@@ -238,7 +221,7 @@ void ProgressFloatItem::removeProgressItem()
     if ( enabled() ) {
         if ( !active() && !m_progressShowTimer.isActive() ) {
             m_progressShowTimer.start();
-            m_progressResetTimer.stop();
+            m_progressHideTimer.stop();
         } else if ( active() ) {
             update();
             scheduleRepaint();
@@ -246,13 +229,39 @@ void ProgressFloatItem::removeProgressItem()
     }
 }
 
-void ProgressFloatItem::resetProgress()
+void ProgressFloatItem::handleProgress( int current, int queued )
 {
     m_jobMutex.lock();
-    m_totalJobs = 0;
-    m_completedJobs = 0;
+    if ( current < 1 ) {
+        m_totalJobs = 0;
+        m_completedJobs = 0;
+    } else {
+        m_totalJobs = qMax<int>( m_totalJobs, queued + current );
+    }
     m_jobMutex.unlock();
 
+    if ( enabled() ) {
+        if ( !active() && !m_progressShowTimer.isActive() && m_totalJobs > 0 ) {
+            m_progressShowTimer.start();
+            m_progressHideTimer.stop();
+        } else if ( active() ) {
+            if ( m_totalJobs < 1 || m_completedJobs == m_totalJobs ) {
+                m_progressShowTimer.stop();
+                m_progressHideTimer.start();
+            }
+            update();
+            scheduleRepaint();
+        }
+
+        m_completed = 1.0;
+        if ( m_totalJobs && m_completedJobs <= m_totalJobs ) {
+            m_completed = (qreal) m_completedJobs / (qreal) m_totalJobs;
+        }
+    }
+}
+
+void ProgressFloatItem::hideProgress()
+{
     if ( enabled() ) {
         setActive( false );
 

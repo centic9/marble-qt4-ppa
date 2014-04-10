@@ -35,8 +35,6 @@ protected:
     void                    downloadItemData (const QUrl& url, const QString& type, Marble::AbstractDataPluginItem* item);
     void                    downloadDescriptionFile (const QUrl& url);
     void                    addItemToList (Marble::AbstractDataPluginItem* item);
-    QString                 name () const;
-    void                    setName (const QString& name);
     QString                 generateFilename (const QString& id, const QString& type) const;
     QString                 generateFilepath (const QString& id, const QString& type) const;
     bool                    fileExists (const QString& fileName) const;
@@ -50,10 +48,29 @@ protected:
 signals:
     void                    itemsUpdated ();
 public:
-//ig    explicit                AbstractDataPluginModel (const QString& name, PluginManager* pluginManager, QObject* parent /TransferThis/ = 0);
-    QList<Marble::AbstractDataPluginItem*>  items (Marble::ViewportParams* viewport, const Marble::MarbleModel* model, qint32 number = 10);
+    virtual void            setFavoriteItems (const QStringList& list);
+    QStringList             favoriteItems () const;
+    virtual void            setFavoriteItemsOnly (bool favoriteOnly);
+    bool                    isFavoriteItemsOnly () const;
 protected:
-    virtual void            getAdditionalItems (const Marble::GeoDataLatLonAltBox& box, const Marble::MarbleModel* model, qint32 number = 10)=0;
+    void                    clear ();
+signals:
+    void                    favoriteItemsChanged (const QStringList& favoriteItems);
+public:
+    QObject*                favoritesModel ();
+    void                    addItemsToList (const QList<Marble::AbstractDataPluginItem*>& items);
+protected:
+    void                    registerItemProperties (const QMetaObject& item);
+signals:
+    void                    favoriteItemsOnlyChanged ();
+public:
+    explicit                AbstractDataPluginModel (const QString& name, const Marble::MarbleModel* marbleModel, QObject* parent /TransferThis/ = 0);
+    const Marble::MarbleModel*  marbleModel () const;
+    QList<Marble::AbstractDataPluginItem*>  items (const Marble::ViewportParams* viewport, qint32 number = 10);
+protected:
+    virtual void            getAdditionalItems (const Marble::GeoDataLatLonAltBox& box, qint32 number = 10)=0;
+    virtual void            getItem (const QString& id);
+    void                    downloadItem (const QUrl& url, const QString& type, Marble::AbstractDataPluginItem* item);
 };
 // AbstractDataPluginModel
 

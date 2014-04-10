@@ -14,9 +14,9 @@
 #include "MarbleDebug.h"
 #include "MarbleModel.h"
 
-#include <QtCore/QTimer>
-#include <QtDBus/QDBusConnection>
-#include <QtDBus/QDBusInterface>
+#include <QTimer>
+#include <QDBusConnection>
+#include <QDBusInterface>
 
 namespace Marble {
 
@@ -44,9 +44,16 @@ InhibitScreensaverPluginPrivate::~InhibitScreensaverPluginPrivate()
 }
 
 InhibitScreensaverPlugin::InhibitScreensaverPlugin() :
-        d ( new InhibitScreensaverPluginPrivate() )
+    RenderPlugin( 0 ),
+    d( 0 )
 {
-    connect( &d->m_timer, SIGNAL( timeout() ), this, SLOT( inhibitScreenSaver() ) );
+}
+
+InhibitScreensaverPlugin::InhibitScreensaverPlugin( const MarbleModel *marbleModel ) :
+    RenderPlugin( marbleModel ),
+    d ( new InhibitScreensaverPluginPrivate() )
+{
+    connect( &d->m_timer, SIGNAL(timeout()), this, SLOT(inhibitScreenSaver()) );
 
 #ifdef Q_WS_MAEMO_5
     setEnabled( true );
@@ -89,9 +96,25 @@ QString InhibitScreensaverPlugin::nameId() const
     return QString("inhibit-screensaver");
 }
 
+QString InhibitScreensaverPlugin::version() const
+{
+    return "1.0";
+}
+
 QString InhibitScreensaverPlugin::description() const
 {
     return tr( "Inhibits the screensaver during turn-by-turn navigation" );
+}
+
+QString InhibitScreensaverPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> InhibitScreensaverPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
 }
 
 QIcon InhibitScreensaverPlugin::icon() const
@@ -107,8 +130,8 @@ void InhibitScreensaverPlugin::initialize()
        "com.nokia.mce.request", QDBusConnection::systemBus() );
 
     PositionTracking *tracking = marbleModel()->positionTracking();
-    connect( tracking, SIGNAL( positionProviderPluginChanged( PositionProviderPlugin* ) ),
-             this, SLOT( updateScreenSaverState( PositionProviderPlugin* ) ) );
+    connect( tracking, SIGNAL(positionProviderPluginChanged(PositionProviderPlugin*)),
+             this, SLOT(updateScreenSaverState(PositionProviderPlugin*)) );
     updateScreenSaverState( tracking->positionProviderPlugin() );
 }
 

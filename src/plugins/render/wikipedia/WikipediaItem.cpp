@@ -12,36 +12,42 @@
 #include "WikipediaItem.h"
 
 // Qt
-#include <QtGui/QAction>
-#include <QtGui/QIcon>
-#include <QtGui/QPixmap>
-#include <QtGui/QMouseEvent>
-#include <QtWebKit/QWebView>
+#include <QAction>
+#include <QIcon>
+#include <QPainter>
+#include <QPixmap>
+#include <QMouseEvent>
+#include <QWebView>
 
 // Marble
 #include "MarbleDebug.h"
-#include "GeoPainter.h"
 #include "ViewportParams.h"
-#include "GeoSceneLayer.h"
 #include "TinyWebBrowser.h"
+#include "MarbleWidget.h"
+#include "MarbleModel.h"
+#include "RenderPlugin.h"
+#include "PluginManager.h"
+#include "layers/PopupLayer.h"
 
 using namespace Marble;
 /* TRANSLATOR Marble::WikipediaItem */
 
 // The Wikipedia icon is not a square
-const QRect wikiIconRect( 0, 0, 32, 27 );
+const QRect wikiIconRect( 0, 0, 22, 19 );
 const QSize miniWikiIconSize( 22, 19 );
 const int miniWikiIconBorder = 3;
 
-WikipediaItem::WikipediaItem( QObject *parent )
+WikipediaItem::WikipediaItem( MarbleWidget* widget, QObject *parent )
     : AbstractDataPluginItem( parent ),
+      m_marbleWidget( widget ),
+      m_rank( 0.0 ),
       m_browser( 0 ),
       m_wikiIcon(),
-      m_settings()
+      m_showThumbnail( false )
 {
     m_action = new QAction( this );
-    connect( m_action, SIGNAL( triggered() ), this, SLOT( openBrowser() ) );
-    setCacheMode( MarbleGraphicsItem::ItemCoordinateCache );
+    connect( m_action, SIGNAL(triggered()), this, SLOT(openBrowser()) );
+    setCacheMode( ItemCoordinateCache );
 }
 
 WikipediaItem::~WikipediaItem()
@@ -65,7 +71,7 @@ QString WikipediaItem::itemType() const
     return "wikipediaItem";
 }
      
-bool WikipediaItem::initialized()
+bool WikipediaItem::initialized() const
 {
     return true;
 }
@@ -81,16 +87,12 @@ void WikipediaItem::addDownloadedFile( const QString& url, const QString& type )
 
 bool WikipediaItem::operator<( const AbstractDataPluginItem *other ) const
 {
-    return this->id() < other->id();
+    WikipediaItem const * otherItem = dynamic_cast<WikipediaItem const *>( other );
+    return otherItem ? m_rank > otherItem->m_rank : id() < other->id();
 }
    
-void WikipediaItem::paint( GeoPainter *painter, ViewportParams *viewport,
-                           const QString& renderPos, GeoSceneLayer * layer )
+void WikipediaItem::paint( QPainter *painter )
 {
-    Q_UNUSED( renderPos )
-    Q_UNUSED( layer )
-    Q_UNUSED( viewport )
-
     if ( !showThumbnail() ) {
         m_wikiIcon.paint( painter, wikiIconRect );
     }
@@ -174,11 +176,19 @@ QAction *WikipediaItem::action()
 
 void WikipediaItem::openBrowser( )
 {
-    if ( !m_browser ) {
-        m_browser = new TinyWebBrowser();
+    if ( m_marbleWidget ) {
+        PopupLayer* popup = m_marbleWidget->popupLayer();
+        popup->setCoordinates( coordinate(), Qt::AlignRight | Qt::AlignVCenter );
+        popup->setSize( QSizeF( 500, 550 ) );
+        popup->setUrl( url() );
+        popup->setVisible( true );
+    } else {
+        if ( !m_browser ) {
+            m_browser = new TinyWebBrowser();
+        }
+        m_browser->load( url() );
+        m_browser->show();
     }
-    m_browser->load( url() );
-    m_browser->show();
 }
     
 void WikipediaItem::setIcon( const QIcon& icon )
@@ -191,12 +201,24 @@ void WikipediaItem::setIcon( const QIcon& icon )
 
 void WikipediaItem::setSettings( const QHash<QString, QVariant>& settings )
 {
-    if ( settings != m_settings ) {
-        m_settings = settings;
+    const bool showThumbnail = settings.value( "showThumbnails", false ).toBool();
+
+    if ( showThumbnail != m_showThumbnail ) {
+        m_showThumbnail = showThumbnail;
         updateSize();
         updateToolTip();
         update();
     }
+}
+
+void WikipediaItem::setRank( double rank )
+{
+    m_rank = rank;
+}
+
+double WikipediaItem::rank() const
+{
+    return m_rank;
 }
 
 void WikipediaItem::updateSize()
@@ -229,9 +251,9 @@ void WikipediaItem::updateToolTip()
     }
 }
 
-bool WikipediaItem::showThumbnail()
+bool WikipediaItem::showThumbnail() const
 {
-    return m_settings.value( "showThumbnails", false ).toBool() && !m_thumbnail.isNull();
+    return m_showThumbnail && !m_thumbnail.isNull();
 }
 
 #include "WikipediaItem.moc"

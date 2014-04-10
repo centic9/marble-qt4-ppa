@@ -33,10 +33,10 @@ public:
     void                    setTessellate (bool tessellate);
     Marble::TessellationFlags  tessellationFlags () const;
     void                    setTessellationFlags (Marble::TessellationFlags f);
-    Marble::GeoDataLatLonAltBox  latLonAltBox () const;
-    Marble::GeoDataLinearRing&  outerBoundary () const;
+    virtual const Marble::GeoDataLatLonAltBox&  latLonAltBox () const;
+//ig    Marble::GeoDataLinearRing&  outerBoundary ();
     void                    setOuterBoundary (const Marble::GeoDataLinearRing& boundary);
-    QVector<Marble::GeoDataLinearRing>&  innerBoundaries () const;
+//ig    QVector<Marble::GeoDataLinearRing>&  innerBoundaries ();
     void                    appendInnerBoundary (const Marble::GeoDataLinearRing& boundary);
     virtual void            pack (QDataStream& stream) const;
     virtual void            unpack (QDataStream& stream);
@@ -45,9 +45,10 @@ protected:
 //ig    GeoDataPolygonPrivate*  p () const;
 public:
     virtual bool            contains (const Marble::GeoDataCoordinates& coordinates) const;
+    const Marble::GeoDataLinearRing&  outerBoundary () const;
+    const QVector<Marble::GeoDataLinearRing>&  innerBoundaries () const;
 };
 // GeoDataPolygon
-
 
 class GeoDataOuterBoundary : Marble::GeoDataPolygon
 {
@@ -56,9 +57,6 @@ class GeoDataOuterBoundary : Marble::GeoDataPolygon
 %End
 
 };
-// GeoDataOuterBoundary
-
-
 class GeoDataInnerBoundary : Marble::GeoDataPolygon
 {
 %TypeHeaderCode
@@ -66,8 +64,6 @@ class GeoDataInnerBoundary : Marble::GeoDataPolygon
 %End
 
 };
-// GeoDataInnerBoundary
-
 };
 // Marble
 

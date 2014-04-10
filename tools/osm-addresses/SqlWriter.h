@@ -13,9 +13,9 @@
 
 #include "Writer.h"
 
-#include <QtCore/QMap>
-#include <QtCore/QPair>
-#include <QtSql/QSqlQuery>
+#include <QMap>
+#include <QPair>
+#include <QSqlQuery>
 
 namespace Marble
 {
@@ -23,7 +23,7 @@ namespace Marble
 class SqlWriter : public Writer
 {
 public:
-    SqlWriter( const QString &filename, QObject* parent = 0 );
+    explicit SqlWriter( const QString &filename, QObject* parent = 0 );
 
     ~SqlWriter();
 

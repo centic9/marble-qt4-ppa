@@ -10,19 +10,37 @@
 #ifndef MARBLEOSMPLUGIN_H
 #define MARBLEOSMPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "ParseRunnerPlugin.h"
+
 namespace Marble
 {
 
-class OsmPlugin : public RunnerPlugin
+class OsmPlugin : public ParseRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.OsmPlugin" )
+    Q_INTERFACES( Marble::ParseRunnerPlugin )
 
 public:
     explicit OsmPlugin( QObject *parent = 0 );
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    QString name() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QString fileFormatDescription() const;
+
+    QStringList fileExtensions() const;
+
+    virtual ParsingRunner* newRunner() const;
 };
 
 }

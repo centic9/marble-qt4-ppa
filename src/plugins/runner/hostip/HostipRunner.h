@@ -10,28 +10,25 @@
 #ifndef MARBLE_HOSTIPRUNNER_H
 #define MARBLE_HOSTIPRUNNER_H
 
-#include "MarbleAbstractRunner.h"
+#include "SearchRunner.h"
 
-#include <QtCore/QString>
-#include <QtNetwork/QHostInfo>
-#include <QtNetwork/QNetworkRequest>
+#include <QString>
+#include <QHostInfo>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
 
-class QNetworkAccessManager;
 class QNetworkReply;
 
 namespace Marble
 {
 
-class HostipRunner : public MarbleAbstractRunner
+class HostipRunner : public SearchRunner
 {
     Q_OBJECT
 public:
     explicit HostipRunner(QObject *parent = 0);
 
     ~HostipRunner();
-
-    // Overriding MarbleAbstractRunner
-    GeoDataFeature::GeoDataVisualCategory category() const;
 
 private Q_SLOTS:
     void get();
@@ -45,12 +42,12 @@ private Q_SLOTS:
     // No results (or an error)
     void slotNoResults();
 
-    virtual void search( const QString &searchTerm );
+    virtual void search( const QString &searchTerm, const GeoDataLatLonAltBox &preferred );
 
 private:
     QHostInfo m_hostInfo;
 
-    QNetworkAccessManager *const m_networkAccessManager;
+    QNetworkAccessManager m_networkAccessManager;
 
     QNetworkRequest m_request;
 };

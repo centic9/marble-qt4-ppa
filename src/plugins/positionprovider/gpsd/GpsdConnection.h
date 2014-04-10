@@ -13,8 +13,8 @@
 
 #include "PositionProviderPlugin.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QObject>
+#include <QTimer>
 
 #include <libgpsmm.h>
 
@@ -26,7 +26,7 @@ class GpsdConnection : public QObject
     Q_OBJECT
 
  public:
-    GpsdConnection( QObject* parent = 0 );
+    explicit GpsdConnection( QObject* parent = 0 );
 
     ~GpsdConnection();
 

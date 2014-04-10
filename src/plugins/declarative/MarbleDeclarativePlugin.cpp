@@ -12,53 +12,80 @@
 
 #include "Coordinate.h"
 #include "DeclarativeMapThemeManager.h"
+#include "MarbleDeclarativeObject.h"
 #include "MarbleDeclarativeWidget.h"
 #include "PositionSource.h"
+#include "Bookmarks.h"
+#include "CloudSync.h"
+#include "cloudsync/MergeItem.h"
 #include "Tracking.h"
 #include "Routing.h"
+#include "Navigation.h"
 #include "Search.h"
 #include "RouteRequestModel.h"
-#include "ActivityModel.h"
-#include "Activity.h"
-#include "RelatedActivities.h"
 #include "Settings.h"
+#include "MapThemeModel.h"
+#include "NewstuffModel.h"
+#include "OfflineDataModel.h"
+#include "Placemark.h"
+#include "routing/SpeakersModel.h"
+#include "routing/VoiceNavigationModel.h"
+#include "AbstractFloatItem.h"
+#include "RenderPlugin.h"
+#include "DeclarativeDataPlugin.h"
 
-#include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeEngine>
-
-namespace Marble
-{
-namespace Declarative
-{
+#if QT_VERSION < 0x050000
+  #include <qdeclarative.h>
+  #include <QDeclarativeEngine>
+  typedef QDeclarativeEngine QQmlEngine;
+  typedef QDeclarativeComponent QQmlComponent;
+#else
+  #include <QtQml/qqml.h>
+  #include <QQmlEngine>
+  #include <QQmlContext>
+#endif
 
 void MarbleDeclarativePlugin::registerTypes( const char * )
 {
     const char* uri = "org.kde.edu.marble";
 
     //@uri org.kde.edu.marble
-    qmlRegisterType<Marble::Declarative::Coordinate>( uri, 0, 11, "Coordinate" );
-    qmlRegisterType<Marble::Declarative::PositionSource>( uri, 0, 11, "PositionSource" );
-    qmlRegisterType<Marble::Declarative::Tracking>( uri, 0, 11, "Tracking" );
-    qmlRegisterType<Marble::Declarative::Routing>( uri, 0, 11, "Routing" );
-    qmlRegisterType<Marble::Declarative::Search>( uri, 0, 11, "Search" );
-    qmlRegisterType<Marble::Declarative::RouteRequestModel>( uri, 0, 11, "RouteRequestModel" );
-    qmlRegisterType<Marble::Declarative::ActivityModel>( uri, 0, 11, "ActivityModel" );
-    qmlRegisterType<Marble::Declarative::Activity>( uri, 0, 11, "Activity" );
-    qmlRegisterType<Marble::Declarative::RelatedActivities>( uri, 0, 11, "RelatedActivities" );
-    qmlRegisterType<Marble::Declarative::Settings>( uri, 0, 11, "Settings" );
+    qmlRegisterType<Coordinate>( uri, 0, 11, "Coordinate" );
+    qmlRegisterType<Placemark>( uri, 0, 11, "Placemark" );
+    qmlRegisterType<PositionSource>( uri, 0, 11, "PositionSource" );
+    qmlRegisterType<Bookmarks>( uri, 0, 11, "Bookmarks" );
+    qmlRegisterType<Tracking>( uri, 0, 11, "Tracking" );
+    qmlRegisterType<Routing>( uri, 0, 11, "Routing" );
+    qmlRegisterType<Navigation>( uri, 0, 11, "Navigation" );
+    qmlRegisterType<Search>( uri, 0, 11, "Search" );
+    qmlRegisterType<CloudSync>( uri, 0, 11, "CloudSync" );
+    qmlRegisterType<Marble::MergeItem>( uri, 0, 11, "MergeItem" );
+    qmlRegisterType<RouteRequestModel>( uri, 0, 11, "RouteRequestModel" );
+    qmlRegisterType<Settings>( uri, 0, 11, "Settings" );
 
-    qmlRegisterType<Marble::Declarative::MarbleWidget>( uri, 0, 11, "MarbleWidget" );
-    qmlRegisterType<Marble::Declarative::MapThemeManager>( uri, 0, 11, "MapThemeManager" );
+    qmlRegisterType<MarbleWidget>( uri, 0, 11, "MarbleWidget" );
+    qmlRegisterType<MapThemeManager>( uri, 0, 11, "MapThemeManager" );
+    qmlRegisterType<Marble::SpeakersModel>( uri, 0, 11, "SpeakersModel" );
+    qmlRegisterType<Marble::VoiceNavigationModel>( uri, 0, 11, "VoiceNavigation" );
+    qmlRegisterType<Marble::NewstuffModel>( uri, 0, 11, "NewstuffModel" );
+    qmlRegisterType<OfflineDataModel>( uri, 0, 11, "OfflineDataModel" );
+    qmlRegisterType<MapThemeModel>( uri, 0, 11, "MapThemeModel" );
+    qmlRegisterType<DeclarativeDataPlugin>( uri, 0, 11, "DataLayer" );
+
+    qmlRegisterUncreatableType<BookmarksModel>( uri, 0, 11, "BookmarksModel", "Do not create" );
+    qmlRegisterUncreatableType<Marble::AbstractFloatItem>( uri, 0, 11, "FloatItem", "Do not create" );
+    qmlRegisterUncreatableType<Marble::RenderPlugin>( uri, 0, 11, "RenderPlugin", "Do not create" );
 }
 
-void MarbleDeclarativePlugin::initializeEngine( QDeclarativeEngine *engine, const char *)
+void MarbleDeclarativePlugin::initializeEngine( QQmlEngine *engine, const char *)
 {
     engine->addImageProvider( "maptheme", new MapThemeImageProvider );
-}
-
-}
+    // Register the global Marble object. Can be used in .qml files for requests like Marble.resolvePath("some/icon.png")
+    if ( !engine->rootContext()->contextProperty( "Marble").isValid() ) {
+        engine->rootContext()->setContextProperty( "Marble", new MarbleDeclarativeObject( this ) );
+    }
 }
 
 #include "MarbleDeclarativePlugin.moc"
 
-Q_EXPORT_PLUGIN2( MarbleDeclarativePlugin, Marble::Declarative::MarbleDeclarativePlugin )
+Q_EXPORT_PLUGIN2( MarbleDeclarativePlugin, MarbleDeclarativePlugin )

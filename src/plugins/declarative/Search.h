@@ -11,20 +11,22 @@
 #ifndef MARBLE_DECLARATIVE_SEARCH_H
 #define MARBLE_DECLARATIVE_SEARCH_H
 
-#include <QtCore/QObject>
-#include <QtDeclarative/QtDeclarative>
-
-#include "MarbleRunnerManager.h"
+#include <QObject>
+#if QT_VERSION < 0x050000
+  #include <QtDeclarative/qdeclarative.h>
+  #include <QDeclarativeComponent>
+  #include <QDeclarativeItem>
+#else
+  #include <QtQml/qqml.h>
+  #include <QQuickItem>
+#endif
 
 class QAbstractItemModel;
 
-namespace Marble
-{
-
-class MarblePlacemarkModel;
-
-namespace Declarative
-{
+namespace Marble {
+    class MarblePlacemarkModel;
+    class SearchRunnerManager;
+}
 
 class MarbleWidget;
 
@@ -32,20 +34,33 @@ class Search : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY( MarbleWidget* map READ map WRITE setMap NOTIFY mapChanged )
+#if QT_VERSION < 0x050000
     Q_PROPERTY( QDeclarativeComponent* placemarkDelegate READ placemarkDelegate WRITE setPlacemarkDelegate NOTIFY placemarkDelegateChanged )
+#else
+    Q_PROPERTY( QQmlComponent* placemarkDelegate READ placemarkDelegate WRITE setPlacemarkDelegate NOTIFY placemarkDelegateChanged )
+#endif
 
 public:
     explicit Search( QObject* parent = 0 );
 
-    void setMarbleWidget( Marble::Declarative::MarbleWidget* widget );
+    MarbleWidget *map();
 
-    void setDelegateParent( QGraphicsItem* parent );
+    void setMap( MarbleWidget* widget );
 
+#if QT_VERSION < 0x050000
     QDeclarativeComponent* placemarkDelegate();
 
     void setPlacemarkDelegate( QDeclarativeComponent* delegate );
+#else
+    QQmlComponent* placemarkDelegate();
+
+    void setPlacemarkDelegate( QQmlComponent* delegate );
+#endif
 
 Q_SIGNALS:
+    void mapChanged();
+
     /**
      * The last search triggered by search() is finished and can be
      * retrieved using @see searchResult
@@ -68,23 +83,23 @@ private Q_SLOTS:
     void handleSearchResult();
 
 private:
-    Marble::Declarative::MarbleWidget* m_marbleWidget;
+    MarbleWidget* m_marbleWidget;
 
     /** Wrapped Marble runner manager */
-    Marble::MarbleRunnerManager *m_runnerManager;
+    Marble::SearchRunnerManager *m_runnerManager;
 
     /** Search result */
-    MarblePlacemarkModel *m_searchResult;
+    Marble::MarblePlacemarkModel *m_searchResult;
 
+#if QT_VERSION < 0x050000
     QDeclarativeComponent* m_placemarkDelegate;
 
-    QGraphicsItem* m_delegateParent;
-
     QMap<int,QDeclarativeItem*> m_placemarks;
+#else
+    QQmlComponent* m_placemarkDelegate;
+
+    QMap<int,QQuickItem*> m_placemarks;
+#endif
 };
-
-}
-
-}
 
 #endif

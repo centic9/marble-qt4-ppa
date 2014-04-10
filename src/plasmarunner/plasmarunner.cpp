@@ -20,6 +20,8 @@
 #include <GeoDataFolder.h>
 #include <GeoDataPlacemark.h>
 #include <BookmarkManager.h>
+#include <GeoDataTreeModel.h>
+
 // KDE
 #include <KProcess>
 #include <KIcon>
@@ -39,6 +41,8 @@ PlasmaRunner::PlasmaRunner(QObject *parent, const QVariantList &args)
     KLocale* locale = KGlobal::locale();
     locale->insertCatalog(QLatin1String("marble"));
     locale->insertCatalog(QLatin1String("marble_qt"));
+    // load catalog manually, as it does not (yet) match the name of the plugin lib
+    // TODO: fix catalog name after branching of 1.4
     locale->insertCatalog(QLatin1String("plasma_runner_marblerunner"));
 
     setIgnoredTypes(Plasma::RunnerContext::NetworkLocation |
@@ -82,7 +86,7 @@ void PlasmaRunner::match(Plasma::RunnerContext &context)
 
     // TODO: BookmarkManager does not yet listen to updates, also does not sync between processes :(
     // So for now always load on demand, even if expensive possibly
-    BookmarkManager bookmarkManager;
+    BookmarkManager bookmarkManager(new GeoDataTreeModel);
     bookmarkManager.loadFile( QLatin1String("bookmarks/bookmarks.kml") );
 
     foreach (GeoDataFolder* folder, bookmarkManager.folders()) {

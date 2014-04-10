@@ -11,7 +11,7 @@
 
 
 #include "svgxmlhandler.h"
-#include <QtCore/QDebug>
+#include <QDebug>
 
 SVGXmlHandler::SVGXmlHandler(const QString& targetfile)
 {
@@ -26,6 +26,9 @@ bool SVGXmlHandler::startElement(const QString& nspace,
                                  const QString& qName,
                                  const QXmlAttributes &atts)
 {
+    Q_UNUSED(nspace)
+    Q_UNUSED(localName)
+
     qDebug();
     if ( qName == "g" ) {
         qDebug( "Parsing Data ..." );

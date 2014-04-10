@@ -8,8 +8,7 @@
 // Copyright 2009      Andrew Manson <g.real.ate@gmail.com>
 //
 
-#include <QtCore/QObject>
-#include <QtTest/QtTest>
+#include <QObject>
 
 #include "PlacemarkTextAnnotation.h"
 #include "TextAnnotation.h"

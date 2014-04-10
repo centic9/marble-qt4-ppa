@@ -5,8 +5,8 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2009      Eckhart Wörner <ewoerner@kde.org>
-// Copyright 2011      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
+// Copyright 2011      Guillaume Martres <smarter@ubuntu.com>
+// Copyright 2011,2012 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 #ifndef PLACEMARKPOSITIONPROVIDERPLUGIN_H
@@ -16,7 +16,7 @@
 
 #include "GeoDataCoordinates.h"
 
-#include <QtCore/QDateTime>
+#include <QDateTime>
 
 namespace Marble
 {
@@ -27,6 +27,7 @@ class GeoDataPlacemark;
 class PlacemarkPositionProviderPlugin: public PositionProviderPlugin
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.PlacemarkPositionProviderPlugin" )
     Q_INTERFACES( Marble::PositionProviderPluginInterface )
 
  public:
@@ -35,7 +36,10 @@ class PlacemarkPositionProviderPlugin: public PositionProviderPlugin
     virtual QString name() const;
     virtual QString nameId() const;
     virtual QString guiString() const;
+    virtual QString version() const;
     virtual QString description() const;
+    virtual QString copyrightYears() const;
+    virtual QList<PluginAuthor> pluginAuthors() const;
     virtual QIcon icon() const;
     virtual void initialize();
     virtual bool isInitialized() const;
@@ -46,22 +50,23 @@ class PlacemarkPositionProviderPlugin: public PositionProviderPlugin
     virtual GeoDataCoordinates position() const;
     virtual GeoDataAccuracy accuracy() const;
     virtual qreal speed() const;
-
-    void setPlacemark( const GeoDataPlacemark *placemark );
+    virtual qreal direction() const;
+    virtual QDateTime timestamp() const;
 
  private:
     const GeoDataPlacemark *m_placemark;
     GeoDataCoordinates m_coordinates;
     QDateTime m_timestamp;
     qreal m_speed;
+    qreal m_direction;
 
     PositionProviderStatus m_status;
     GeoDataAccuracy m_accuracy;
     bool m_isInitialized;
 
-    void update();
+ private Q_SLOTS:
+    void setPlacemark( const GeoDataPlacemark *placemark );
 
- private slots:
     void updatePosition();
 };
 

@@ -38,5 +38,10 @@ public:
 signals:
     void                    mapThemeIdChanged (const QString&);
     void                    projectionChanged (Marble::Projection);
+    void                    celestialBodyChanged (const QString&);
+protected:
+    void                    resizeEvent (QResizeEvent* event);
+signals:
+    void                    mapThemeDeleted ();
 };
 };

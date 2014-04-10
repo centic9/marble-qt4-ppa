@@ -6,43 +6,57 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 
 #ifndef MARBLE_LOCALOSMSEARCHPLUGIN_H
 #define MARBLE_LOCALOSMSEARCHPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "SearchRunnerPlugin.h"
 #include "OsmDatabase.h"
 
-#include <QtCore/QFileSystemWatcher>
+#include <QFileSystemWatcher>
 
 namespace Marble
 {
 
-class LocalOsmSearchPlugin : public RunnerPlugin
+class LocalOsmSearchPlugin : public SearchRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.LocalOsmSearchPlugin" )
+    Q_INTERFACES( Marble::SearchRunnerPlugin )
 
 public:
     explicit LocalOsmSearchPlugin( QObject *parent = 0 );
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    QString name() const;
+
+    QString guiString() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    virtual SearchRunner* newRunner() const;
 
 private Q_SLOTS:
-    void updateDirectory( const QString &directory ) const;
+    void updateDirectory( const QString &directory );
 
-    void updateFile( const QString &directory ) const;
+    void updateFile( const QString &directory );
 
 private:
-    void addDatabaseDirectory( const QString &path ) const;
+    void addDatabaseDirectory( const QString &path );
 
-    void updateDatabase() const;
+    void updateDatabase();
 
-    /** @todo: FIXME newRunner() is another virtual method that shouldn't be const */
-    mutable bool m_databaseLoaded;
-    mutable OsmDatabase m_database;
+    QStringList m_databaseFiles;
     QFileSystemWatcher m_watcher;
 };
 

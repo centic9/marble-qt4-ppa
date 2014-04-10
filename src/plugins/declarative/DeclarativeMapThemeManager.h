@@ -11,17 +11,16 @@
 #ifndef DECLARATIVE_MAPTHEMEMANAGER_H
 #define DECLARATIVE_MAPTHEMEMANAGER_H
 
-#include "MapTheme.h"
 #include "MapThemeManager.h"
 
-#include <QtDeclarative/QDeclarativeImageProvider>
+#if QT_VERSION <= 0x050000
+  #include <QDeclarativeImageProvider>
+  typedef QDeclarativeImageProvider QQuickImageProvider;
+#else
+  #include <QQuickImageProvider>
+#endif
 
-namespace Marble
-{
-namespace Declarative
-{
-
-class MapThemeImageProvider : public QDeclarativeImageProvider
+class MapThemeImageProvider : public QQuickImageProvider
 {
 public:
     MapThemeImageProvider();
@@ -46,25 +45,15 @@ public:
     /** Constructor. Map themes are loaded later on demand. */
     explicit MapThemeManager( QObject *parent = 0 );
 
-public Q_SLOTS:
     /**
       * A list of all installed map theme ids, each entry has the form
       * "planet/themeid/themeid.dgml", e.g. "earth/bluemarble/bluemarble.dgml"
       */
     QStringList mapThemeIds() const;
 
-    /**
-      * A list of all installed map themes. Each list item is an instance
-      * of a MapTheme. This list is useful to feed to qml views.
-      */
-    QList<QObject*> mapThemes();
-
 private:
     /** Marble map theme manager doing the real work */
     Marble::MapThemeManager m_mapThemeManager;
 };
-
-} // namespace Declarative
-} // namespace Marble
 
 #endif // DECLARATIVE_MAPTHEMEMANAGER_H

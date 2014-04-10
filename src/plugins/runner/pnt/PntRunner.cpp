@@ -6,13 +6,19 @@
 // the source code.
 //
 // Copyright 2011 Thibaut Gridel <tgridel@free.fr>
+// Copyright 2012 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 
 #include "PntRunner.h"
 
 #include "GeoDataDocument.h"
+#include "GeoDataLineString.h"
+#include "GeoDataPlacemark.h"
+#include "MarbleDebug.h"
+#include "MarbleGlobal.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
+#include <qmath.h>
+#include <QFile>
+#include <QFileInfo>
 
 namespace Marble
 {
@@ -21,17 +27,12 @@ namespace Marble
 const qreal INT2RAD = M_PI / 10800.0;
 
 PntRunner::PntRunner(QObject *parent) :
-    MarbleAbstractRunner(parent)
+    ParsingRunner(parent)
 {
 }
 
 PntRunner::~PntRunner()
 {
-}
-
-GeoDataFeature::GeoDataVisualCategory PntRunner::category() const
-{
-    return GeoDataFeature::Folder;
 }
 
 void PntRunner::parseFile( const QString &fileName, DocumentRole role = UnknownDocument )
@@ -43,6 +44,11 @@ void PntRunner::parseFile( const QString &fileName, DocumentRole role = UnknownD
     }
 
     QFile  file( fileName );
+    if ( !file.exists() ) {
+        qWarning( "File does not exist!" );
+        emit parsingFinished( 0 );
+        return;
+    }
 
     file.open( QIODevice::ReadOnly );
     QDataStream stream( &file );  // read the data serialized from the file
@@ -50,47 +56,153 @@ void PntRunner::parseFile( const QString &fileName, DocumentRole role = UnknownD
 
     GeoDataDocument *document = new GeoDataDocument();
     document->setDocumentRole( role );
-
-    short  header;
-    short  iLat;
-    short  iLon;
-
     GeoDataPlacemark  *placemark = 0;
-    placemark = new GeoDataPlacemark;
-    document->append( placemark );
-    GeoDataMultiGeometry *geom = new GeoDataMultiGeometry;
-    placemark->setGeometry( geom );
 
-    while( !stream.atEnd() ){
+    int count = 0;
+    bool error = false;
+    while( !stream.atEnd() || error ){
+        short  header = -1;
+        short  iLat = -5400 - 1;
+        short  iLon = -10800 - 1;
+
         stream >> header >> iLat >> iLon;
-        // Transforming Range of Coordinates to iLat [0,ARCMINUTE] , iLon [0,2 * ARCMINUTE]
 
-        if ( header > 5 ) {
+        // make sure iLat is within valid range
+        if ( !( -5400 <= iLat && iLat <= 5400 ) ) {
+            mDebug() << Q_FUNC_INFO << "invalid iLat =" << iLat << "(" << ( iLat * INT2RAD ) * RAD2DEG << ") in dataset" << count << "of file" << fileName;
+            error = true;
+        }
 
-            // qDebug(QString("header: %1 iLat: %2 iLon: %3").arg(header).arg(iLat).arg(iLon).toLatin1());
+        // make sure iLon is within valid range
+        if ( !( -10800 <= iLon && iLon <= 10800 ) ) {
+            mDebug() << Q_FUNC_INFO << "invalid iLon =" << iLon << "(" << ( iLon * INT2RAD ) * RAD2DEG << ") in dataset" << count << "of file" << fileName;
+            error = true;
+        }
 
-            // Find out whether the Polyline is a river or a closed polygon
-            if ( ( header >= 7000 && header < 8000 )
-                || ( header >= 9000 && header < 20000 ) ) {
-                GeoDataLineString *polyline = new GeoDataLineString;
-                geom->append( polyline );
-            }
-            else {
-                GeoDataLinearRing *polyline = new GeoDataLinearRing;
-                geom->append( polyline );
+        if ( header >= 1000 && document->size() > 0 ) {
+            GeoDataLineString *const polyline = static_cast<GeoDataLineString*>( placemark->geometry() );
+            if ( polyline->size() == 1 ) {
+                mDebug() << Q_FUNC_INFO << fileName << "contains single-point polygon at" << count << ". Aborting.";
+                error = true;
+                break;
             }
         }
-        GeoDataLineString *polyline = static_cast<GeoDataLineString*>(geom->child(geom->size()-1));
+
+        if ( header < 1 ) {
+            /* invalid header */
+            mDebug() << Q_FUNC_INFO << "invalid header:" << header << "in" << fileName << "at" << count;
+            error = true;
+            break;
+        }
+        else if ( header <= 5 ) {
+            /* header represents level of detail */
+            /* nothing to do */
+        }
+        else if ( header < 1000 ) {
+            /* invalid header */
+            mDebug() << Q_FUNC_INFO << "invalid header:" << header << "in" << fileName << "at" << count;
+            error = true;
+            break;
+        }
+        else if ( header < 2000 ) {
+            /* header represents start of coastline */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLinearRing );
+        }
+        else if ( header < 4000 ) {
+            /* header represents start of country border */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else if ( header < 5000 ) {
+            /* header represents start of internal political border */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else if ( header < 6000 ) {
+            /* header represents start of island */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLinearRing );
+        }
+        else if ( header < 7000 ) {
+            /* header represents start of lake */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLinearRing );
+        }
+        else if ( header < 8000 ) {
+            /* header represents start of river */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else if ( header < 9000 ) {
+            /* custom header represents start of glaciers, lakes or islands */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLinearRing );
+        }
+        else if ( header < 10000 ) {
+            /* custom header represents start of political borders */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else if ( header < 14000 ) {
+            /* invalid header */
+            mDebug() << Q_FUNC_INFO << "invalid header:" << header << "in" << fileName << "at" << count;
+            error = true;
+            break;
+        }
+        else if ( header < 15000 ) {
+            /* custom header represents start of political borders */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else if ( header < 19000 ) {
+            /* invalid header */
+            mDebug() << Q_FUNC_INFO << "invalid header:" << header << "in" << fileName << "at" << count;
+            error = true;
+            break;
+        }
+        else if ( header < 20000 ) {
+            /* custom header represents start of dateline */
+            placemark = new GeoDataPlacemark;
+            document->append( placemark );
+            placemark->setGeometry( new GeoDataLineString );
+        }
+        else {
+            /* invalid header */
+            mDebug() << Q_FUNC_INFO << "invalid header:" << header << "in" << fileName << "at" << count;
+            error = true;
+            break;
+        }
+
+        GeoDataLineString *polyline = static_cast<GeoDataLineString*>( placemark->geometry() );
+
+        // Transforming Range of Coordinates to iLat [0,ARCMINUTE] , iLon [0,2 * ARCMINUTE]
         polyline->append( GeoDataCoordinates( (qreal)(iLon) * INT2RAD, (qreal)(iLat) * INT2RAD,
-                                                  0.0, GeoDataCoordinates::Radian, 5 ) );
+                                              0.0, GeoDataCoordinates::Radian,
+                                              5 - qMin( 5, (int)header  ) ) ); // if 1 <= header <= 5, header contains level of detail
+                                                                           // else pick most sparse level of detail, which equals 0
+
+        ++count;
     }
 
     file.close();
-    if ( geom->size() ) {
-        emit parsingFinished( document );
-    } else {
+    if ( document->size() == 0 || error ) {
+        delete document;
+        document = 0;
         emit parsingFinished( 0 );
+        return;
     }
+    document->setFileName( fileName );
+    emit parsingFinished( document );
 }
 
 }

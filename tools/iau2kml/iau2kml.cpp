@@ -12,10 +12,10 @@
 
 // #include <zlib.h>
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDebug>
-#include <QtCore/QFile>
-#include <QtCore/QStringList>
+#include <QCoreApplication>
+#include <QDebug>
+#include <QFile>
+#include <QStringList>
 
 
 QString escapeXml( const QString &str )
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
             rawline = sourcestream.readLine();
 //            if ( !rawline.startsWith("\"E\"|\"m\"|\"" ) ) {
-            if ( !rawline.startsWith("\"V\"|\"V\"|\"" ) ) {
+            if ( !rawline.startsWith(QLatin1String( "\"V\"|\"V\"|\"" ) ) ) {
                 continue;
             }
             rawline = rawline.replace( "\"|", "|" );
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 
             // if ( roleString == "SF" ) continue;
 
-            QString marbleRoleString = 'o';
+            QString marbleRoleString = QLatin1String( "o" );
 
             if ( roleString == "AA" || roleString == "SF" ) marbleRoleString = "c";
             if (    roleString == "ME" || roleString == "OC" 
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
             if ( lon > 180.0 ) lon = lon - 360.0;
 
-            if ( rawline.startsWith("\"M\"|\"M\"|\"" ) || rawline.startsWith("\"V\"|\"V\"|\"" ) ) {
+            if ( rawline.startsWith(QLatin1String( "\"M\"|\"M\"|\"" ) ) || rawline.startsWith("\"V\"|\"V\"|\"" ) ) {
                 lon = -lon;
             }
 

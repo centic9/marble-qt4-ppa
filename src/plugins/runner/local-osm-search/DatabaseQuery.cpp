@@ -6,32 +6,35 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow  <bbeschow@cs.tu-berlin.de>
 //
 
 #include "DatabaseQuery.h"
 
-#include "MarbleMap.h"
+#include "GeoDataLatLonAltBox.h"
 #include "MarbleModel.h"
 #include "PositionTracking.h"
-#include "ViewportParams.h"
 
-#include <QtCore/QMap>
+#include <QMap>
 
 namespace Marble
 {
 
-DatabaseQuery::DatabaseQuery( MarbleModel* model, const QString &searchTerm ) :
+DatabaseQuery::DatabaseQuery( const MarbleModel* model, const QString &searchTerm, const GeoDataLatLonAltBox &preferred ) :
     m_queryType( BroadSearch ), m_resultFormat( AddressFormat ), m_searchTerm( searchTerm.trimmed() ),
     m_category( OsmPlacemark::UnknownCategory )
 {
     if ( model && model->positionTracking()->status() == PositionProviderStatusAvailable ) {
         m_position = model->positionTracking()->currentLocation();
         m_resultFormat = DistanceFormat;
+    } else if ( !preferred.isEmpty() ) {
+        m_position = preferred.center();
+        m_resultFormat = AddressFormat;
     } else {
         m_resultFormat = AddressFormat;
     }
 
-    QStringList terms = m_searchTerm.split( ",", QString::SkipEmptyParts );
+    QStringList terms = m_searchTerm.split(QLatin1Char(','), QString::SkipEmptyParts );
 
     QRegExp streetAndHouse( "^(.*)\\s+(\\d+\\D?)$" );
     if ( streetAndHouse.indexIn( terms.first() ) != -1 ) {
@@ -61,6 +64,8 @@ bool DatabaseQuery::isPointOfInterest( const QString &category )
 {
     static QMap<QString, OsmPlacemark::OsmCategory> pois;
     if ( pois.isEmpty() ) {
+        pois[QObject::tr( "pois").toLower()] = OsmPlacemark::UnknownCategory;
+        pois["pois"] = OsmPlacemark::UnknownCategory;
         pois[QObject::tr( "camping" ).toLower()] = OsmPlacemark::AccomodationCamping;
         pois["camping"] = OsmPlacemark::AccomodationCamping;
         pois[QObject::tr( "hostel" ).toLower()] = OsmPlacemark::AccomodationHostel;

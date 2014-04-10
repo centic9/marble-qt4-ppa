@@ -12,13 +12,13 @@
 #define APRSFILE_H
 
 #include "AprsSource.h"
-#include <QtCore/QString>
+#include <QString>
 
 namespace Marble {
 class AprsFile : public AprsSource
     {
       public:
-        AprsFile( const QString &fileName );
+        explicit AprsFile( const QString &fileName );
         ~AprsFile();
 
         QString    sourceName() const;

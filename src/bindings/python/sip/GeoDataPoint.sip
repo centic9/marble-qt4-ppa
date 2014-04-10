@@ -32,7 +32,6 @@ public:
                             GeoDataPoint (const Marble::GeoDataPoint& other);
                             GeoDataPoint (const Marble::GeoDataGeometry& other);
                             GeoDataPoint ();
-                            GeoDataPoint (qreal _lon, qreal _lat, qreal alt = 0, Marble::GeoDataPoint::Unit _unit = Marble::GeoDataPoint::Radian, int _detail = 0);
     typedef QVector<Marble::GeoDataPoint> Vector;
 
     virtual void            pack (QDataStream& stream) const;
@@ -42,7 +41,9 @@ public:
                             GeoDataPoint (const Marble::GeoDataCoordinates& other);
     ~GeoDataPoint ();
     virtual const char*     nodeType () const;
-    virtual Marble::GeoDataLatLonAltBox  latLonAltBox () const;
+                            GeoDataPoint (qreal lon, qreal lat, qreal alt = 0, Marble::GeoDataPoint::Unit _unit = Marble::GeoDataCoordinates::Radian);
+    void                    setCoordinates (const Marble::GeoDataCoordinates& coordinates);
+    const Marble::GeoDataCoordinates&  coordinates () const;
 };
 // GeoDataPoint
 

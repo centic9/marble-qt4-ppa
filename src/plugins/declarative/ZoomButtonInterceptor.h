@@ -11,15 +11,9 @@
 #ifndef MARBLE_DECLARATIVE_ZOOMBUTTONINTERCEPTOR_H
 #define MARBLE_DECLARATIVE_ZOOMBUTTONINTERCEPTOR_H
 
-#include <QtCore/QObject>
-
-namespace Marble
-{
+#include <QObject>
 
 class MarbleWidget;
-
-namespace Declarative
-{
 
 class ZoomButtonInterceptorPrivate;
 
@@ -28,7 +22,7 @@ class ZoomButtonInterceptor : public QObject
     Q_OBJECT
 
 public:
-    explicit ZoomButtonInterceptor( Marble::MarbleWidget* widget, QObject* parent );
+    explicit ZoomButtonInterceptor( MarbleWidget* widget, QObject* parent );
 
     ~ZoomButtonInterceptor();
 
@@ -38,8 +32,5 @@ protected:
 private:
     ZoomButtonInterceptorPrivate* const d;
 };
-
-}
-}
 
 #endif // MARBLE_DECLARATIVE_ZOOMBUTTONINTERCEPTOR_H

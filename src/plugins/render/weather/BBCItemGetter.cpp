@@ -15,8 +15,8 @@
 #include "MarbleDebug.h"
 
 // Qt
-#include <QtCore/QMutexLocker>
-#include <QtCore/QUrl>
+#include <QMutexLocker>
+#include <QUrl>
 
 using namespace Marble;
 
@@ -32,10 +32,8 @@ BBCItemGetter::~BBCItemGetter()
 }
 
 void BBCItemGetter::setSchedule( const GeoDataLatLonAltBox& box,
-                                 const MarbleModel *model,
                                  qint32 number )
 {
-    Q_UNUSED( model )
     m_scheduleMutex.lock();
     m_scheduledBox = box;
     m_scheduledNumber = number;
@@ -47,6 +45,18 @@ void BBCItemGetter::setStationList( const QList<BBCStation>& items )
 {
     m_items = items;
     ensureRunning();
+}
+
+BBCStation BBCItemGetter::station( const QString &id )
+{
+    QString const bbcIdTemplate = QString( "bbc%1" );
+    foreach( const BBCStation &station, m_items ) {
+        if ( bbcIdTemplate.arg( station.bbcId() ) == id ) {
+            return station;
+        }
+    }
+
+    return BBCStation();
 }
 
 bool BBCItemGetter::workAvailable()

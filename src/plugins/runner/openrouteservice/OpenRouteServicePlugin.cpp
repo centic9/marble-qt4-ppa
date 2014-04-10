@@ -16,29 +16,61 @@
 namespace Marble
 {
 
-OpenRouteServicePlugin::OpenRouteServicePlugin( QObject *parent ) : RunnerPlugin( parent )
+OpenRouteServicePlugin::OpenRouteServicePlugin( QObject *parent ) :
+    RoutingRunnerPlugin( parent )
 {
-    setCapabilities( Routing );
     setSupportedCelestialBodies( QStringList() << "earth" );
     setCanWorkOffline( false );
-    setName( tr( "OpenRouteService" ) );
-    setNameId( "openrouteservice" );
-    setDescription( tr( "Routing in Europe using openrouteservice.org" ) );
     setStatusMessage( tr ( "This service requires an Internet connection." ) );
-    setGuiString( tr( "OpenRouteService Routing" ) );
 }
 
-MarbleAbstractRunner* OpenRouteServicePlugin::newRunner() const
+QString OpenRouteServicePlugin::name() const
+{
+    return tr( "OpenRouteService Routing" );
+}
+
+QString OpenRouteServicePlugin::guiString() const
+{
+    return tr( "OpenRouteService" );
+}
+
+QString OpenRouteServicePlugin::nameId() const
+{
+    return "openrouteservice";
+}
+
+QString OpenRouteServicePlugin::version() const
+{
+    return "1.0";
+}
+
+QString OpenRouteServicePlugin::description() const
+{
+    return tr( "Routing in Europe using openrouteservice.org" );
+}
+
+QString OpenRouteServicePlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> OpenRouteServicePlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
+RoutingRunner *OpenRouteServicePlugin::newRunner() const
 {
     return new OpenRouteServiceRunner;
 }
 
-class OpenRouteServiceConfigWidget : public RunnerPlugin::ConfigWidget
+class OpenRouteServiceConfigWidget : public RoutingRunnerPlugin::ConfigWidget
 {
 public:
 
     OpenRouteServiceConfigWidget()
-        : RunnerPlugin::ConfigWidget()
+        : RoutingRunnerPlugin::ConfigWidget()
     {
         ui_configWidget = new Ui::OpenRouteServiceConfigWidget;
         ui_configWidget->setupUi( this );
@@ -80,7 +112,7 @@ private:
     Ui::OpenRouteServiceConfigWidget *ui_configWidget;
 };
 
-RunnerPlugin::ConfigWidget *OpenRouteServicePlugin::configWidget()
+RoutingRunnerPlugin::ConfigWidget *OpenRouteServicePlugin::configWidget()
 {
     return new OpenRouteServiceConfigWidget();
 }

@@ -14,25 +14,35 @@
 
 #include "MarbleDebug.h"
 #include "MarbleDirs.h"
-#include "GeoPainter.h"
 #include "ViewportParams.h"
 
-#include <QtCore/QRect>
-#include <QtGui/QColor>
-#include <QtGui/QPixmap>
-#include <QtGui/QPushButton>
-#include <QtSvg/QSvgRenderer>
+#include <QRect>
+#include <QColor>
+#include <QPainter>
+#include <QPixmap>
+#include <QPushButton>
+#include <QSvgRenderer>
 
 namespace Marble
 {
 
-CompassFloatItem::CompassFloatItem ( const QPointF &point, const QSizeF &size )
-    : AbstractFloatItem( point, size ),
+CompassFloatItem::CompassFloatItem()
+    : AbstractFloatItem( 0 ),
+      m_svgobj( 0 ),
+      m_polarity( 0 ),
+      m_themeIndex( 0 ),
+      m_configDialog( 0 ),
+      m_uiConfigWidget( 0 )
+{
+}
+
+CompassFloatItem::CompassFloatItem( const MarbleModel *marbleModel )
+    : AbstractFloatItem( marbleModel, QPointF( -1.0, 10.0 ), QSizeF( 75.0, 75.0 ) ),
       m_isInitialized( false ),
-      m_aboutDialog(0),
       m_svgobj( 0 ),
       m_compass(),
       m_polarity( 0 ),
+      m_themeIndex( 0 ),
       m_configDialog( 0 ),
       m_uiConfigWidget( 0 )
 {
@@ -63,40 +73,31 @@ QString CompassFloatItem::nameId() const
     return QString( "compass" );
 }
 
+QString CompassFloatItem::version() const
+{
+    return "1.0";
+}
+
 QString CompassFloatItem::description() const
 {
     return tr( "This is a float item that provides a compass." );
 }
 
+QString CompassFloatItem::copyrightYears() const
+{
+    return "2009, 2010";
+}
+
+QList<PluginAuthor> CompassFloatItem::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" )
+            << PluginAuthor( "Torsten Rahn", "tackat@kde.org" );
+}
+
 QIcon CompassFloatItem::icon() const
 {
     return QIcon(":/icons/compass.png");
-}
-
-QDialog* CompassFloatItem::aboutDialog()
-{
-    if ( !m_aboutDialog ) {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "Compass Plugin" );
-        m_aboutDialog->setVersion( "0.1" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2009, 2010 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        QList<Author> authors;
-        Author tackat, earthwings;
-        
-        earthwings.name = QString::fromUtf8( "Dennis Nienhüser" );
-        earthwings.task = tr( "Developer" );
-        earthwings.email = "earthwings@gentoo.org";
-        authors.append( earthwings );
-        
-        tackat.name = "Torsten Rahn";
-        tackat.task = tr( "Developer" );
-        tackat.email = "tackat@kde.org";
-        authors.append( tackat );
-        m_aboutDialog->setAuthors( authors );
-    }
-    return m_aboutDialog;
 }
 
 void CompassFloatItem::initialize()
@@ -127,24 +128,16 @@ void CompassFloatItem::changeViewport( ViewportParams *viewport )
 {
     // figure out the polarity ...
     if ( m_polarity != viewport->polarity() ) {
+        m_polarity = viewport->polarity();
         update();
     }
 }
 
-void CompassFloatItem::paintContent( GeoPainter *painter,
-                                     ViewportParams *viewport,
-                                     const QString& renderPos,
-                                     GeoSceneLayer * layer )
+void CompassFloatItem::paintContent( QPainter *painter )
 {
-    Q_UNUSED( layer )
-    Q_UNUSED( renderPos )
-
     painter->save();
 
-    painter->setRenderHint( QPainter::Antialiasing, true );
-
     QRectF compassRect( contentRect() );
-    m_polarity = viewport->polarity();
 
     QString dirstr = tr( "N" );
     if ( m_polarity == -1 )
@@ -172,8 +165,6 @@ void CompassFloatItem::paintContent( GeoPainter *painter,
     painter->setPen( Qt::NoPen );
     painter->drawPath( outlinepath );
 
-    painter->autoMapQuality();
-
     int compassLength = static_cast<int>( compassRect.height() ) - 5 - fontheight;
         
     QSize compassSize( compassLength, compassLength ); 
@@ -185,7 +176,6 @@ void CompassFloatItem::paintContent( GeoPainter *painter,
         QPainter mapPainter( &m_compass );
         mapPainter.setViewport( m_compass.rect() );
         m_svgobj->render( &mapPainter ); 
-        mapPainter.setViewport( QRect( QPoint( 0, 0 ), viewport->size() ) );
     }
     painter->drawPixmap( QPoint( static_cast<int>( compassRect.width() - compassLength ) / 2, fontheight + 5 ), m_compass );
 
@@ -199,13 +189,13 @@ QDialog *CompassFloatItem::configDialog()
         m_uiConfigWidget = new Ui::CompassConfigWidget;
         m_uiConfigWidget->setupUi( m_configDialog );
         readSettings();
-        connect( m_uiConfigWidget->m_buttonBox, SIGNAL( accepted() ),
-                SLOT( writeSettings() ) );
-        connect( m_uiConfigWidget->m_buttonBox, SIGNAL( rejected() ),
-                SLOT( readSettings() ) );
+        connect( m_uiConfigWidget->m_buttonBox, SIGNAL(accepted()),
+                SLOT(writeSettings()) );
+        connect( m_uiConfigWidget->m_buttonBox, SIGNAL(rejected()),
+                SLOT(readSettings()) );
         QPushButton *applyButton = m_uiConfigWidget->m_buttonBox->button( QDialogButtonBox::Apply );
-        connect( applyButton, SIGNAL( clicked() ),
-                 this,        SLOT( writeSettings() ) );
+        connect( applyButton, SIGNAL(clicked()),
+                 this,        SLOT(writeSettings()) );
     }
 
     return m_configDialog;
@@ -213,24 +203,30 @@ QDialog *CompassFloatItem::configDialog()
 
 QHash<QString,QVariant> CompassFloatItem::settings() const
 {
-    return m_settings;
+    QHash<QString, QVariant> result = AbstractFloatItem::settings();
+
+    result.insert( "theme", m_themeIndex );
+
+    return result;
 }
 
-void CompassFloatItem::setSettings( QHash<QString,QVariant> settings )
+void CompassFloatItem::setSettings( const QHash<QString,QVariant> &settings )
 {
-    m_settings = settings;
+    AbstractFloatItem::setSettings( settings );
+
+    m_themeIndex = settings.value( "theme", 0 ).toInt();
+
     readSettings();
 }
 
 void CompassFloatItem::readSettings()
 {
-    int index = m_settings.value( "theme", 0 ).toInt();
-    if ( m_uiConfigWidget && index >= 0 && index < m_uiConfigWidget->m_themeList->count() ) {
-        m_uiConfigWidget->m_themeList->setCurrentRow( index );
+    if ( m_uiConfigWidget && m_themeIndex >= 0 && m_themeIndex < m_uiConfigWidget->m_themeList->count() ) {
+        m_uiConfigWidget->m_themeList->setCurrentRow( m_themeIndex );
     }
 
     QString theme = ":/compass.svg";
-    switch( index ) {
+    switch( m_themeIndex ) {
     case 1:
         theme = ":/compass-arrows.svg";
         break;
@@ -243,15 +239,14 @@ void CompassFloatItem::readSettings()
     }
 
     delete m_svgobj;
-    CompassFloatItem * me = const_cast<CompassFloatItem*>( this );
-    m_svgobj = new QSvgRenderer( theme, me );
+    m_svgobj = new QSvgRenderer( theme, this );
     m_compass = QPixmap();
 }
 
 void CompassFloatItem::writeSettings()
 {
     if ( m_uiConfigWidget ) {
-        m_settings["theme"] = m_uiConfigWidget->m_themeList->currentRow();
+        m_themeIndex = m_uiConfigWidget->m_themeList->currentRow();
     }
     readSettings();
     update();

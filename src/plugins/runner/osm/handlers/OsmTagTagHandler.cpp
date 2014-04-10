@@ -68,12 +68,13 @@ GeoNode* OsmTagTagHandler::parse( GeoParser& parser ) const
         return 0;
     }
 
-    if ( parentItem.represents( osmTag_way ) )
+    // Ways or relations can represent closed areas such as buildings
+    if ( parentItem.represents( osmTag_way ) || parentItem.represents( osmTag_relation ) )
     {
         Q_ASSERT( placemark );
 
-        //Convert area ways to polygons
-        if( !dynamic_cast<GeoDataPolygon*>( geometry ) && OsmGlobals::tagNeedArea( key + "=" + value ) )
+        //Convert area ways or relations to polygons
+        if( !dynamic_cast<GeoDataPolygon*>( geometry ) && OsmGlobals::tagNeedArea( key + '=' + value ) )
         {
             placemark = convertWayToPolygon( doc, placemark, geometry );
         }
@@ -85,7 +86,7 @@ GeoNode* OsmTagTagHandler::parse( GeoParser& parser ) const
     }
     else if ( parentItem.represents( osmTag_node ) ) //POI
     {
-        GeoDataFeature::GeoDataVisualCategory poiCategory = OsmGlobals::visualCategories().value( key + "=" + value );
+        GeoDataFeature::GeoDataVisualCategory poiCategory = GeoDataFeature::OsmVisualCategory( key + '=' + value );
 
         //Placemark is an accepted POI
         if ( poiCategory )
@@ -101,7 +102,7 @@ GeoNode* OsmTagTagHandler::parse( GeoParser& parser ) const
     {
         GeoDataFeature::GeoDataVisualCategory category;
 
-        if ( ( category = OsmGlobals::visualCategories().value( key + "=" + value ) ) )
+        if ( ( category = GeoDataFeature::OsmVisualCategory( key + '=' + value ) ) )
         {
             if( placemark->visualCategory() != GeoDataFeature::Default 
              && placemark->visualCategory() != GeoDataFeature::Building )
@@ -120,7 +121,7 @@ GeoNode* OsmTagTagHandler::parse( GeoParser& parser ) const
                 placemark->setVisible( true );
             }
         }
-        else if ( ( category = OsmGlobals::visualCategories().value( key ) ) )
+        else if ( ( category = GeoDataFeature::OsmVisualCategory( key ) ) )
         {
             if( placemark->visualCategory() != GeoDataFeature::Default )
             {
@@ -151,7 +152,7 @@ GeoDataPlacemark* OsmTagTagHandler::createPOI( GeoDataDocument* doc, GeoDataGeom
     placemark->setGeometry( new GeoDataPoint( *point ) );
     point->setParent( placemark );
     placemark->setVisible( false );
-    placemark->setPopularityIndex( 1 );
+    placemark->setZoomLevel( 18 );
     doc->append( placemark );
     return placemark;
 }

@@ -8,29 +8,9 @@
 // Copyright 2011       Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
-#include <QtTest/QtTest>
 #include "MercatorProjection.h"
 #include "ViewportParams.h"
-
-namespace QTest
-{
-
-bool qCompare(qreal val1, qreal val2, qreal epsilon, const char *actual, const char *expected, const char *file, int line)
-{
-    return ( qAbs( val1 - val2 ) < epsilon )
-        ? compare_helper( true, "COMPARE()", file, line )
-        : compare_helper( false, "Compared qreals are not the same", toString( val1 ), toString( val2 ), actual, expected, file, line );
-}
-
-}
-
-#define QFUZZYCOMPARE(actual, expected, epsilon) \
-do {\
-    if (!QTest::qCompare(actual, expected, epsilon, #actual, #expected, __FILE__, __LINE__))\
-        return;\
-} while (0)
-
-#define addRow() QTest::newRow( QString("line %1").arg( __LINE__ ).toAscii().data() )
+#include "TestUtils.h"
 
 namespace Marble
 {
@@ -45,10 +25,15 @@ class MercatorProjectionTest : public QObject
 
     void screenCoordinatesOfCenter_data();
     void screenCoordinatesOfCenter();
+
+    void setInvalidRadius();
 };
 
 void MercatorProjectionTest::screenCoordinatesValidLat_data()
 {
+    ViewportParams mercator;
+    mercator.setProjection( Mercator );
+
     QTest::addColumn<qreal>( "lon" );
     QTest::addColumn<qreal>( "lat" );
     QTest::addColumn<bool>( "validLat" );
@@ -58,23 +43,23 @@ void MercatorProjectionTest::screenCoordinatesValidLat_data()
     addRow() << -180.0 << 0.0 << true;
     addRow() <<  180.0 << 0.0 << true;
 
-    addRow() << 0.0 << MercatorProjection().minValidLat() * RAD2DEG << true;
-    addRow() << 0.0 << MercatorProjection().maxValidLat() * RAD2DEG << true;
+    addRow() << 0.0 << mercator.currentProjection()->minValidLat() * RAD2DEG << true;
+    addRow() << 0.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG << true;
 
-    addRow() << 0.0 << MercatorProjection().minValidLat() * RAD2DEG - 0.0001 << false;
-    addRow() << 0.0 << MercatorProjection().maxValidLat() * RAD2DEG + 0.0001 << false;
+    addRow() << 0.0 << mercator.currentProjection()->minValidLat() * RAD2DEG - 0.0001 << false;
+    addRow() << 0.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG + 0.0001 << false;
 
-    addRow() << -180.0 << MercatorProjection().minValidLat() * RAD2DEG << true;
-    addRow() <<  180.0 << MercatorProjection().minValidLat() * RAD2DEG << true;
+    addRow() << -180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG << true;
+    addRow() <<  180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG << true;
 
-    addRow() << -180.0 << MercatorProjection().maxValidLat() * RAD2DEG << true;
-    addRow() <<  180.0 << MercatorProjection().maxValidLat() * RAD2DEG << true;
+    addRow() << -180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG << true;
+    addRow() <<  180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG << true;
 
-    addRow() << -180.0 << MercatorProjection().minValidLat() * RAD2DEG - 0.0001 << false;
-    addRow() <<  180.0 << MercatorProjection().minValidLat() * RAD2DEG - 0.0001 << false;
+    addRow() << -180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG - 0.0001 << false;
+    addRow() <<  180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG - 0.0001 << false;
 
-    addRow() << -180.0 << MercatorProjection().maxValidLat() * RAD2DEG + 0.0001 << false;
-    addRow() <<  180.0 << MercatorProjection().maxValidLat() * RAD2DEG + 0.0001 << false;
+    addRow() << -180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG + 0.0001 << false;
+    addRow() <<  180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG + 0.0001 << false;
 }
 
 void MercatorProjectionTest::screenCoordinatesValidLat()
@@ -111,7 +96,7 @@ void MercatorProjectionTest::screenCoordinatesValidLat()
         QVERIFY( !globeHidesPoint );
     }
 
-    QVERIFY( viewport.currentProjection()->repeatX() );
+    QVERIFY( viewport.currentProjection()->repeatableX() );
 
     {
         qreal x[2];
@@ -129,6 +114,9 @@ void MercatorProjectionTest::screenCoordinatesValidLat()
 
 void MercatorProjectionTest::screenCoordinatesOfCenter_data()
 {
+    ViewportParams mercator;
+    mercator.setProjection( Mercator );
+
     QTest::addColumn<qreal>( "lon" );
     QTest::addColumn<qreal>( "lat" );
 
@@ -143,14 +131,14 @@ void MercatorProjectionTest::screenCoordinatesOfCenter_data()
     addRow() << -540.0 << 0.0;
     addRow() <<  540.0 << 0.0;
 
-    addRow() << 0.0 << MercatorProjection().minValidLat() * RAD2DEG;
-    addRow() << 0.0 << MercatorProjection().maxValidLat() * RAD2DEG;
+    addRow() << 0.0 << mercator.currentProjection()->minValidLat() * RAD2DEG;
+    addRow() << 0.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG;
 
-    addRow() << -180.0 << MercatorProjection().minValidLat() * RAD2DEG;
-    addRow() << -180.0 << MercatorProjection().maxValidLat() * RAD2DEG;
+    addRow() << -180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG;
+    addRow() << -180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG;
 
-    addRow() <<  180.0 << MercatorProjection().minValidLat() * RAD2DEG;
-    addRow() <<  180.0 << MercatorProjection().maxValidLat() * RAD2DEG;
+    addRow() <<  180.0 << mercator.currentProjection()->minValidLat() * RAD2DEG;
+    addRow() <<  180.0 << mercator.currentProjection()->maxValidLat() * RAD2DEG;
 
     // FIXME: the following tests should succeed
 #if 0
@@ -199,7 +187,7 @@ void MercatorProjectionTest::screenCoordinatesOfCenter()
         QCOMPARE( y, 1.0 );
     }
 
-    QVERIFY( viewport.currentProjection()->repeatX() );
+    QVERIFY( viewport.currentProjection()->repeatableX() );
 
     {
         qreal x[2];
@@ -215,6 +203,15 @@ void MercatorProjectionTest::screenCoordinatesOfCenter()
         QCOMPARE( x[0], 1.0 );
         QCOMPARE( y, 1.0 );
     }
+}
+
+void MercatorProjectionTest::setInvalidRadius()
+{
+    ViewportParams viewport;
+    viewport.setProjection( Mercator );
+    viewport.setRadius( 0 );
+    qreal lon, lat;
+    viewport.geoCoordinates( 23, 42, lon, lat );
 }
 
 }

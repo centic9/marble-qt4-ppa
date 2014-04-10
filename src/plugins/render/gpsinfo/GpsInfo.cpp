@@ -23,12 +23,19 @@
 namespace Marble
 {
 
-GpsInfo::GpsInfo( const QPointF &point, const QSizeF &size )
-    : AbstractFloatItem( point, size ),
+GpsInfo::GpsInfo()
+    : AbstractFloatItem( 0 ),
+      m_locale( 0 ),
+      m_widgetItem( 0 )
+{
+}
+
+GpsInfo::GpsInfo( const MarbleModel *marbleModel )
+    : AbstractFloatItem( marbleModel, QPointF( 10.5, 110 ), QSizeF( 135.0, 80.0 ) ),
+      m_locale( 0 ),
       m_widgetItem( 0 )
 {
     setVisible( false );
-    setCacheMode( NoCache );
 }
 
 GpsInfo::~GpsInfo()
@@ -55,14 +62,30 @@ QString GpsInfo::nameId() const
     return QString( "GpsInfo" );
 }
 
+QString GpsInfo::version() const
+{
+    return "1.0";
+}
+
 QString GpsInfo::description() const
 {
     return tr("This is a float item that provides Gps Information.");
 }
 
+QString GpsInfo::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> GpsInfo::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Thibaut Gridel", "tgridel@free.fr" );
+}
+
 QIcon GpsInfo::icon () const
 {
-    return QIcon();
+    return QIcon(":/icons/gps.png");
 }
 
 void GpsInfo::initialize ()
@@ -73,7 +96,6 @@ void GpsInfo::initialize ()
         m_widget.setupUi( widget );
         m_widgetItem = new WidgetGraphicsItem( this );
         m_widgetItem->setWidget( widget );
-        m_widgetItem->setCacheMode( MarbleGraphicsItem::DeviceCoordinateCache );
 
         MarbleGraphicsGridLayout *layout = new MarbleGraphicsGridLayout( 1, 1 );
         layout->addItem( m_widgetItem, 0, 0 );
@@ -81,8 +103,8 @@ void GpsInfo::initialize ()
         setPadding( 0 );
 
         m_locale = MarbleGlobal::getInstance()->locale();
-        connect( marbleModel()->positionTracking(), SIGNAL( gpsLocation(GeoDataCoordinates,qreal) ),
-                this, SLOT( updateLocation(GeoDataCoordinates,qreal) ) );
+        connect( marbleModel()->positionTracking(), SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
+                this, SLOT(updateLocation(GeoDataCoordinates,qreal)) );
     }
 }
 
@@ -102,7 +124,7 @@ void GpsInfo::updateLocation( GeoDataCoordinates coordinates, qreal)
     QString distanceString;
 
     switch ( m_locale->measurementSystem() ) {
-    case QLocale::ImperialSystem:
+    case MarbleLocale::ImperialSystem:
         //miles per hour
         speedString = tr("mph");
         speed *= HOUR2SEC * METER2KM * KM2MI;
@@ -111,11 +133,18 @@ void GpsInfo::updateLocation( GeoDataCoordinates coordinates, qreal)
         precision *= M2FT;
         break;
 
-    case QLocale::MetricSystem:
+    case MarbleLocale::MetricSystem:
         //kilometers per hour
         speedString = tr("km/h");
         speed *= HOUR2SEC * METER2KM;
         distanceString = tr("m");
+        break;
+
+    case MarbleLocale::NauticalSystem:
+        // nm per hour (knots)
+        speedString = tr("kt");
+        speed *= HOUR2SEC * METER2KM * KM2NM;
+        distanceString = tr("nm");
         break;
     }
 
@@ -137,7 +166,7 @@ void GpsInfo::updateLocation( GeoDataCoordinates coordinates, qreal)
         m_widgetItem->setSize( QSizeF( minimumWidth, size().height() ) );
     }
 
-    m_widgetItem->update();
+    update();
     emit repaintNeeded();
 }
 

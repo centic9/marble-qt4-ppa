@@ -28,16 +28,11 @@ class AbstractDataPlugin : Marble::RenderPlugin /Abstract/
 %End
 
 public:
-                            AbstractDataPlugin ();
     QStringList             backendTypes () const;
     QString                 renderPolicy () const;
     QStringList             renderPosition () const;
-    virtual void            initialize ()=0;
-    bool                    isInitialized () const;
     Marble::AbstractDataPluginModel*  model () const;
     void                    setModel (Marble::AbstractDataPluginModel* model);
-    void                    setNameId (const QString& name);
-    QString                 nameId () const;
     quint32                 numberOfItems () const;
     void                    setNumberOfItems (quint32 number);
     QList<Marble::AbstractDataPluginItem*>  whichItemAt (const QPoint& curpos);
@@ -46,8 +41,19 @@ public:
 signals:
     void                    changedNumberOfItems (quint32 number);
 public:
-//ig    PluginManager*          pluginManager () const;
+                            AbstractDataPlugin (const Marble::MarbleModel* marbleModel);
+    bool                    isInitialized () const;
+// FIXME
+//ig    void                    setDelegate (QDeclarativeComponent* delegate, QGraphicsItem* parent);
+    void                    setFavoriteItemsOnly (bool favoriteOnly);
+    bool                    isFavoriteItemsOnly () const;
+    QObject*                favoritesModel ();
+signals:
+    void                    favoriteItemsOnlyChanged ();
+    void                    favoritesModelChanged ();
+public:
     virtual Marble::RenderPlugin::RenderType  renderType () const;
+    void                    handleViewportChange (const Marble::ViewportParams* viewport);
 };
 // AbstractDataPlugin
 

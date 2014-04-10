@@ -6,68 +6,106 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 #include "LocalOsmSearchPlugin.h"
 #include "LocalOsmSearchRunner.h"
 #include "MarbleDirs.h"
 
-#include <QtCore/QDirIterator>
+#include <QDirIterator>
 
 namespace Marble
 {
 
 LocalOsmSearchPlugin::LocalOsmSearchPlugin( QObject *parent ) :
-    RunnerPlugin( parent ),
-    m_databaseLoaded( false )
+    SearchRunnerPlugin( parent ),
+    m_databaseFiles()
 {
-    setCapabilities( Search );
     setSupportedCelestialBodies( QStringList() << "earth" );
     setCanWorkOffline( true );
-    setName( tr( "Local OSM Search" ) );
-    setNameId( "local-osm-search" );
-    setDescription( tr( "Searches for addresses and points of interest in offline maps." ) );
-    setGuiString( tr( "Offline OpenStreetMap Search")  );
 
-    m_watcher.addPath( MarbleDirs::localPath() + "/maps/earth/placemarks/" );
-    connect( &m_watcher, SIGNAL( directoryChanged( QString ) ), this, SLOT( updateDirectory( QString ) ) );
-    connect( &m_watcher, SIGNAL( fileChanged( QString ) ), this, SLOT( updateFile( QString ) ) );
-}
-
-MarbleAbstractRunner* LocalOsmSearchPlugin::newRunner() const
-{
-    if ( !m_databaseLoaded ) {
-        m_databaseLoaded = true;
-        updateDatabase();
+    QString const path = MarbleDirs::localPath() + "/maps/earth/placemarks/";
+    QFileInfo pathInfo( path );
+    if ( !pathInfo.exists() ) {
+        QDir("/").mkpath( pathInfo.absolutePath() );
+        pathInfo.refresh();
     }
-    return new LocalOsmSearchRunner( &m_database );
+    if ( pathInfo.exists() ) {
+        m_watcher.addPath( path );
+    }
+    connect( &m_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(updateDirectory(QString)) );
+    connect( &m_watcher, SIGNAL(fileChanged(QString)), this, SLOT(updateFile(QString)) );
+
+    updateDatabase();
 }
 
-void LocalOsmSearchPlugin::addDatabaseDirectory( const QString &path ) const
+QString LocalOsmSearchPlugin::name() const
+{
+    return tr( "Local OSM Search" );
+}
+
+QString LocalOsmSearchPlugin::guiString() const
+{
+    return tr( "Offline OpenStreetMap Search" );
+}
+
+QString LocalOsmSearchPlugin::nameId() const
+{
+    return "local-osm-search";
+}
+
+QString LocalOsmSearchPlugin::version() const
+{
+    return "1.0";
+}
+
+QString LocalOsmSearchPlugin::description() const
+{
+    return tr( "Searches for addresses and points of interest in offline maps." );
+}
+
+QString LocalOsmSearchPlugin::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> LocalOsmSearchPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
+SearchRunner* LocalOsmSearchPlugin::newRunner() const
+{
+    return new LocalOsmSearchRunner( m_databaseFiles );
+}
+
+void LocalOsmSearchPlugin::addDatabaseDirectory( const QString &path )
 {
     QDir directory( path );
     QStringList const nameFilters = QStringList() << "*.sqlite";
     QStringList const files( directory.entryList( nameFilters, QDir::Files ) );
     foreach( const QString &file, files ) {
-        m_database.addFile( directory.filePath( file ) );
+        m_databaseFiles << directory.filePath( file );
     }
 }
 
-void LocalOsmSearchPlugin::updateDirectory( const QString & ) const
+void LocalOsmSearchPlugin::updateDirectory( const QString & )
 {
-    m_databaseLoaded = false;
+    updateDatabase();
 }
 
-void LocalOsmSearchPlugin::updateFile( const QString &file ) const
+void LocalOsmSearchPlugin::updateFile( const QString &file )
 {
-    if ( file.endsWith( ".sqlite" ) ) {
-        m_databaseLoaded = false;
+    if ( file.endsWith( QLatin1String( ".sqlite" ) ) ) {
+        updateDatabase();
     }
 }
 
-void LocalOsmSearchPlugin::updateDatabase() const
+void LocalOsmSearchPlugin::updateDatabase()
 {
-    m_database.clear();
+    m_databaseFiles.clear();
     QStringList const baseDirs = QStringList() << MarbleDirs::systemPath() << MarbleDirs::localPath();
     foreach ( const QString &baseDir, baseDirs ) {
         QString base = baseDir + "/maps/earth/placemarks/";

@@ -6,27 +6,28 @@
 // the source code.
 //
 // Copyright 2011 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
+//
 
 #include "LocalOsmSearchRunner.h"
+#include "DatabaseQuery.h"
 
-#include "OsmDatabase.h"
-#include "MarbleAbstractRunner.h"
 #include "MarbleDebug.h"
 #include "GeoDataDocument.h"
 #include "GeoDataPlacemark.h"
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtCore/QUrl>
+#include <QString>
+#include <QVector>
+#include <QUrl>
 
 namespace Marble
 {
 
 QMap<OsmPlacemark::OsmCategory, GeoDataFeature::GeoDataVisualCategory> LocalOsmSearchRunner::m_categoryMap;
 
-LocalOsmSearchRunner::LocalOsmSearchRunner( OsmDatabase *database, QObject *parent ) :
-    MarbleAbstractRunner( parent ),
-    m_database( database )
+LocalOsmSearchRunner::LocalOsmSearchRunner( const QStringList &databaseFiles, QObject *parent ) :
+    SearchRunner( parent ),
+    m_database( databaseFiles )
 {
     if ( m_categoryMap.isEmpty() ) {
         m_categoryMap[OsmPlacemark::UnknownCategory] = GeoDataFeature::OsmSite;
@@ -94,31 +95,27 @@ LocalOsmSearchRunner::~LocalOsmSearchRunner()
 {
 }
 
-GeoDataFeature::GeoDataVisualCategory LocalOsmSearchRunner::category() const
-{
-    return GeoDataFeature::Coordinate;
-}
 
-
-void LocalOsmSearchRunner::search( const QString &searchTerm )
+void LocalOsmSearchRunner::search( const QString &searchTerm, const GeoDataLatLonAltBox &preferred )
 {
-    QVector<OsmPlacemark> placemarks = m_database->find( model(), searchTerm );
+    const DatabaseQuery userQuery( model(), searchTerm, preferred );
+
+    QVector<OsmPlacemark> placemarks = m_database.find( userQuery );
 
     QVector<GeoDataPlacemark*> result;
     foreach( const OsmPlacemark &placemark, placemarks ) {
         GeoDataPlacemark* hit = new GeoDataPlacemark;
         hit->setName( placemark.name() );
         if ( placemark.category() == OsmPlacemark::Address && !placemark.houseNumber().isEmpty() ) {
-            hit->setName( hit->name() + " " + placemark.houseNumber() );
+            hit->setName( hit->name() + ' ' + placemark.houseNumber() );
         }
         if ( !placemark.additionalInformation().isEmpty() ) {
-            hit->setName( hit->name() + " (" + placemark.additionalInformation() + ")" );
+            hit->setName( hit->name() + '(' + placemark.additionalInformation() + ')' );
         }
         if ( placemark.category() != OsmPlacemark::UnknownCategory ) {
             hit->setVisualCategory( m_categoryMap[placemark.category()] );
         }
-        GeoDataCoordinates coordinate( placemark.longitude(), placemark.latitude(), 0.0, GeoDataCoordinates::Degree );
-        hit->setCoordinate( coordinate );
+        hit->setGeometry( new GeoDataPoint( placemark.longitude(), placemark.latitude(), 0.0, GeoDataCoordinates::Degree ) );
         result << hit;
     }
 

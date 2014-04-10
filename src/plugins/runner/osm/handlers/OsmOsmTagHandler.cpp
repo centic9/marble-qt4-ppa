@@ -13,7 +13,7 @@
 #include "GeoParser.h"
 #include "GeoDataPoint.h"
 #include "GeoDataDocument.h"
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "GeoDataParser.h"
 #include "GeoDataLineStyle.h"
 #include "GeoDataStyleMap.h"
@@ -31,6 +31,8 @@ static GeoTagHandlerRegistrar osmOsmTagHandler( GeoParser::QualifiedName( osmTag
 
 GeoNode* OsmOsmTagHandler::parse( GeoParser& parser ) const
 {
+    // Osm Node http://wiki.openstreetmap.org/wiki/Data_Primitives#Node
+
     GeoDataDocument* doc = geoDataDoc( parser );
 
     GeoDataPolyStyle backgroundPolyStyle;

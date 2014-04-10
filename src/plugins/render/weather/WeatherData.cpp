@@ -12,17 +12,17 @@
 #include "WeatherData.h"
 
 // Marble
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleDirs.h"
 #include "MarbleDebug.h"
 
 // Qt
-#include <QtCore/QAtomicInt>
-#include <QtCore/QDate>
-#include <QtCore/QDateTime>
-#include <QtCore/QHash>
-#include <QtCore/QLocale>
-#include <QtGui/QImage>
+#include <QAtomicInt>
+#include <QDate>
+#include <QDateTime>
+#include <QHash>
+#include <QLocale>
+#include <QImage>
 
 #include <cmath>
 
@@ -420,6 +420,13 @@ QImage WeatherData::icon() const
         WeatherDataPrivate::s_icons.insert( condition(), icon );
         return icon;
     }
+}
+
+QString WeatherData::iconSource() const
+{
+    QString const invalid = MarbleDirs::path( "weather/weather-none-available.png" );
+    QString const icon = WeatherDataPrivate::s_iconPath.value( condition() );
+    return icon == invalid ? "" : icon;
 }
 
 WeatherData::WindDirection WeatherData::windDirection() const

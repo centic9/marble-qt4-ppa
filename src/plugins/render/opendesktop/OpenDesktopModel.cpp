@@ -5,26 +5,27 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010 Utku Aydın <utkuaydin34@gmail.com>
+// Copyright 2010 Utku Aydın        <utkuaydin34@gmail.com>
+// Copyright 2012 Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
 //
 
 
 #include "OpenDesktopModel.h"
 #include "OpenDesktopItem.h"
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleModel.h"
 #include "GeoDataCoordinates.h"
-#include <QtCore/QString>
-#include <QtCore/QUrl>
-#include <QtScript/QScriptEngine>
-#include <QtScript/QScriptValue>
-#include <QtScript/QScriptValueIterator>
+#include <QString>
+#include <QUrl>
+#include <QScriptEngine>
+#include <QScriptValue>
+#include <QScriptValueIterator>
  
 using namespace Marble;
  
  
-OpenDesktopModel::OpenDesktopModel( const PluginManager *pluginManager, QObject *parent )
-    : AbstractDataPluginModel( "opendesktop", pluginManager, parent )
+OpenDesktopModel::OpenDesktopModel( const MarbleModel *marbleModel, QObject *parent )
+    : AbstractDataPluginModel( "opendesktop", marbleModel, parent )
 {
     // Nothing to do...
 }
@@ -33,12 +34,17 @@ OpenDesktopModel::~OpenDesktopModel()
 {
     // Nothing to do...
 }
+
+void OpenDesktopModel::setMarbleWidget(MarbleWidget *widget)
+{
+    m_marbleWidget = widget;
+}
  
-void OpenDesktopModel::getAdditionalItems( const GeoDataLatLonAltBox& box, const MarbleModel *model, qint32 number )
+void OpenDesktopModel::getAdditionalItems( const GeoDataLatLonAltBox& box, qint32 number )
 {
     Q_UNUSED( number )
   
-    if( model->planetId() != "earth" )
+    if( marbleModel()->planetId() != "earth" )
         return;
     
     GeoDataCoordinates coords = box.center();
@@ -55,13 +61,14 @@ void OpenDesktopModel::parseFile( const QByteArray& file )
 {
     QScriptValue data;
     QScriptEngine engine;
-    data = engine.evaluate( "(" + QString(file) + ")" );
+    data = engine.evaluate( '(' + QString(file) + ')' );
     
     // Parse if any result exists
     if ( data.property( "data" ).isArray() )
     {  
     QScriptValueIterator iterator( data.property( "data" ) );
         // Add items to the list
+        QList<AbstractDataPluginItem*> items;
         while ( iterator.hasNext() )
         {
             iterator.next();
@@ -81,15 +88,19 @@ void OpenDesktopModel::parseFile( const QByteArray& file )
                 // If it does not exists, create it
                 GeoDataCoordinates coor(longitude * DEG2RAD, latitude * DEG2RAD);
                 OpenDesktopItem *item = new OpenDesktopItem( this );
+                item->setMarbleWidget(m_marbleWidget);
                 item->setId( personid );
                 item->setCoordinate( coor );
                 item->setTarget( "earth" );
                 item->setFullName( QString( "%1 %2" ).arg( firstName ).arg( lastName ) );
                 item->setLocation( QString( "%1, %2" ).arg( city ).arg( country ) );
                 item->setRole( !role.isEmpty() ? role : QString( "nothing" ) );
-                downloadItemData( avatarUrl, "avatar", item );
+                downloadItem( avatarUrl, "avatar", item );
+                items << item;
             }
         }
+
+        addItemsToList( items );
     }
 }
  

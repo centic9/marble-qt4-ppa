@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 #ifndef MARBLE_OSMDATABASE_H
@@ -13,39 +14,30 @@
 
 #include "OsmPlacemark.h"
 
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-#include <QtSql/QSqlDatabase>
+#include <QString>
+#include <QStringList>
 
 namespace Marble {
 
-class MarbleModel;
+class DatabaseQuery;
 class GeoDataCoordinates;
 
 class OsmDatabase
 {
 public:
-    OsmDatabase();
+    explicit OsmDatabase( const QStringList &databaseFiles );
 
     // Methods for read access
 
-    /** Open the given file. Previously opened files remain valid. */
-    void addFile( const QString &file );
-
-    /** Remove all files */
-    void clear();
-
     /** Search the database for matching regions and placemarks */
-    QVector<OsmPlacemark> find( MarbleModel* model, const QString &searchTerm );
+    QVector<OsmPlacemark> find( const DatabaseQuery &userQuery );
 
 private:
     QString wildcardQuery( const QString &term ) const;
 
     void unique( QVector<OsmPlacemark> &placemarks ) const;
 
-    QStringList m_databases;
-
-    QSqlDatabase m_database;
+    QStringList m_databaseFiles;
 
     QString formatDistance( const GeoDataCoordinates &a, const GeoDataCoordinates &b ) const;
 

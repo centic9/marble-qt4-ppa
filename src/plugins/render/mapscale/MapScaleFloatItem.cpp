@@ -5,36 +5,36 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2008 Torsten Rahn <tackat@kde.org>
+// Copyright 2008 Torsten Rahn      <tackat@kde.org>
+// Copyright 2012 Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
 //
 
 #include "MapScaleFloatItem.h"
 
-#include <QtCore/QRect>
-#include <QtGui/QPixmap>
-#include <QtGui/QApplication>
-#include <QtGui/QPushButton>
-#include <QtGui/QMenu>
-#include <QtGui/QToolTip>
+#include <QDebug>
+#include <QRect>
+#include <QPixmap>
+#include <QApplication>
+#include <QPainter>
+#include <QPushButton>
+#include <QMenu>
+#include <QToolTip>
 
 #include "ui_MapScaleConfigWidget.h"
 #include "MarbleDebug.h"
-#include "global.h"
-#include "Projections/AbstractProjection.h"
+#include "MarbleGlobal.h"
+#include "projections/AbstractProjection.h"
 #include "MarbleLocale.h"
 #include "MarbleModel.h"
-#include "GeoPainter.h"
 #include "ViewportParams.h"
 
 namespace Marble
 {
 
-MapScaleFloatItem::MapScaleFloatItem( const QPointF &point, const QSizeF &size )
-    : AbstractFloatItem( point, size ),
-      m_aboutDialog(0),
+MapScaleFloatItem::MapScaleFloatItem( const MarbleModel *marbleModel )
+    : AbstractFloatItem( marbleModel, QPointF( 10.5, -10.5 ), QSizeF( 0.0, 40.0 ) ),
       m_configDialog(0),
       m_radius(0),
-      m_invScale(0.0),
       m_target(QString()),
       m_leftBarMargin(0),
       m_rightBarMargin(0),
@@ -45,14 +45,20 @@ MapScaleFloatItem::MapScaleFloatItem( const QPointF &point, const QSizeF &size )
       m_bestDivisor(0),
       m_pixelInterval(0),
       m_valueInterval(0),
-      m_unit(tr("km")),
       m_scaleInitDone( false ),
       m_showRatioScale( false ),
-      m_contextMenu( 0 )
+      m_contextMenu( 0 ),
+      m_minimized(false),
+      m_widthScaleFactor(2)
 {
 #ifdef Q_WS_MAEMO_5
         setPosition( QPointF( 220.0, 10.5 ) );
 #endif // Q_WS_MAEMO_5
+
+    m_minimizeAction = new QAction(tr("Minimize"), this);
+    m_minimizeAction->setCheckable(true);
+    m_minimizeAction->setChecked(m_minimized);
+    connect(m_minimizeAction, SIGNAL(triggered()), this, SLOT(toggleMinimized()));
 }
 
 MapScaleFloatItem::~MapScaleFloatItem()
@@ -79,9 +85,28 @@ QString MapScaleFloatItem::nameId() const
     return QString( "scalebar" );
 }
 
+QString MapScaleFloatItem::version() const
+{
+    return "1.1";
+}
+
 QString MapScaleFloatItem::description() const
 {
-    return tr("This is a float item that provides a map scale.");}
+    return tr("This is a float item that provides a map scale.");
+}
+
+QString MapScaleFloatItem::copyrightYears() const
+{
+    return "2008, 2010, 2012";
+}
+
+QList<PluginAuthor> MapScaleFloatItem::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Torsten Rahn", "tackat@kde.org", tr( "Original Developer" ) )
+            << PluginAuthor( "Khanh-Nhan Nguyen", "khanh.nhan@wpi.edu" )
+            << PluginAuthor( "Illya Kovalevskyy", "illya.kovalevskyy@gmail.com" );
+}
 
 QIcon MapScaleFloatItem::icon () const
 {
@@ -98,51 +123,23 @@ bool MapScaleFloatItem::isInitialized () const
     return true;
 }
 
-QDialog *MapScaleFloatItem::aboutDialog()
-{
-    if ( !m_aboutDialog ) {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "Scale Bar Plugin" );
-        m_aboutDialog->setVersion( "0.2" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2009, 2010 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        QList<Author> authors;
-        Author rahn;
-        rahn.name = "Torsten Rahn";
-        rahn.task = tr( "Original Developer" );
-        rahn.email = "tackat@kde.org";
-        authors.append( rahn );
-        Author nhan;
-        nhan.name = "Khanh-Nhan Nguyen";
-        nhan.task = tr( "Developer" );
-        nhan.email = "khanh.nhan@wpi.edu";
-        authors.append( nhan );
-        m_aboutDialog->setAuthors( authors );
-        //TODO: add data text
-//        m_aboutDialog->setPixmap( m_icon.pixmap( 62, 53 ) );
-    }
-    return m_aboutDialog;
-}
-
-
 void MapScaleFloatItem::changeViewport( ViewportParams *viewport )
 {
     int viewportWidth = viewport->width();
 
     QString target = marbleModel()->planetId();
 
-    if ( !(    m_radius == viewport->radius() 
+    if ( !(    m_radius == viewport->radius()
             && viewportWidth == m_viewportWidth
             && m_target == target
             && m_scaleInitDone ) )
     {
         int fontHeight     = QFontMetrics( font() ).ascent();
         if (m_showRatioScale) {
-            setContentSize( QSizeF( viewport->width() / 2,
+            setContentSize( QSizeF( viewport->width() / m_widthScaleFactor,
                                     fontHeight + 3 + m_scaleBarHeight + fontHeight + 7 ) );
         } else {
-            setContentSize( QSizeF( viewport->width() / 2,
+            setContentSize( QSizeF( viewport->width() / m_widthScaleFactor,
                                     fontHeight + 3 + m_scaleBarHeight ) );
         }
 
@@ -154,43 +151,49 @@ void MapScaleFloatItem::changeViewport( ViewportParams *viewport )
         m_radius = viewport->radius();
         m_scaleInitDone = true;
 
+        m_pixel2Length = marbleModel()->planetRadius() /
+                             (qreal)(viewport->radius());
+
+        if ( viewport->currentProjection()->surfaceType() == AbstractProjection::Cylindrical )
+        {
+            qreal centerLatitude = viewport->viewLatLonAltBox().center().latitude();
+            // For flat maps we calculate the length of the 90 deg section of the
+            // central latitude circle. For flat maps this distance matches
+            // the pixel based radius propertyy.
+            m_pixel2Length *= M_PI / 2 * cos( centerLatitude );
+        }
+
+        m_scaleBarDistance = (qreal)(m_scaleBarWidth) * m_pixel2Length;
+
+        const MarbleLocale::MeasurementSystem measurementSystem =
+                MarbleGlobal::getInstance()->locale()->measurementSystem();
+
+        if ( measurementSystem != MarbleLocale::MetricSystem ) {
+            m_scaleBarDistance *= KM2MI;
+        } else if (measurementSystem == MarbleLocale::NauticalSystem) {
+            m_scaleBarDistance *= KM2NM;
+        }
+
+        calcScaleBar();
+
         update();
     }
 }
 
-void MapScaleFloatItem::paintContent( GeoPainter *painter,
-                                      ViewportParams *viewport,
-                                      const QString& renderPos,
-                                      GeoSceneLayer * layer )
+void MapScaleFloatItem::paintContent( QPainter *painter )
 {
-
-    Q_UNUSED( layer )
-    Q_UNUSED( renderPos )
-
     painter->save();
 
     painter->setRenderHint( QPainter::Antialiasing, true );
 
     int fontHeight     = QFontMetrics( font() ).ascent();
 
-    qreal pixel2Length = marbleModel()->planetRadius() /
-                         (qreal)(viewport->radius());
-
-    if ( viewport->currentProjection()->surfaceType() == AbstractProjection::Cylindrical )
-    {
-        qreal centerLatitude = viewport->viewLatLonAltBox().center().latitude();
-        // For flat maps we calculate the length of the 90 deg section of the
-        // central latitude circle. For flat maps this distance matches
-        // the pixel based radius propertyy.
-        pixel2Length *= M_PI / 2 * cos( centerLatitude );
-    }
-
     //calculate scale ratio
     qreal displayMMPerPixel = 1.0 * painter->device()->widthMM() / painter->device()->width();
-    qreal ratio = pixel2Length / (displayMMPerPixel * MM2M);
+    qreal ratio = m_pixel2Length / (displayMMPerPixel * MM2M);
 
     //round ratio to 3 most significant digits, assume that ratio >= 1, otherwise it may display "1 : 0"
-    //i made this assumption because as the primary use case we dont need to zoom in that much
+    //i made this assumption because as the primary use case we do not need to zoom in that much
     qreal power = 1;
     int iRatio = (int)(ratio + 0.5); //round ratio to the nearest integer
     while (iRatio >= 1000) {
@@ -200,16 +203,6 @@ void MapScaleFloatItem::paintContent( GeoPainter *painter,
     iRatio *= power;
     m_ratioString.setNum(iRatio);
     m_ratioString = m_ratioString = "1 : " + m_ratioString;
-
-    m_scaleBarDistance = (qreal)(m_scaleBarWidth) * pixel2Length;
-
-    const QLocale::MeasurementSystem measurementSystem = MarbleGlobal::getInstance()->locale()->measurementSystem();
-
-    if ( measurementSystem == QLocale::ImperialSystem ) {
-        m_scaleBarDistance *= KM2MI;
-    }
-
-    calcScaleBar();
 
     painter->setPen(   QColor( Qt::darkGray ) );
     painter->setBrush( QColor( Qt::darkGray ) );
@@ -222,63 +215,85 @@ void MapScaleFloatItem::paintContent( GeoPainter *painter,
     painter->drawRect( m_leftBarMargin, fontHeight + 3,
                        m_bestDivisor * m_pixelInterval, m_scaleBarHeight );
 
+    painter->setPen(   QColor( Oxygen::aluminumGray4 ) );
+    painter->drawLine( m_leftBarMargin + 1, fontHeight + 2 + m_scaleBarHeight,
+                       m_leftBarMargin + m_bestDivisor * m_pixelInterval - 1, fontHeight + 2 + m_scaleBarHeight );
+    painter->setPen(   QColor( Qt::black ) );
+
     painter->setBrush( QColor( Qt::black ) );
 
     QString  intervalStr;
     int      lastStringEnds     = 0;
     int      currentStringBegin = 0;
- 
+
     for ( int j = 0; j <= m_bestDivisor; j += 2 ) {
-        if ( j < m_bestDivisor )
+        if ( j < m_bestDivisor ) {
             painter->drawRect( m_leftBarMargin + j * m_pixelInterval,
                                fontHeight + 3, m_pixelInterval - 1,
                                m_scaleBarHeight );
 
-            QLocale::MeasurementSystem distanceUnit;
-            distanceUnit = MarbleGlobal::getInstance()->locale()->measurementSystem();
+	    painter->setPen(   QColor( Oxygen::aluminumGray5 ) );
+	    painter->drawLine( m_leftBarMargin + j * m_pixelInterval + 1, fontHeight + 4,
+			       m_leftBarMargin + (j + 1) * m_pixelInterval - 1, fontHeight + 4 );
+	    painter->setPen(   QColor( Qt::black ) );
+        }
 
-            switch ( distanceUnit ) {
-            case QLocale::MetricSystem:
-                if ( m_bestDivisor * m_valueInterval > 10000 ) {
-                    m_unit = tr("km");
-                    intervalStr.setNum( j * m_valueInterval / 1000 );
-                }
-                else {
-                    m_unit = tr("m");
-                    intervalStr.setNum( j * m_valueInterval );
-                }
-                break;
+        MarbleLocale::MeasurementSystem distanceUnit;
+        distanceUnit = MarbleGlobal::getInstance()->locale()->measurementSystem();
 
-            case QLocale::ImperialSystem:
-                m_unit = tr("mi");
-                intervalStr.setNum( j * m_valueInterval / 1000 );                
-                
-                if ( m_bestDivisor * m_valueInterval > 3800 ) {
-                    intervalStr.setNum( j * m_valueInterval / 1000 );
-                }
-                else {
-                    intervalStr.setNum( qreal(j * m_valueInterval ) / 1000.0, 'f', 2 );
-                }
-                break;
+        QString unit = tr("km");
+        switch ( distanceUnit ) {
+        case MarbleLocale::MetricSystem:
+            if ( m_bestDivisor * m_valueInterval > 10000 ) {
+                unit = tr("km");
+                intervalStr.setNum( j * m_valueInterval / 1000 );
             }
+            else {
+                unit = tr("m");
+                intervalStr.setNum( j * m_valueInterval );
+            }
+            break;
+        case MarbleLocale::ImperialSystem:
+            unit = tr("mi");
+            intervalStr.setNum( j * m_valueInterval / 1000 );
+
+            if ( m_bestDivisor * m_valueInterval > 3800 ) {
+                intervalStr.setNum( j * m_valueInterval / 1000 );
+            }
+            else {
+                intervalStr.setNum( qreal(j * m_valueInterval ) / 1000.0, 'f', 2 );
+            }
+            break;
+        case MarbleLocale::NauticalSystem:
+            unit = tr("nm");
+            intervalStr.setNum( j * m_valueInterval / 1000 );
+
+            if ( m_bestDivisor * m_valueInterval > 3800 ) {
+                intervalStr.setNum( j * m_valueInterval / 1000 );
+            }
+            else {
+                intervalStr.setNum( qreal(j * m_valueInterval ) / 1000.0, 'f', 2 );
+            }
+            break;
+        }
 
         painter->setFont( font() );
 
         if ( j == 0 ) {
-            painter->drawText( 0, fontHeight, "0 " + m_unit );
-            lastStringEnds = QFontMetrics( font() ).width( "0 " + m_unit );
+            painter->drawText( 0, fontHeight, "0 " + unit );
+            lastStringEnds = QFontMetrics( font() ).width( "0 " + unit );
             continue;
         }
 
         if( j == m_bestDivisor ) {
-            currentStringBegin = ( j * m_pixelInterval 
+            currentStringBegin = ( j * m_pixelInterval
                                    - QFontMetrics( font() ).boundingRect( intervalStr ).width() );
         }
         else {
-            currentStringBegin = ( j * m_pixelInterval 
+            currentStringBegin = ( j * m_pixelInterval
                                    - QFontMetrics( font() ).width( intervalStr ) / 2 );
         }
-        
+
         if ( lastStringEnds < currentStringBegin ) {
             painter->drawText( currentStringBegin, fontHeight, intervalStr );
             lastStringEnds = currentStringBegin + QFontMetrics( font() ).width( intervalStr );
@@ -295,7 +310,7 @@ void MapScaleFloatItem::calcScaleBar()
 {
     qreal  magnitude = 1;
 
-    // First we calculate the exact length of the whole area that is possibly 
+    // First we calculate the exact length of the whole area that is possibly
     // available to the scalebar in kilometers
     int  magValue = (int)( m_scaleBarDistance );
 
@@ -303,7 +318,7 @@ void MapScaleFloatItem::calcScaleBar()
     // and store them in magValue.
     while ( magValue >= 100 ) {
         magValue  /= 10;
-        magnitude *= 10; 
+        magnitude *= 10;
     }
 
     m_bestDivisor = 4;
@@ -311,7 +326,7 @@ void MapScaleFloatItem::calcScaleBar()
 
     for ( int i = 0; i < magValue; i++ ) {
         // We try to find the lowest divisor between 4 and 8 that
-        // divides magValue without remainder. 
+        // divides magValue without remainder.
         for ( int j = 4; j < 9; j++ ) {
             if ( ( magValue - i ) % j == 0 ) {
                 // We store the very first result we find and store
@@ -320,7 +335,7 @@ void MapScaleFloatItem::calcScaleBar()
                 bestMagValue  = magValue - i;
 
                 // Stop all for loops and end search
-                i = magValue; 
+                i = magValue;
                 j = 9;
             }
         }
@@ -342,16 +357,17 @@ QDialog *MapScaleFloatItem::configDialog()
         m_configDialog = new QDialog();
         ui_configWidget = new Ui::MapScaleConfigWidget;
         ui_configWidget->setupUi( m_configDialog );
-    
+
         readSettings();
 
-        connect( ui_configWidget->m_buttonBox, SIGNAL( accepted() ),
-                                            SLOT( writeSettings() ) );
-        connect( ui_configWidget->m_buttonBox, SIGNAL( rejected() ),
-                                            SLOT( readSettings() ) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(accepted()),
+                                            SLOT(writeSettings()) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(rejected()),
+                                            SLOT(readSettings()) );
+
         QPushButton *applyButton = ui_configWidget->m_buttonBox->button( QDialogButtonBox::Apply );
-        connect( applyButton, SIGNAL( clicked()) ,
-                this,        SLOT( writeSettings() ) );
+        connect( applyButton, SIGNAL(clicked()) ,
+                this,        SLOT(writeSettings()) );
     }
     return m_configDialog;
 }
@@ -369,9 +385,11 @@ void MapScaleFloatItem::contextMenuEvent( QWidget *w, QContextMenuEvent *e )
         }
 
         QAction *toggleAction = m_contextMenu->addAction( tr("&Ratio Scale"), this,
-                                                SLOT( toggleRatioScaleVisibility() ) );
+                                                SLOT(toggleRatioScaleVisibility()) );
         toggleAction->setCheckable( true );
         toggleAction->setChecked( m_showRatioScale );
+
+        m_contextMenu->addAction(m_minimizeAction);
     }
 
     Q_ASSERT( m_contextMenu );
@@ -384,16 +402,17 @@ void MapScaleFloatItem::toolTipEvent( QHelpEvent *e )
 }
 
 void MapScaleFloatItem::readSettings()
-{    
+{
     if ( !m_configDialog )
         return;
-    
+
     if ( m_showRatioScale ) {
         ui_configWidget->m_showRatioScaleCheckBox->setCheckState( Qt::Checked );
-    }
-    else {
+    } else {
         ui_configWidget->m_showRatioScaleCheckBox->setCheckState( Qt::Unchecked );
     }
+
+    ui_configWidget->m_minimizeCheckBox->setChecked(m_minimized);
 }
 
 void MapScaleFloatItem::writeSettings()
@@ -404,6 +423,10 @@ void MapScaleFloatItem::writeSettings()
         m_showRatioScale = false;
     }
 
+    if (m_minimized != ui_configWidget->m_minimizeCheckBox->isChecked()) {
+        toggleMinimized();
+    }
+
     emit settingsChanged( nameId() );
 }
 
@@ -412,6 +435,21 @@ void MapScaleFloatItem::toggleRatioScaleVisibility()
     m_showRatioScale = !m_showRatioScale;
     readSettings();
     emit settingsChanged( nameId() );
+}
+
+void MapScaleFloatItem::toggleMinimized()
+{
+    m_minimized = !m_minimized;
+    ui_configWidget->m_minimizeCheckBox->setChecked(m_minimized);
+    m_minimizeAction->setChecked(m_minimized);
+    readSettings();
+    emit settingsChanged( nameId() );
+
+    if (m_minimized == true) {
+        m_widthScaleFactor = 4;
+    } else {
+        m_widthScaleFactor = 2;
+    }
 }
 
 }

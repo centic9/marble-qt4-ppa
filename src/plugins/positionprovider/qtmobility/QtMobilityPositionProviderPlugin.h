@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2011      Daniel Marth <danielmarth@gmx.at>
+// Copyright 2012        Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 #ifndef QT_MOBILITY_POSITION_PROVIDER_PLUGIN_H
@@ -21,6 +22,7 @@ class QtMobilityPositionProviderPluginPrivate;
 class QtMobilityPositionProviderPlugin: public PositionProviderPlugin
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.QtMobilityPositionProviderPlugin" )
     Q_INTERFACES( Marble::PositionProviderPluginInterface )
 
 public:
@@ -31,12 +33,16 @@ public:
     virtual QString name() const;
     virtual QString nameId() const;
     virtual QString guiString() const;
+    virtual QString version() const;
     virtual QString description() const;
+    virtual QString copyrightYears() const;
+    virtual QList<PluginAuthor> pluginAuthors() const;
     virtual QIcon icon() const;
     virtual void initialize();
     virtual bool isInitialized() const;
     virtual qreal speed() const;
     virtual qreal direction() const;
+    virtual QDateTime timestamp() const;
 
     // Implementing PositionProviderPlugin
     virtual PositionProviderPlugin * newInstance() const;

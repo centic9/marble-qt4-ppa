@@ -14,10 +14,8 @@
 
 #include "AbstractDataPluginItem.h"
 
-#include <QtCore/QDate>
-#include <QtGui/QPixmap>
-
-class QFont;
+#include <QDate>
+#include <QFont>
 
 namespace Marble
 {
@@ -27,7 +25,7 @@ class EarthquakeItem : public AbstractDataPluginItem
     Q_OBJECT
 
 public:
-    EarthquakeItem( QObject *parent );
+    explicit EarthquakeItem( QObject *parent );
 
     ~EarthquakeItem();
 
@@ -35,11 +33,10 @@ public:
     QString itemType() const;
 
     // Returns true if the item is paintable
-    bool initialized();
+    bool initialized() const;
 
     // Here the item gets painted
-    void paint( GeoPainter *painter, ViewportParams *viewport,
-                const QString& renderPos, GeoSceneLayer * layer = 0 );
+    void paint( QPainter *painter );
 
     bool operator<( const AbstractDataPluginItem *other ) const;
 
@@ -66,9 +63,7 @@ private:
 
     QDateTime m_dateTime;
 
-    static QFont s_font;
-
-    QPixmap m_seismograph;
+    static const QFont s_font;
 };
 
 }

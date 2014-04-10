@@ -10,12 +10,14 @@
 // Copyright 2007      Tim Sutton   <tim@linfiniti.com>
 //
 
-#include <QtGui/QtGui> //needed because this is a gui test
-#include <QtTest/QtTest>
-#include <QtCore/QtCore>
-#include <QtCore/QTime>
+#include <QApplication>
 #include "MarbleDirs.h"
 #include "MarbleWidget.h"
+
+#include <QtGui> //needed because this is a gui test
+#include <QtCore>
+#include <QTime>
+#include <QTest>
 
 namespace Marble
 {
@@ -47,7 +49,7 @@ void MarbleWidgetSpeedTest::cleanupTestCase()
 void MarbleWidgetSpeedTest::timeTest()
 {
     m_marbleWidget->setMapThemeId( "plain/plain.dgml" );
-    m_marbleWidget->zoomView( 1500 );
+    m_marbleWidget->setZoom( 1500 );
 //    m_marbleWidget->resize( 800, 600 );
 
     QTime t;

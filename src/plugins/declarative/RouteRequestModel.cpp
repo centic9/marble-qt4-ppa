@@ -10,29 +10,25 @@
 
 #include "RouteRequestModel.h"
 
+#include "routing/RoutingManager.h"
 #include "routing/RouteRequest.h"
+#include "MarbleDeclarativeWidget.h"
+#include "MarbleModel.h"
+#include "Routing.h"
 
-namespace Marble
+RouteRequestModel::RouteRequestModel( QObject *parent ) :
+    QAbstractListModel( parent ),
+    m_request( 0 ),
+    m_routing( 0 )
 {
-namespace Declarative
-{
-
-RouteRequestModel::RouteRequestModel( Marble::RouteRequest* request, QObject *parent ) :
-    QAbstractListModel( parent ), m_request( request )
-{
-    if ( m_request ) {
-        connect( m_request, SIGNAL( positionChanged( int, GeoDataCoordinates ) ),
-                 this, SLOT( updateData( int ) ) );
-        connect( m_request, SIGNAL( positionAdded( int ) ),
-                 this, SLOT( updateAfterAddition( int ) ) );
-        connect( m_request, SIGNAL( positionRemoved( int) ),
-                 this, SLOT( updateAfterRemoval( int ) ) );
-    }
-
-    QHash<int,QByteArray> roles = roleNames();
+    QHash<int,QByteArray> roles;
     roles[LongitudeRole] = "longitude";
     roles[LatitudeRole] = "latitude";
+#if QT_VERSION < 0x050000
     setRoleNames( roles );
+#else
+    m_roleNames = roles;
+#endif
 }
 
 RouteRequestModel::~RouteRequestModel()
@@ -49,6 +45,13 @@ int RouteRequestModel::rowCount ( const QModelIndex &parent ) const
     return 0;
 }
 
+#if QT_VERSION >= 0x050000
+QHash<int, QByteArray> RouteRequestModel::roleNames() const
+{
+    return m_roleNames;
+}
+#endif
+
 QVariant RouteRequestModel::headerData ( int section, Qt::Orientation orientation, int role ) const
 {
     if ( orientation == Qt::Horizontal && role == Qt::DisplayRole && section == 0 ) {
@@ -63,12 +66,43 @@ QVariant RouteRequestModel::data ( const QModelIndex &index, int role ) const
     if ( index.isValid() && m_request && index.row() >= 0 && index.row() < m_request->size() ) {
         switch ( role ) {
         case Qt::DisplayRole: return m_request->name( index.row() );
-        case LongitudeRole: return m_request->at( index.row() ).longitude( GeoDataCoordinates::Degree );
-        case LatitudeRole: return m_request->at( index.row() ).latitude( GeoDataCoordinates::Degree );
+        case LongitudeRole: return m_request->at( index.row() ).longitude( Marble::GeoDataCoordinates::Degree );
+        case LatitudeRole: return m_request->at( index.row() ).latitude( Marble::GeoDataCoordinates::Degree );
         }
     }
 
     return QVariant();
+}
+
+Routing *RouteRequestModel::routing()
+{
+    return m_routing;
+}
+
+void RouteRequestModel::setRouting( Routing *routing )
+{
+    if ( routing != m_routing ) {
+        m_routing = routing;
+        updateMap();
+        connect( m_routing, SIGNAL(mapChanged()), this, SLOT(updateMap()) );
+        emit routingChanged();
+    }
+}
+
+void RouteRequestModel::updateMap()
+{
+    if ( m_routing && m_routing->map() ) {
+        m_request = m_routing->map()->model()->routingManager()->routeRequest();
+
+        connect( m_request, SIGNAL(positionChanged(int,GeoDataCoordinates)),
+                 this, SLOT(updateData(int)) );
+        connect( m_request, SIGNAL(positionAdded(int)),
+                 this, SLOT(updateAfterAddition(int)) );
+        connect( m_request, SIGNAL(positionRemoved(int)),
+                 this, SLOT(updateAfterRemoval(int)) );
+
+        emit layoutChanged();
+    }
 }
 
 void RouteRequestModel::updateData( int idx )
@@ -94,11 +128,8 @@ void RouteRequestModel::updateAfterAddition( int idx )
 void RouteRequestModel::setPosition ( int index, qreal longitude, qreal latitude )
 {
     if ( index >= 0 && index < m_request->size() ) {
-        m_request->setPosition( index, GeoDataCoordinates( longitude, latitude, 0.0, GeoDataCoordinates::Degree ) );
+        m_request->setPosition( index, Marble::GeoDataCoordinates( longitude, latitude, 0.0, Marble::GeoDataCoordinates::Degree ) );
     }
-}
-
-}
 }
 
 #include "RouteRequestModel.moc"

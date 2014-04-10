@@ -1,11 +1,13 @@
 PROJECT( PntPlugin )
 
 INCLUDE_DIRECTORIES(
- ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/runner/pnt
- ${CMAKE_BINARY_DIR}/src/plugins/runner/pnt
+ ${CMAKE_CURRENT_SOURCE_DIR}
+ ${CMAKE_CURRENT_BINARY_DIR}
  ${QT_INCLUDE_DIR}
 )
-INCLUDE(${QT_USE_FILE})
+if( QT4_FOUND )
+  INCLUDE(${QT_USE_FILE})
+endif()
 
 set( pnt_SRCS PntPlugin.cpp PntRunner.cpp )
 

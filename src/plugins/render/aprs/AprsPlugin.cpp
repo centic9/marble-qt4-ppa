@@ -10,15 +10,15 @@
 
 #include "AprsPlugin.h"
 
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleDebug.h"
 
-#include <QtGui/QColor>
-#include <QtGui/QPixmap>
-#include <QtCore/QTimer>
-#include <QtGui/QAction>
-#include <QtCore/QMutexLocker>
-#include <QtNetwork/QTcpSocket>
+#include <QColor>
+#include <QPixmap>
+#include <QTimer>
+#include <QAction>
+#include <QMutexLocker>
+#include <QTcpSocket>
 
 #include "MarbleDirs.h"
 #include "MarbleWidget.h"
@@ -28,36 +28,60 @@
 #include "GeoDataLatLonAltBox.h"
 #include "ViewportParams.h"
 #include "AprsGatherer.h"
-#include "qextserialport.h"
 #include "AprsTCPIP.h"
-#include "AprsTTY.h"
 #include "AprsFile.h"
+
+#include <aprsconfig.h>
+
+#ifdef HAVE_QEXTSERIALPORT
+#include "AprsTTY.h"
+#endif
 
 using namespace Marble;
 /* TRANSLATOR Marble::AprsPlugin */
 
 AprsPlugin::AprsPlugin()
-    : m_mutex( new QMutex ),
+    : RenderPlugin( 0 ),
+      m_mutex( 0 ),
+      m_configDialog( 0 ),
+      ui_configWidget( 0 )
+{
+}
+
+AprsPlugin::AprsPlugin( const MarbleModel *marbleModel )
+    : RenderPlugin( marbleModel ),
+      m_mutex( new QMutex ),
       m_initialized( false ),
       m_tcpipGatherer( 0 ),
       m_ttyGatherer( 0 ),
       m_fileGatherer( 0 ),
       m_action( 0 ),
-      m_aboutDialog( 0 ),
+      m_useInternet( true ),
+      m_useTty( false ),
+      m_useFile( false ),
+      m_aprsHost( "rotate.aprs.net" ),
+      m_aprsPort( 10253 ),
+      m_tncTty( "/dev/ttyUSB0" ),
+      m_aprsFile(),
+      m_dumpTcpIp( false ),
+      m_dumpTty( false ),
+      m_dumpFile( false ),
+      m_fadeTime( 10 ),
+      m_hideTime( 45 ),
       m_configDialog( 0 ),
       ui_configWidget( 0 )
 {
-    setEnabled( false );
-    setVisible( true );
+    setEnabled( true );
+    setVisible( false );
     
     setSettings( QHash<QString,QVariant>() );
 
-    connect( this, SIGNAL( visibilityChanged( QString, bool ) ),
-             this, SLOT( updateVisibility( QString, bool ) ) );
+    connect( this, SIGNAL(visibilityChanged(bool,QString)),
+             this, SLOT(updateVisibility(bool)) );
 
     m_action = new QAction( this );
-    connect( m_action,    SIGNAL( toggled( bool ) ),
-	     this,        SLOT( setVisible( bool ) ) );
+    connect( m_action,    SIGNAL(toggled(bool)),
+	     this,        SLOT(setVisible(bool)) );
 
 }
 
@@ -80,9 +104,8 @@ AprsPlugin::~AprsPlugin()
     delete m_mutex;
 }
 
-void AprsPlugin::updateVisibility( QString nameId, bool visible )
+void AprsPlugin::updateVisibility( bool visible )
 {
-    Q_UNUSED( nameId );
     if ( visible )
         restartGatherers();
     else
@@ -91,7 +114,7 @@ void AprsPlugin::updateVisibility( QString nameId, bool visible )
 
 RenderPlugin::RenderType AprsPlugin::renderType() const
 {
-    return Online;
+    return OnlineRenderType;
 }
 
 QStringList AprsPlugin::backendTypes() const
@@ -124,38 +147,30 @@ QString AprsPlugin::nameId() const
     return QString( "aprs-plugin" );
 }
 
+QString AprsPlugin::version() const
+{
+    return "1.0";
+}
+
 QString AprsPlugin::description() const
 {
     return tr( "This plugin displays APRS data gleaned from the Internet.  APRS is an Amateur Radio protocol for broadcasting location and other information." );
 }
 
-QIcon AprsPlugin::icon () const
+QString AprsPlugin::copyrightYears() const
 {
-    return QIcon();
+    return "2009, 2010";
 }
 
-QDialog* AprsPlugin::aboutDialog()
+QList<PluginAuthor> AprsPlugin::pluginAuthors() const
 {
-    if ( !m_aboutDialog )
-    {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "APRS Plugin" );
-        m_aboutDialog->setVersion( "0.1" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2009, 2010 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        QList<Author> authors;
-        Author hardaker;
-        
-        hardaker.name = QString::fromUtf8( "Wes Hardaker" );
-        hardaker.task = tr( "Developer" );
-        hardaker.email = "hardaker@users.sourceforge.net";
-        authors.append( hardaker );
-        m_aboutDialog->setAuthors( authors );
-        
-        m_aboutDialog->setLicense( PluginAboutDialog::License_LGPL_V2 );
-    }
-    return m_aboutDialog;
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Wes Hardaker", "hardaker@users.sourceforge.net" );
+}
+
+QIcon AprsPlugin::icon () const
+{
+    return QIcon(":/icons/aprs.png");
 }
 
 void AprsPlugin::stopGatherers()
@@ -165,8 +180,10 @@ void AprsPlugin::stopGatherers()
     if ( m_tcpipGatherer )
         m_tcpipGatherer->shutDown();
 
+#ifdef HAVE_QEXTSERIALPORT
     if ( m_ttyGatherer )
         m_ttyGatherer->shutDown();
+#endif
     
     if ( m_fileGatherer )
         m_fileGatherer->shutDown();
@@ -176,9 +193,11 @@ void AprsPlugin::stopGatherers()
         if ( m_tcpipGatherer->wait(2000) )
             delete m_tcpipGatherer;
 
+#ifdef HAVE_QEXTSERIALPORT
     if ( m_ttyGatherer )
         if ( m_ttyGatherer->wait(2000) )
             delete m_ttyGatherer;
+#endif
     
     if ( m_fileGatherer )
         if ( m_fileGatherer->wait(2000) )
@@ -192,42 +211,40 @@ void AprsPlugin::stopGatherers()
 void AprsPlugin::restartGatherers()
 {
     stopGatherers();
-    
-    if ( m_settings.value( "useInternet" ).toBool() ) {
 
+    if ( m_useInternet ) {
         m_tcpipGatherer =
-            new AprsGatherer( new AprsTCPIP( m_settings.value( "APRSHost" ).toString(),
-                                             m_settings.value( "APRSPort" ).toInt() ),
+            new AprsGatherer( new AprsTCPIP( m_aprsHost, m_aprsPort ),
                               &m_objects, m_mutex, &m_filter);
         m_tcpipGatherer->setSeenFrom( GeoAprsCoordinates::FromTCPIP );
-        m_tcpipGatherer->setDumpOutput( m_settings.value( "TCPIPDump" ).toBool() );
-
+        m_tcpipGatherer->setDumpOutput( m_dumpTcpIp );
 
         m_tcpipGatherer->start();
         mDebug() << "started TCPIP gatherer";
     }
 
-    if ( m_settings.value( "useTTY" ).toBool() ) {
-
+#ifdef HAVE_QEXTSERIALPORT
+    if ( m_useTty ) {
         m_ttyGatherer =
-            new AprsGatherer( new AprsTTY( m_settings.value( "TNCTTY" ).toString() ),
+            new AprsGatherer( new AprsTTY( m_tncTty ),
                               &m_objects, m_mutex, NULL);
 
         m_ttyGatherer->setSeenFrom( GeoAprsCoordinates::FromTTY );
-        m_ttyGatherer->setDumpOutput( m_settings.value( "TTYDump" ).toBool() );
+        m_ttyGatherer->setDumpOutput( m_dumpTty );
 
         m_ttyGatherer->start();
         mDebug() << "started TTY gatherer";
     }
+#endif
 
     
-    if ( m_settings.value( "useFile" ).toBool() ) {
+    if ( m_useFile ) {
         m_fileGatherer = 
-            new AprsGatherer( new AprsFile( m_settings.value( "File" ).toString() ),
+            new AprsGatherer( new AprsFile( m_aprsFile ),
                               &m_objects, m_mutex, NULL);
 
         m_fileGatherer->setSeenFrom( GeoAprsCoordinates::FromFile );
-        m_fileGatherer->setDumpOutput( m_settings.value( "FileDump" ).toBool() );
+        m_fileGatherer->setDumpOutput( m_dumpFile );
 
         m_fileGatherer->start();
         mDebug() << "started File gatherer";
@@ -251,14 +268,14 @@ QDialog *AprsPlugin::configDialog()
         ui_configWidget = new Ui::AprsConfigWidget;
         ui_configWidget->setupUi( m_configDialog );
         readSettings();
-        connect( ui_configWidget->m_buttonBox, SIGNAL( accepted() ),
-                 SLOT( writeSettings() ) );
-        connect( ui_configWidget->m_buttonBox, SIGNAL( rejected() ),
-                 SLOT( readSettings() ) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(accepted()),
+                 SLOT(writeSettings()) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(rejected()),
+                 SLOT(readSettings()) );
         //       QPushButton *applyButton =
 //             ui_configWidget->m_buttonBox->button( QDialogButtonBox::Apply );
-//         connect( applyButton, SIGNAL( clicked() ),
-//                  this,        SLOT( writeSettings() ) );
+//         connect( applyButton, SIGNAL(clicked()),
+//                  this,        SLOT(writeSettings()) );
     }
     return m_configDialog;
 }
@@ -269,78 +286,77 @@ void AprsPlugin::readSettings()
         return;
     }
 
+#ifndef HAVE_QEXTSERIALPORT
+    ui_configWidget->tabWidget->setTabEnabled( ui_configWidget->tabWidget->indexOf(
+                                                   ui_configWidget->Device ), false );
+#endif
+
     // Connect to the net?
-    if ( m_settings.value( "useInternet" ).toBool() )
+    if ( m_useInternet )
         ui_configWidget->m_internetBox->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_internetBox->setCheckState( Qt::Unchecked );
 
     // Connection Information
-    ui_configWidget->m_serverName->setText( m_settings.value( "APRSHost" ).toString() );
-    ui_configWidget->m_serverPort->setText( m_settings.value( "APRSPort" ).toString() );
+    ui_configWidget->m_serverName->setText( m_aprsHost );
+    ui_configWidget->m_serverPort->setText( QString::number( m_aprsPort ) );
 
     // Read from a TTY serial port?
-    if ( m_settings.value( "useTTY" ).toBool() )
+    if ( m_useTty )
         ui_configWidget->m_serialBox->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_serialBox->setCheckState( Qt::Unchecked );
 
     // Serial port to use
-    ui_configWidget->m_ttyName->setText( m_settings.value( "TNCTTY" ).toString() );
+    ui_configWidget->m_ttyName->setText( m_tncTty );
 
     // Read from a File?
-    if ( m_settings.value( "useFile" ).toBool() )
+    if ( m_useFile )
         ui_configWidget->m_useFile->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_useFile->setCheckState( Qt::Unchecked );
 
     // Serial port to use
-    ui_configWidget->m_fileName->setText( m_settings.value( "FileName" ).toString() );
+    ui_configWidget->m_fileName->setText( m_aprsFile );
 
     // Dumping settings
-    if ( m_settings.value( "TCPIPDump" ).toBool() )
+    if ( m_dumpTcpIp )
         ui_configWidget->m_tcpipdump->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_tcpipdump->setCheckState( Qt::Unchecked );
 
-    if ( m_settings.value( "TTYDump" ).toBool() )
+    if ( m_dumpTty )
         ui_configWidget->m_ttydump->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_ttydump->setCheckState( Qt::Unchecked );
 
-    if ( m_settings.value( "FileDump" ).toBool() )
+    if ( m_dumpFile )
         ui_configWidget->m_filedump->setCheckState( Qt::Checked );
     else
         ui_configWidget->m_filedump->setCheckState( Qt::Unchecked );
 
     // display settings
-    ui_configWidget->m_fadetime->setText( m_settings.value( "fadeTime" ).toString() );
-    ui_configWidget->m_hidetime->setText( m_settings.value( "hideTime" ).toString() );
+    ui_configWidget->m_fadetime->setText( QString::number( m_fadeTime ) );
+    ui_configWidget->m_hidetime->setText( QString::number( m_hideTime ) );
 }
 
 
 void AprsPlugin::writeSettings()
 {
-    m_settings.insert( "useInternet", 
-                       ui_configWidget->m_internetBox->checkState() == Qt::Checked );
-    
-    m_settings.insert( "useTTY",
-                       ui_configWidget->m_serialBox->checkState() == Qt::Checked );
+    m_useInternet = ui_configWidget->m_internetBox->checkState() == Qt::Checked;
+    m_useTty = ui_configWidget->m_serialBox->checkState() == Qt::Checked;
+    m_useFile = ui_configWidget->m_useFile->checkState() == Qt::Checked;
 
-    m_settings.insert( "useFile",
-                       ui_configWidget->m_useFile->checkState() == Qt::Checked );
+    m_aprsHost = ui_configWidget->m_serverName->text();
+    m_aprsPort = ui_configWidget->m_serverPort->text().toInt();
+    m_tncTty = ui_configWidget->m_ttyName->text();
 
-    
-    m_settings.insert( "APRSHost",  ui_configWidget->m_serverName->text() );
-    m_settings.insert( "APRSPort",  ui_configWidget->m_serverPort->text() );
-    m_settings.insert( "TNCTTY",    ui_configWidget->m_ttyName->text() );
+    m_dumpTcpIp = ui_configWidget->m_tcpipdump->checkState() == Qt::Checked;
+    m_dumpTty = ui_configWidget->m_ttydump->checkState() == Qt::Checked;
+    m_dumpFile = ui_configWidget->m_filedump->checkState() == Qt::Checked;
 
-    m_settings.insert( "TCPIPDump", ui_configWidget->m_tcpipdump->checkState() == Qt::Checked );
-    m_settings.insert( "TTYDump",   ui_configWidget->m_ttydump->checkState() == Qt::Checked );
-    m_settings.insert( "FileDump",   ui_configWidget->m_filedump->checkState() == Qt::Checked );
-
-    m_settings.insert( "fadeTime",  ui_configWidget->m_fadetime->text() );
-    m_settings.insert( "hideTime",  ui_configWidget->m_hidetime->text() );
+    m_fadeTime = ui_configWidget->m_fadetime->text().toInt();
+    m_hideTime = ui_configWidget->m_hidetime->text().toInt();
 
     restartGatherers();
     emit settingsChanged( nameId() );
@@ -348,46 +364,44 @@ void AprsPlugin::writeSettings()
 
 QHash<QString,QVariant> AprsPlugin::settings() const
 {
-    return m_settings;
+    QHash<QString, QVariant> result = RenderPlugin::settings();
+
+    result.insert( "useInternet", true );
+    result.insert( "useTTY", false );
+    result.insert( "useFile", false );
+    result.insert( "APRSHost", "rotate.aprs.net" );
+    result.insert( "APRSPort", "10253" );
+    result.insert( "TNCTTY", "/dev/ttyUSB0" );
+    result.insert( "FileName", "" );
+    result.insert( "TCPIPDump", false );
+    result.insert( "TTYDump", false );
+    result.insert( "FileDump", false );
+    result.insert( "fadeTime", 10 );
+    result.insert( "hideTime", 45 );
+
+    return result;
 }
 
-void AprsPlugin::setSettings( QHash<QString,QVariant> settings )
+void AprsPlugin::setSettings( const QHash<QString,QVariant> &settings )
 {
-    // Check if all fields are filled and fill them with default values.
-    // Information
-    if ( !settings.contains( "useInternet" ) ) {
-        settings.insert( "useInternet", true );
-    }
-    if ( !settings.contains( "useTTY" ) ) {
-        settings.insert( "useTTY", false );
-    }
+    RenderPlugin::setSettings( settings );
 
-    if ( !settings.contains( "APRSHost" ) ) {
-        settings.insert( "APRSHost", "rotate.aprs.net" );
-    }
-    if ( !settings.contains( "APRSPort" ) ) {
-        settings.insert( "APRSPort", "10253" );
-    }
-    if ( !settings.contains( "TNCTTY" ) ) {
-        settings.insert( "TNCTTY", "/dev/ttyUSB0" );
-    }
+    m_useInternet =  settings.value( "useInternet", true ).toBool();
+    m_useTty = settings.value( "useTTY", false ).toBool();
+    m_useFile = settings.value( "useFile", false ).toBool();
 
-    if ( !settings.contains( "TCPIPDump" ) ) {
-        settings.insert( "TCPIPDump", false );
-    }
-    if ( !settings.contains( "TTYDump" ) ) {
-        settings.insert( "TTYDump", false );
-    }
+    m_aprsHost = settings.value( "APRSHost", "rotate.aprs.net" ).toString();
+    m_aprsPort = settings.value( "APRSPort", 10253 ).toInt();
+    m_tncTty = settings.value( "TNCTTY", "/dev/ttyUSB0" ).toString();
+    m_aprsFile = settings.value( "FileName", "" ).toString();
 
-    if ( !settings.contains( "fadeTime" ) ) {
-        settings.insert( "fadeTime", 10 );
-    }
+    m_dumpTcpIp = settings.value( "TCPIPDump", false ).toBool();
+    m_dumpTty = settings.value( "TTYDump", false ).toBool();
+    m_dumpFile = settings.value( "FileDump", false ).toBool();
 
-    if ( !settings.contains( "hideTime" ) ) {
-        settings.insert( "hideTime", 45 );
-    }
+    m_fadeTime = settings.value( "fadeTime", 10 ).toInt();
+    m_hideTime = settings.value( "hideTime", 45 ).toInt();
 
-    m_settings = settings;
     readSettings();
     emit settingsChanged( nameId() );
 }
@@ -399,24 +413,21 @@ bool AprsPlugin::isInitialized () const
 
 bool AprsPlugin::render( GeoPainter *painter, ViewportParams *viewport, const QString& renderPos, GeoSceneLayer * layer )
 {
-    int fadetime = m_settings.value( "fadeTime" ).toInt() * 60000;
-    int hidetime = m_settings.value( "hideTime" ).toInt() * 60000;
+    Q_UNUSED( renderPos )
+    Q_UNUSED( layer )
 
-    if ( renderPos != "HOVERS_ABOVE_SURFACE") {
-        return true;
-    }
+    int fadetime = m_fadeTime * 60000;
+    int hidetime = m_hideTime * 60000;
 
     painter->save();
 
-    painter->autoMapQuality();
-    
     if ( !( viewport->viewLatLonAltBox() == m_lastBox ) ) {
         m_lastBox = viewport->viewLatLonAltBox();
         QString towrite = "#filter a/" + 
-            QString().number( m_lastBox.north( GeoDataCoordinates::Degree ) ) +"/" +
-            QString().number( m_lastBox.west( GeoDataCoordinates::Degree ) )  +"/" +
-            QString().number( m_lastBox.south( GeoDataCoordinates::Degree ) ) +"/" +
-            QString().number( m_lastBox.east( GeoDataCoordinates::Degree ) )  +"\n";
+            QString().number( m_lastBox.north( GeoDataCoordinates::Degree ) ) +'/' +
+            QString().number( m_lastBox.west( GeoDataCoordinates::Degree ) )  +'/' +
+            QString().number( m_lastBox.south( GeoDataCoordinates::Degree ) ) +'/' +
+            QString().number( m_lastBox.east( GeoDataCoordinates::Degree ) )  +'\n';
         mDebug() << "upating filter: " << towrite.toLocal8Bit().data();
 
         QMutexLocker locker( m_mutex );
@@ -427,7 +438,7 @@ bool AprsPlugin::render( GeoPainter *painter, ViewportParams *viewport, const QS
     QMutexLocker locker( m_mutex );
     QMap<QString, AprsObject *>::ConstIterator obj;
     for( obj = m_objects.constBegin(); obj != m_objects.constEnd(); ++obj ) {
-        ( *obj )->render( painter, viewport, renderPos, layer, fadetime, hidetime );
+        ( *obj )->render( painter, viewport, fadetime, hidetime );
     }
 
     painter->restore();

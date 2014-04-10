@@ -43,7 +43,6 @@ public:
     qreal                   width (Marble::GeoDataCoordinates::Unit unit = Marble::GeoDataCoordinates::Radian) const;
     qreal                   height (Marble::GeoDataCoordinates::Unit unit = Marble::GeoDataCoordinates::Radian) const;
     bool                    crossesDateLine () const;
-    virtual bool            contains (const Marble::GeoDataPoint&) const;
     virtual bool            contains (const Marble::GeoDataCoordinates&) const;
     bool                    contains (const Marble::GeoDataLatLonBox&) const;
     virtual bool            intersects (const Marble::GeoDataLatLonBox&) const;
@@ -65,6 +64,7 @@ public:
     Marble::GeoDataLatLonBox  operator | (const Marble::GeoDataLatLonBox& other) const;
     Marble::GeoDataLatLonBox&  operator |= (const Marble::GeoDataLatLonBox& other);
     void                    boundaries (qreal& north, qreal& south, qreal& east, qreal& west, Marble::GeoDataCoordinates::Unit unit = Marble::GeoDataCoordinates::Radian) const;
+    virtual void            clear ();
 };
 // GeoDataLatLonBox
 

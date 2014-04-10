@@ -14,8 +14,8 @@
 #include "OpenCachingCacheLog.h"
 #include "OpenCachingCacheDescription.h"
 
-#include <QtCore/QString>
-#include <QtCore/QDateTime>
+#include <QString>
+#include <QDateTime>
 
 namespace Marble
 {
@@ -27,7 +27,7 @@ namespace Marble
 class OpenCachingCache
 {
 public:
-    OpenCachingCache( const QHash<QString, QVariant>& properties = QHash<QString, QVariant>() );
+    explicit OpenCachingCache( const QHash<QString, QVariant>& properties = QHash<QString, QVariant>() );
 
     void setId( unsigned long long id );
 

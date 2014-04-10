@@ -28,10 +28,7 @@ class RenderPlugin : QObject, Marble::RenderPluginInterface /Abstract/
 %End
 
 public:
-                            RenderPlugin ();
     QAction*                action () const;
-    void                    applyItemState ();
-    void                    retrieveItemState ();
     bool                    enabled () const;
     bool                    visible () const;
     void                    setEnabled (bool enabled);
@@ -42,38 +39,44 @@ protected:
     bool                    eventFilter (QObject*, QEvent*);
 
 public:
-    enum ItemDataRole
-    {
-        NameId,
-        AboutDialogAvailable,
-        ConfigurationDialogAvailable,
-        BackendTypes
-    };
     virtual ~RenderPlugin ();
-    virtual QList<QActionGroup*>*  actionGroups () const;
-    virtual QList<QActionGroup*>*  toolbarActionGroups () const;
     virtual QHash<QString,QVariant>  settings () const;
-    virtual void            setSettings (QHash<QString,QVariant> settings);
 signals:
-    void                    visibilityChanged (QString nameId, bool visible);
     void                    settingsChanged (QString nameId);
     void                    actionGroupsChanged ();
 public:
-    enum RenderType
-    {
-        Unknown,
-        Online
-    };
-    virtual Marble::RenderPlugin::RenderType  renderType () const;
     const Marble::MarbleModel*  marbleModel () const;
-    void                    setMarbleModel (const Marble::MarbleModel*);
-    QStandardItem*          item ();
-    virtual QDialog*        aboutDialog ();
-    virtual QDialog*        configDialog ();
     void                    restoreDefaultSettings ();
 signals:
     void                    repaintNeeded (QRegion dirtyRegion = QRegion());
     void                    enabledChanged (bool enable);
+public:
+                            RenderPlugin (const Marble::MarbleModel* marbleModel);
+    virtual QString         guiString () const=0;
+    virtual Marble::RenderPlugin*  newInstance (const Marble::MarbleModel* marbleModel) const=0;
+    virtual void            setSettings (const QHash<QString,QVariant>& settings);
+signals:
+    void                    visibilityChanged (bool visible, const QString& nameId);
+public:
+    virtual QString         runtimeTrace () const;
+    QStringList             settingKeys ();
+    bool                    setSetting (const QString& key, const QVariant& value);
+    QVariant                setting (const QString& key);
+    enum RenderType
+    {
+        UnknownRenderType,
+        TopLevelRenderType,
+        PanelRenderType,
+        OnlineRenderType,
+        ThemeRenderType
+    };
+    virtual const QList<QActionGroup*>*  actionGroups () const;
+    virtual const QList<QActionGroup*>*  toolbarActionGroups () const;
+    bool                    isUserCheckable () const;
+    virtual Marble::RenderPlugin::RenderType  renderType () const;
+    void                    setUserCheckable (bool isUserCheckable);
+signals:
+    void                    userCheckableChanged (bool isUserCheckable);
 };
 // RenderPlugin
 

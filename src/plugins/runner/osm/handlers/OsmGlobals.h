@@ -11,10 +11,10 @@
 #ifndef MARBLE_OSMGLOBALS_H
 #define MARBLE_OSMGLOBALS_H
 
-#include <QtCore/QMap>
-#include <QtGui/QColor>
-#include <QtCore/QString>
-#include <QtCore/QList>
+#include <QMap>
+#include <QColor>
+#include <QString>
+#include <QList>
 #include "GeoDataFeature.h"
 
 namespace Marble
@@ -28,7 +28,6 @@ namespace osm
 class OsmGlobals
 {
 public:
-    static QMap<QString, GeoDataFeature::GeoDataVisualCategory> visualCategories();
     static bool tagNeedArea( const QString& keyValue );
     static void addDummyPlacemark( GeoDataPlacemark *placemark );
     static void cleanUpDummyPlacemarks();
@@ -40,7 +39,6 @@ private:
     static void setupCategories();
     static void setupAreaTags();
     
-    static QMap<QString, GeoDataFeature::GeoDataVisualCategory> m_visualCategories;
     static QList<QString> m_areaTags;
     static QList<GeoDataPlacemark*> dummyPlacemarks;
 };

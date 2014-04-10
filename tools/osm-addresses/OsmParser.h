@@ -16,15 +16,15 @@
 #include "OsmPlacemark.h"
 #include "OsmRegionTree.h"
 
-#include "marble/GeoDataLineString.h"
-#include "marble/GeoDataPolygon.h"
+#include "GeoDataLineString.h"
+#include "GeoDataPolygon.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QFileInfo>
-#include <QtCore/QMap>
-#include <QtCore/QHash>
-#include <QtCore/QList>
-#include <QtCore/QPair>
+#include <QObject>
+#include <QFileInfo>
+#include <QMap>
+#include <QHash>
+#include <QList>
+#include <QPair>
 
 namespace Marble
 {
@@ -64,6 +64,8 @@ struct Element {
 struct Coordinate {
     float lon;
     float lat;
+
+    Coordinate(float lon=0.0, float lat=0.0);
 };
 
 struct Node : public Element {
@@ -153,6 +155,8 @@ public:
 
     void read( const QFileInfo &file, const QString &areaName );
 
+    void writeKml( const QString &area, const QString &version, const QString &date, const QString &transport, const QString &payload, const QString &outputKml ) const;
+
 protected:
     virtual bool parse( const QFileInfo &file, int pass, bool &needAnotherPass ) = 0;
 
@@ -169,11 +173,11 @@ protected:
     QHash<int, Relation> m_relations;
 
 private:
+    GeoDataLinearRing *convexHull() const;
+
     void importMultipolygon( const Relation &relation );
 
     void importWay( QVector<Marble::GeoDataLineString> &ways, int id );
-
-    void writeOutlineKml( const QString &area ) const;
 
     QList< QList<Way> > merge( const QList<Way> &ways ) const;
 
@@ -210,6 +214,8 @@ private:
     QHash<QString, OsmPlacemark::OsmCategory> m_categoryMap;
 
     mutable Statistic m_statistic;
+
+    GeoDataLinearRing* m_convexHull;
 };
 
 }

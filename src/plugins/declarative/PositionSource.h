@@ -13,25 +13,25 @@
 
 #include "Coordinate.h"
 
-#include <QtCore/QObject>
-#include <QtDeclarative/QtDeclarative>
+#include <QObject>
+#if QT_VERSION < 0x050000
+  #include <QtDeclarative/qdeclarative.h>
+#else
+  #include <QtQml/qqml.h>
+#endif
 
-namespace Marble
-{
-
-class MarbleModel;
-
-namespace Declarative
-{
+class MarbleWidget;
 
 class PositionSource : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY( MarbleWidget* map READ map WRITE setMap NOTIFY mapChanged )
     Q_PROPERTY( bool active READ active WRITE setActive NOTIFY activeChanged )
     Q_PROPERTY( QString source READ source WRITE setSource NOTIFY sourceChanged )
     Q_PROPERTY( bool hasPosition READ hasPosition NOTIFY hasPositionChanged )
-    Q_PROPERTY( Marble::Declarative::Coordinate* position READ position NOTIFY positionChanged )
+    Q_PROPERTY( Coordinate* position READ position NOTIFY positionChanged )
+    Q_PROPERTY( qreal speed READ speed NOTIFY speedChanged )
 
 public:
     explicit PositionSource( QObject* parent = 0);
@@ -46,11 +46,17 @@ public:
 
     bool hasPosition() const;
 
-    Marble::Declarative::Coordinate* position();
+    Coordinate* position();
 
-    void setMarbleModel( MarbleModel* model );
+    MarbleWidget *map();
+
+    void setMap( MarbleWidget *map );
+
+    qreal speed() const;
 
 Q_SIGNALS:
+    void mapChanged();
+
     void activeChanged();
 
     void sourceChanged();
@@ -58,6 +64,8 @@ Q_SIGNALS:
     void hasPositionChanged();
 
     void positionChanged();
+
+    void speedChanged();
 
 private Q_SLOTS:
     void updatePosition();
@@ -71,13 +79,11 @@ private:
 
     bool m_hasPosition;
 
-    Marble::Declarative::Coordinate m_position;
+    Coordinate m_position;
 
-    MarbleModel* m_marbleModel;
+    QPointer<MarbleWidget> m_marbleWidget;
+
+    qreal m_speed;
 };
-
-}
-
-}
 
 #endif

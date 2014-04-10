@@ -21,9 +21,15 @@ class AudioOutputPrivate
 {
 public:
   void audioOutputFinished();
+  void playInstructions();
 };
 
 void AudioOutputPrivate::audioOutputFinished()
+{
+    // nothing to do
+}
+
+void AudioOutputPrivate::playInstructions()
 {
     // nothing to do
 }
@@ -39,7 +45,7 @@ AudioOutput::~AudioOutput()
     delete d;
 }
 
-void AudioOutput::update( const Route &, qreal )
+void AudioOutput::update( const Route &, qreal, qreal, bool )
 {
     // nothing to do
 }
@@ -47,6 +53,11 @@ void AudioOutput::update( const Route &, qreal )
 void AudioOutput::setMuted( bool )
 {
     // nothing to do
+}
+
+bool AudioOutput::isMuted() const
+{
+    return true;
 }
 
 void AudioOutput::setSpeaker( const QString & )
@@ -59,24 +70,14 @@ QString AudioOutput::speaker() const
     return QString();
 }
 
-QStringList AudioOutput::speakers() const
-{
-    return QStringList();
-}
-
 void AudioOutput::setSoundEnabled( bool )
 {
     // nothing to do
 }
 
-void AudioOutput::announceStart()
+bool AudioOutput::isSoundEnabled() const
 {
-    // nothing to do
-}
-
-void AudioOutput::announceDestination()
-{
-    // nothing to do
+    return false;
 }
 
 }

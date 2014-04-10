@@ -26,12 +26,15 @@ class InhibitScreensaverPlugin : public RenderPlugin
 {
 
 Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.InhibitScreensaverPlugin" )
 Q_INTERFACES( Marble::RenderPluginInterface )
 
 MARBLE_PLUGIN( InhibitScreensaverPlugin )
 
 public:
     InhibitScreensaverPlugin();
+
+    explicit InhibitScreensaverPlugin( const MarbleModel *marbleModel );
 
     ~InhibitScreensaverPlugin();
 
@@ -47,7 +50,13 @@ public:
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon() const;
 

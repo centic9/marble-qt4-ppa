@@ -11,19 +11,17 @@
 #ifndef MARBLE_ROUTEREQUESTMODEL_H
 #define MARBLE_ROUTEREQUESTMODEL_H
 
-#include <QtCore/QAbstractListModel>
+#include <QAbstractListModel>
 
-namespace Marble
-{
-
-class RouteRequest;
-
-namespace Declarative
-{
+namespace Marble { class RouteRequest; }
+class Routing;
 
 class RouteRequestModel : public QAbstractListModel
 {
     Q_OBJECT
+
+    Q_PROPERTY( Routing* routing READ routing WRITE setRouting NOTIFY routingChanged )
+    Q_PROPERTY( int count READ rowCount )
 
 public:
     enum RouteRequestModelRoles {
@@ -32,7 +30,7 @@ public:
     };
 
     /** Constructor */
-    explicit RouteRequestModel( Marble::RouteRequest* request = 0, QObject *parent = 0 );
+    explicit RouteRequestModel( QObject *parent = 0 );
 
     /** Destructor */
     ~RouteRequestModel();
@@ -42,16 +40,30 @@ public:
     /** Overload of QAbstractListModel */
     int rowCount ( const QModelIndex &parent = QModelIndex() ) const;
 
+#if QT_VERSION >= 0x050000
+    /** Overload of QAbstractListModel */
+    QHash<int, QByteArray> roleNames() const;
+#endif
+
     /** Overload of QAbstractListModel */
     QVariant headerData ( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
 
     /** Overload of QAbstractListModel */
     QVariant data ( const QModelIndex &index, int role = Qt::DisplayRole ) const;
 
+    Routing *routing();
+
 public Q_SLOTS:
+    void setRouting( Routing *routing );
+
     void setPosition ( int index, qreal longitude, qreal latitude );
 
+Q_SIGNALS:
+    void routingChanged();
+
 private Q_SLOTS:
+    void updateMap();
+
     void updateData( int index );
 
     void updateAfterRemoval( int index );
@@ -60,9 +72,10 @@ private Q_SLOTS:
 
 private:
     Marble::RouteRequest* m_request;
+    Routing *m_routing;
+#if QT_VERSION >= 0x050000
+    QHash<int, QByteArray> m_roleNames;
+#endif
 };
-
-}
-}
 
 #endif // MARBLE_ROUTEREQUESTMODEL_H

@@ -19,9 +19,9 @@
 #include "GeoDataDocument.h"
 #include "GeoDataExtendedData.h"
 
-#include <QtCore/QProcess>
-#include <QtCore/QMap>
-#include <QtCore/QTemporaryFile>
+#include <QProcess>
+#include <QMap>
+#include <QTemporaryFile>
 #include <MarbleMap.h>
 #include <MarbleModel.h>
 #include <routing/RoutingManager.h>
@@ -161,6 +161,10 @@ QVector<GeoDataPlacemark*> RoutinoRunnerPrivate::parseRoutinoInstructions( const
         turnType.setName( "turnType" );
         turnType.setValue( qVariantFromValue<int>( int( directions[i].turnType() ) ) );
         extendedData.addValue( turnType );
+        GeoDataData roadName;
+        roadName.setName( "roadName" );
+        roadName.setValue( directions[i].roadName() );
+        extendedData.addValue( roadName );
         placemark->setExtendedData( extendedData );
         Q_ASSERT( !directions[i].points().isEmpty() );
         GeoDataLineString* geometry = new GeoDataLineString;
@@ -190,7 +194,7 @@ GeoDataDocument* RoutinoRunnerPrivate::createDocument( GeoDataLineString* routeW
     result->append( routePlacemark );
 
     QString name = "%1 %2 (Routino)";
-    QString unit = "m";
+    QString unit = QLatin1String( "m" );
     qreal length = routeWaypoints->length( EARTH_RADIUS );
     if (length >= 1000) {
         length /= 1000.0;
@@ -207,7 +211,7 @@ GeoDataDocument* RoutinoRunnerPrivate::createDocument( GeoDataLineString* routeW
 }
 
 RoutinoRunner::RoutinoRunner( QObject *parent ) :
-        MarbleAbstractRunner( parent ),
+        RoutingRunner( parent ),
         d( new RoutinoRunnerPrivate )
 {
     // Check installation
@@ -217,11 +221,6 @@ RoutinoRunner::RoutinoRunner( QObject *parent ) :
 RoutinoRunner::~RoutinoRunner()
 {
     delete d;
-}
-
-GeoDataFeature::GeoDataVisualCategory RoutinoRunner::category() const
-{
-    return GeoDataFeature::OsmSite;
 }
 
 void RoutinoRunner::retrieveRoute( const RouteRequest *route )

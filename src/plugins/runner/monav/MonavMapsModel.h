@@ -13,13 +13,15 @@
 
 #include "MonavMap.h"
 
-#include <QtCore/QAbstractTableModel>
+#include <QAbstractTableModel>
 
 namespace Marble
 {
 
 class MonavMapsModel : public QAbstractTableModel
 {
+    Q_OBJECT
+
 public:
     explicit MonavMapsModel( const QVector<MonavMap> &data, QObject * parent = 0 );
 

@@ -11,10 +11,10 @@
 #ifndef COMPASS_FLOAT_ITEM_H
 #define COMPASS_FLOAT_ITEM_H
 
-#include <QtCore/QObject>
+#include <QObject>
 
 #include "AbstractFloatItem.h"
-#include "PluginAboutDialog.h"
+#include "DialogConfigurationInterface.h"
 
 class QSvgRenderer;
 
@@ -30,14 +30,16 @@ namespace Marble
  *
  */
 
-class CompassFloatItem  : public AbstractFloatItem
+class CompassFloatItem  : public AbstractFloatItem, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.CompassFloatItem" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( CompassFloatItem )
  public:
-    explicit CompassFloatItem ( const QPointF &point = QPointF( -1.0, 10.0 ),
-                                const QSizeF &size = QSizeF( 75.0, 75.0 ) );
+    CompassFloatItem();
+    explicit CompassFloatItem( const MarbleModel *marbleModel );
     ~CompassFloatItem ();
 
     QStringList backendTypes() const;
@@ -48,11 +50,15 @@ class CompassFloatItem  : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
 
-    QIcon icon () const;
+    QString copyrightYears() const;
 
-    QDialog *aboutDialog();
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QIcon icon () const;
     
     void initialize ();
 
@@ -62,14 +68,13 @@ class CompassFloatItem  : public AbstractFloatItem
 
     void changeViewport( ViewportParams *viewport );
 
-    void paintContent( GeoPainter *painter, ViewportParams *viewport,
-                       const QString& renderPos, GeoSceneLayer * layer = 0 );
+    void paintContent( QPainter *painter );
 
     QDialog *configDialog();
 
     QHash<QString,QVariant> settings() const;
 
-    void setSettings( QHash<QString,QVariant> settings );
+    void setSettings( const QHash<QString,QVariant> &settings );
 
 private Q_SLOTS:
    void readSettings();
@@ -81,18 +86,16 @@ private Q_SLOTS:
 
     bool           m_isInitialized;
 
-    PluginAboutDialog *m_aboutDialog;
     QSvgRenderer  *m_svgobj;
     QPixmap        m_compass;
 
     /// allowed values: -1, 0, 1; default here: 0. FIXME: Declare enum
     int            m_polarity;
 
-    QHash<QString,QVariant> m_settings;
+    int m_themeIndex;
     QDialog * m_configDialog;
     Ui::CompassConfigWidget * m_uiConfigWidget;
 };
-
 }
 
 #endif

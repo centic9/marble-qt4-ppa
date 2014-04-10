@@ -6,98 +6,119 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
+#include "OsmDatabase.h"
+
 #include "DatabaseQuery.h"
+#include "GeoDataLatLonAltBox.h"
 #include "MarbleDebug.h"
 #include "MarbleMath.h"
 #include "MarbleLocale.h"
 #include "MarbleModel.h"
-#include "OsmDatabase.h"
 #include "PositionTracking.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QDataStream>
-#include <QtCore/QStringList>
-#include <QtCore/QRegExp>
-#include <QtCore/QVariant>
-#include <QtCore/QTime>
+#include <QFile>
+#include <QDataStream>
+#include <QStringList>
+#include <QRegExp>
+#include <QVariant>
+#include <QTime>
 
-#include <QtSql/QSqlDatabase>
-#include <QtSql/QSqlQuery>
-#include <QtSql/QSqlError>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 namespace Marble {
 
 namespace {
 
-static GeoDataCoordinates s_currentPosition;
-static DatabaseQuery* s_currentQuery = 0;
-
-bool placemarkSmallerDistance( const OsmPlacemark &a, const OsmPlacemark &b )
+class PlacemarkSmallerDistance
 {
-    return distanceSphere( a.longitude() * DEG2RAD, a.latitude() * DEG2RAD,
-                           s_currentPosition.longitude(), s_currentPosition.latitude() )
-         < distanceSphere( b.longitude() * DEG2RAD, b.latitude() * DEG2RAD,
-                           s_currentPosition.longitude(), s_currentPosition.latitude() );
+public:
+    PlacemarkSmallerDistance( const GeoDataCoordinates &currentPosition ) :
+        m_currentPosition( currentPosition )
+    {}
+
+    bool operator()( const OsmPlacemark &a, const OsmPlacemark &b ) const
+    {
+        return distanceSphere( a.longitude() * DEG2RAD, a.latitude() * DEG2RAD,
+                               m_currentPosition.longitude(), m_currentPosition.latitude() )
+             < distanceSphere( b.longitude() * DEG2RAD, b.latitude() * DEG2RAD,
+                               m_currentPosition.longitude(), m_currentPosition.latitude() );
+    }
+
+private:
+    GeoDataCoordinates m_currentPosition;
+};
+
+class PlacemarkHigherScore
+{
+public:
+    PlacemarkHigherScore( const DatabaseQuery *currentQuery ) :
+        m_currentQuery( currentQuery )
+    {}
+
+    bool operator()( const OsmPlacemark &a, const OsmPlacemark &b ) const
+    {
+        return a.matchScore( m_currentQuery ) > b.matchScore( m_currentQuery );
+    }
+
+private:
+    const DatabaseQuery *const m_currentQuery;
+};
+
 }
 
-bool placemarkHigherScore( const OsmPlacemark &a, const OsmPlacemark &b )
+OsmDatabase::OsmDatabase( const QStringList &databaseFiles ) :
+    m_databaseFiles( databaseFiles )
 {
-    return a.matchScore( s_currentQuery ) > b.matchScore( s_currentQuery );
 }
 
-}
-
-OsmDatabase::OsmDatabase()
+QVector<OsmPlacemark> OsmDatabase::find( const DatabaseQuery &userQuery )
 {
-    m_database = QSqlDatabase::addDatabase( "QSQLITE" );
-}
-
-void OsmDatabase::addFile( const QString &fileName )
-{
-    m_databases << fileName;
-}
-
-QVector<OsmPlacemark> OsmDatabase::find( MarbleModel* model, const QString &searchTerm )
-{
-    if ( m_databases.isEmpty() ) {
+    if ( m_databaseFiles.isEmpty() ) {
         return QVector<OsmPlacemark>();
     }
 
-    DatabaseQuery userQuery( model, searchTerm );
+    QSqlDatabase database = QSqlDatabase::addDatabase( "QSQLITE", QString( "marble/local-osm-search-%1" ).arg( reinterpret_cast<size_t>( this ) ) );
 
     QVector<OsmPlacemark> result;
     QTime timer;
     timer.start();
-    foreach( const QString &databaseFile, m_databases ) {
-        m_database.setDatabaseName( databaseFile );
-        if ( !m_database.open() ) {
-            mDebug() << "Failed to connect to database " << databaseFile;
+    foreach( const QString &databaseFile, m_databaseFiles ) {
+        database.setDatabaseName( databaseFile );
+        if ( !database.open() ) {
+            qWarning() << "Failed to connect to database" << databaseFile;
         }
 
         QString regionRestriction;
         if ( !userQuery.region().isEmpty() ) {
+            QTime regionTimer;
+            regionTimer.start();
             // Nested set model to support region hierarchies, see http://en.wikipedia.org/wiki/Nested_set_model
-            QSqlQuery regionsQuery( "SELECT lft, rgt FROM regions WHERE name LIKE '%" + userQuery.region() + "%';" );
+            const QString regionsQueryString = "SELECT lft, rgt FROM regions WHERE name LIKE '%" + userQuery.region() + "%';";
+            QSqlQuery regionsQuery( regionsQueryString, database );
             if ( regionsQuery.lastError().isValid() ) {
-                mDebug() << "Error when executing query" << regionsQuery.executedQuery();
-                mDebug() << "Sql reports" << regionsQuery.lastError();
+                qWarning() << regionsQuery.lastError() << "in" << databaseFile << "with query" << regionsQuery.lastQuery();
             }
             regionRestriction = " AND (";
-            bool first = true;
+            int regionCount = 0;
             while ( regionsQuery.next() ) {
-                if ( first ) {
-                    first = false;
-                } else {
+                if ( regionCount > 0 ) {
                     regionRestriction += " OR ";
                 }
                 regionRestriction += " (regions.lft >= " + regionsQuery.value( 0 ).toString();
-                regionRestriction += " AND regions.lft <= " + regionsQuery.value( 1 ).toString() + ")";
+                regionRestriction += " AND regions.lft <= " + regionsQuery.value( 1 ).toString() + ')';
+                regionCount++;
             }
-            regionRestriction += ")";
+            regionRestriction += ')';
 
-            if ( first ) {
+            mDebug() << Q_FUNC_INFO << "region query in" << databaseFile << "with query" << regionsQueryString
+                     << "took" << regionTimer.elapsed() << "ms for" << regionCount << "results";
+
+            if ( regionCount == 0 ) {
                 continue;
             }
         }
@@ -110,9 +131,17 @@ QVector<OsmPlacemark> OsmDatabase::find( MarbleModel* model, const QString &sear
                 " FROM regions, places";
 
         if ( userQuery.queryType() == DatabaseQuery::CategorySearch ) {
-            queryString += " WHERE regions.id = places.region AND places.category = %1";
-            queryString = queryString.arg( (qint32) userQuery.category() );
-            if ( userQuery.resultFormat() == DatabaseQuery::DistanceFormat && userQuery.region().isEmpty() ) {
+            queryString += " WHERE regions.id = places.region";
+            if( userQuery.category() == OsmPlacemark::UnknownCategory ) {
+                // search for all pois which are not street nor address
+                queryString += " AND places.category <> 0 AND places.category <> 6";
+            } else {
+                // search for specific category
+                queryString += " AND places.category = %1";
+                queryString = queryString.arg( (qint32) userQuery.category() );
+            }
+            if ( userQuery.position().isValid() && userQuery.region().isEmpty() ) {
+                // sort by distance
                 queryString += " ORDER BY ((places.lat-%1)*(places.lat-%1)+(places.lon-%2)*(places.lon-%2))";
                 GeoDataCoordinates position = userQuery.position();
                 queryString = queryString.arg( position.latitude( GeoDataCoordinates::Degree ), 0, 'f', 8 )
@@ -122,7 +151,7 @@ QVector<OsmPlacemark> OsmDatabase::find( MarbleModel* model, const QString &sear
             }
         } else if ( userQuery.queryType() == DatabaseQuery::BroadSearch ) {
             queryString += " WHERE regions.id = places.region"
-                    " AND places.name " + wildcardQuery( searchTerm );
+                    " AND places.name " + wildcardQuery( userQuery.searchTerm() );
         } else {
             queryString += " WHERE regions.id = places.region"
                     "   AND places.name " + wildcardQuery( userQuery.street() );
@@ -138,13 +167,16 @@ QVector<OsmPlacemark> OsmDatabase::find( MarbleModel* model, const QString &sear
 
         /** @todo: sort/filter results from several databases */
 
-        QSqlQuery query;
+        QSqlQuery query( database );
         query.setForwardOnly( true );
+        QTime queryTimer;
+        queryTimer.start();
         if ( !query.exec( queryString ) ) {
-            mDebug() << "Failed to execute query" << query.lastError();
-            return result;
+            qWarning() << query.lastError() << "in" << databaseFile << "with query" << query.lastQuery();
+            continue;
         }
 
+        int resultCount = 0;
         while ( query.next() ) {
             OsmPlacemark placemark;
             if ( userQuery.resultFormat() == DatabaseQuery::DistanceFormat ) {
@@ -158,24 +190,26 @@ QVector<OsmPlacemark> OsmDatabase::find( MarbleModel* model, const QString &sear
             placemark.setCategory( (OsmPlacemark::OsmCategory) query.value(3).toInt() );
             placemark.setLongitude( query.value(4).toFloat() );
             placemark.setLatitude( query.value(5).toFloat() );
+
             result.push_back( placemark );
+            resultCount++;
         }
 
-        // mDebug() << "Query string: " << queryString;
+        mDebug() << Q_FUNC_INFO << "query in" << databaseFile << "with query" << queryString
+                 << "took" << queryTimer.elapsed() << "ms for" << resultCount << "results";
     }
 
-    mDebug() << "Offline OSM search query took " << timer.elapsed() << " ms.";
+    mDebug() << "Offline OSM search query took" << timer.elapsed() << "ms for" << result.count() << "results.";
 
     qSort( result.begin(), result.end() );
     unique( result );
 
-    if ( userQuery.resultFormat() == DatabaseQuery::DistanceFormat ) {
-        s_currentPosition = model->positionTracking()->currentLocation();
+    if ( userQuery.position().isValid() ) {
+        const PlacemarkSmallerDistance placemarkSmallerDistance( userQuery.position() );
         qSort( result.begin(), result.end(), placemarkSmallerDistance );
     } else {
-        s_currentQuery = &userQuery;
+        const PlacemarkHigherScore placemarkHigherScore( &userQuery );
         qSort( result.begin(), result.end(), placemarkHigherScore );
-        s_currentQuery = 0;
     }
 
     if ( result.size() > 50 ) {
@@ -200,14 +234,15 @@ QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataC
     qreal distance = EARTH_RADIUS * distanceSphere( a, b);
 
     int precision = 0;
-    QString distanceUnit = "m";
+    QString distanceUnit = QLatin1String( "m" );
 
-    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() == QLocale::ImperialSystem ) {
+    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() == MarbleLocale::MetricSystem ) {
         precision = 1;
         distanceUnit = "mi";
         distance *= METER2KM;
         distance *= KM2MI;
-    } else {
+    } else if (MarbleGlobal::getInstance()->locale()->measurementSystem() ==
+               MarbleLocale::MetricSystem) {
         if ( distance >= 1000 ) {
             distance /= 1000;
             distanceUnit = "km";
@@ -219,6 +254,12 @@ QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataC
         } else {
             distance = 10 * qRound( distance / 10 );
         }
+    } else if (MarbleGlobal::getInstance()->locale()->measurementSystem() ==
+               MarbleLocale::NauticalSystem) {
+        precision = 2;
+        distanceUnit = "nm";
+        distance *= METER2KM;
+        distance *= KM2NM;
     }
 
     QString const fuzzyDistance = QString( "%1 %2" ).arg( distance, 0, 'f', precision ).arg( distanceUnit );
@@ -244,7 +285,7 @@ QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataC
         heading = QObject::tr( "north-east" );
     }
 
-    return fuzzyDistance + " " + heading;
+    return fuzzyDistance + ' ' + heading;
 }
 
 qreal OsmDatabase::bearing( const GeoDataCoordinates &a, const GeoDataCoordinates &b ) const
@@ -260,15 +301,10 @@ QString OsmDatabase::wildcardQuery( const QString &term ) const
 {
     QString result = term;
     if ( term.contains( '*' ) ) {
-        return " LIKE '" + result.replace( '*', '%' ) + "'";
+        return " LIKE '" + result.replace( '*', '%' ) + '\'';
     } else {
-        return " = '" + result + "'";
+        return " = '" + result + '\'';
     }
-}
-
-void OsmDatabase::clear()
-{
-    m_databases.clear();
 }
 
 }

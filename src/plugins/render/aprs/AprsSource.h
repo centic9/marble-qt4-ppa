@@ -11,7 +11,7 @@
 #ifndef APRSSOURCE_H
 #define APRSSOURCE_H
 
-#include <QtCore/QIODevice>
+#include <QIODevice>
 
 namespace Marble {
 
@@ -19,7 +19,7 @@ namespace Marble {
 
     class AprsSource {
       public:
-        AprsSource( QIODevice *insocket = NULL );
+        explicit AprsSource( QIODevice *insocket = NULL );
         virtual ~AprsSource();
 
         virtual QIODevice *openSocket() = 0;

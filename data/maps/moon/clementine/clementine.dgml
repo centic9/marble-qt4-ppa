@@ -42,14 +42,10 @@
                             
             <layer name="lunarplaces" backend="geodata">
                 <geodata name="moonlandingsites">
-                    <sourcefile format="KML">moonlandingsites.kml</sourcefile>
-                    <pick>placemark</pick> <!-- picks certain features from a
-                                            file -->
+                    <sourcefile>moonlandingsites.cache</sourcefile>
                 </geodata>
                 <geodata name="moonterrain">
-                    <sourcefile format="KML">moonterrain.kml</sourcefile>
-                    <pick>placemark</pick> <!-- picks certain features from a
-                                            file -->
+                    <sourcefile>moonterrain.cache</sourcefile>
                 </geodata>
             </layer>
         </map>

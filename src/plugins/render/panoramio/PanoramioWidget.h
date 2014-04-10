@@ -13,8 +13,8 @@
 
 #include "AbstractDataPluginWidget.h"
 
-#include <QtCore/QDate>
-#include <QtGui/QPixmap>
+#include <QDate>
+#include <QPixmap>
 
 namespace Marble
 {
@@ -24,7 +24,7 @@ const QString standardImageSize = "mini_square";
 class PanoramioWidget : public AbstractDataPluginWidget
 {
  public:
-    PanoramioWidget( QObject *parent );
+    explicit PanoramioWidget( QObject *parent );
     
     QString widgetType() const;
      

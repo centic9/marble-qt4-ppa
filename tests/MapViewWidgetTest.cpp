@@ -8,12 +8,10 @@
 // Copyright 2011       Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
-#include <QtTest/QtTest>
-#include <QtTest/QSignalSpy>
+#include <QSignalSpy>
 
 #include "MapViewWidget.h"
-
-#define addRow() QTest::newRow( QString("line %1").arg( __LINE__ ).toAscii().data() )
+#include "TestUtils.h"
 
 namespace Marble
 {
@@ -38,7 +36,7 @@ void MapViewWidgetTest::initTestCase()
 void MapViewWidgetTest::setMapThemeId()
 {
     MapViewWidget widget;
-    QSignalSpy spy( &widget, SIGNAL( mapThemeIdChanged( const QString & ) ) );
+    QSignalSpy spy( &widget, SIGNAL(mapThemeIdChanged(QString)) );
 
     widget.setMapThemeId( "" );
 
@@ -50,7 +48,7 @@ void MapViewWidgetTest::setMapThemeId()
 void MapViewWidgetTest::setProjection()
 {
     MapViewWidget widget;
-    QSignalSpy spy( &widget, SIGNAL( projectionChanged( Projection ) ) );
+    QSignalSpy spy( &widget, SIGNAL(projectionChanged(Projection)) );
 
     widget.setProjection( Spherical );
 

@@ -19,7 +19,7 @@
 
 namespace Marble
 {
-class GeoDataAbstractView : Marble::GeoDataObject
+class GeoDataAbstractView : Marble::GeoDataObject /Abstract/
 {
 %TypeHeaderCode
 #include <GeoDataAbstractView.h>
@@ -28,5 +28,13 @@ class GeoDataAbstractView : Marble::GeoDataObject
 public:
                             GeoDataAbstractView ();
     ~GeoDataAbstractView ();
+                            GeoDataAbstractView (const Marble::GeoDataAbstractView& other);
+    virtual Marble::GeoDataAbstractView*  copy () const=0;
+    const Marble::GeoDataTimeSpan&  timeSpan () const;
+//ig    Marble::GeoDataTimeSpan&  timeSpan ();
+    void                    setTimeSpan (const Marble::GeoDataTimeSpan& timeSpan);
+//ig    Marble::GeoDataTimeStamp&  timeStamp ();
+    const Marble::GeoDataTimeStamp&  timeStamp () const;
+    void                    setTimeStamp (const Marble::GeoDataTimeStamp& timeStamp);
 };
 };

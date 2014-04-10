@@ -41,20 +41,18 @@ public:
       * @param distance The distance in meters to the next turn point
       * @param turnType The turn type to execute at the next turn point
       */
-    void update( const Route &route, qreal distance );
-
-    void announceStart();
-
-    void announceDestination();
+    void update( const Route &route, qreal distanceManeuver, qreal distanceTarget, bool deviated );
 
     /** Toggle muting (neither sound nor voice output) */
     void setMuted( bool muted );
+
+    bool isMuted() const;
 
     /**
       * Change the speaker to use.
       * @param speaker A directory name in audio/speakers in Marble's data path. This directory
       * is expected to contain ogg files containing the instructions: TurnLeft.ogg, RbExit3.ogg etc.
-      * Disabled by setSoundEnabled(true) and overriden by setMuted(true).
+      * Disabled by setSoundEnabled(true) and overridden by setMuted(true).
       * @see setSoundEnabled
       * @see setMuted
       */
@@ -63,18 +61,17 @@ public:
     QString speaker() const;
 
     /**
-      * Toggle whether sound output is used instead of a speaker. Overriden by setMuted(true).
+      * Toggle whether sound output is used instead of a speaker. Overridden by setMuted(true).
       * @see setMuted
       */
     void setSoundEnabled( bool enabled );
 
-    /**
-      * Returns a list of available speakers
-      */
-    QStringList speakers() const;
+    bool isSoundEnabled() const;
 
 private:
     Q_PRIVATE_SLOT( d, void audioOutputFinished() )
+
+    Q_PRIVATE_SLOT( d, void playInstructions() )
 
     AudioOutputPrivate * const d;
 };

@@ -13,9 +13,9 @@
 
 #include "AbstractFloatItem.h"
 
-#include <QtCore/QMutex>
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QMutex>
+#include <QObject>
+#include <QTimer>
 
 namespace Marble
 {
@@ -27,14 +27,14 @@ namespace Marble
 class ProgressFloatItem  : public AbstractFloatItem
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.ProgressFloatItem" )
 
     Q_INTERFACES( Marble::RenderPluginInterface )
 
     MARBLE_PLUGIN( ProgressFloatItem )
 
  public:
-    explicit ProgressFloatItem ( const QPointF &point = QPointF( -10.5, -150.5 ),
-                                const QSizeF &size = QSizeF( 40.0, 40.0 ) );
+    explicit ProgressFloatItem( const MarbleModel *marbleModel = 0 );
     ~ProgressFloatItem ();
 
     QStringList backendTypes() const;
@@ -45,7 +45,13 @@ class ProgressFloatItem  : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon () const;
 
@@ -55,17 +61,16 @@ class ProgressFloatItem  : public AbstractFloatItem
 
     QPainterPath backgroundShape() const;
 
-    void paintContent( GeoPainter *painter, ViewportParams *viewport,
-                       const QString& renderPos, GeoSceneLayer * layer = 0 );
+    void paintContent( QPainter *painter );
 
     bool eventFilter(QObject *object, QEvent *e);
 
 private Q_SLOTS:
-    void addProgressItem();
-
     void removeProgressItem();
 
-    void resetProgress();
+    void handleProgress( int active, int queued );
+
+    void hideProgress();
 
     void show();
 
@@ -84,7 +89,9 @@ private Q_SLOTS:
 
     int m_completedJobs;
 
-    QTimer m_progressResetTimer;
+    qreal m_completed;
+
+    QTimer m_progressHideTimer;
 
     QTimer m_progressShowTimer;
 

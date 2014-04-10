@@ -18,16 +18,16 @@
 #include "worldclock.h"
 
 //Qt
-#include <QtGui/QPainter>
-#include <QtGui/QRadialGradient>
-#include <QtGui/QBrush>
-#include <QtGui/QGraphicsSceneHoverEvent>
-#include <QtCore/QList>
-#include <QtCore/QSize>
-#include <QtCore/QRect>
-#include <QtCore/QTime>
-#include <QtCore/QDate>
-#include <QtCore/QDateTime>
+#include <QPainter>
+#include <QRadialGradient>
+#include <QBrush>
+#include <QGraphicsSceneHoverEvent>
+#include <QList>
+#include <QSize>
+#include <QRect>
+#include <QTime>
+#include <QDate>
+#include <QDateTime>
 
 //KDE
 #include <KDebug>
@@ -43,7 +43,7 @@
 #include <Plasma/DataEngine>
 
 //Marble
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleMap.h"
 #include "MarbleModel.h"
 #include "AbstractFloatItem.h"
@@ -51,14 +51,17 @@
 #include "GeoPainter.h"
 #include "LatLonEdit.h"
 #include "ViewportParams.h"
-#include "AbstractProjection.h"
 
 namespace Marble
 {
 
 WorldClock::WorldClock(QObject *parent, const QVariantList &args)
     : Plasma::Applet(parent, args),
-    m_map(0)
+    m_showDate( false ),
+    m_customTz( false ),
+    m_map(0),
+    m_isHovered( false ),
+    m_timeEngine( 0 )
 {
     KGlobal::locale()->insertCatalog("marble");
     KGlobal::locale()->insertCatalog("marble_qt");
@@ -100,7 +103,8 @@ void WorldClock::init()
     //Set up the Sun to draw night/day shadow
     m_map->setShowSunShading(true);
     m_map->setShowCityLights(true);
-    m_map->setShowSunInZenith(cg.readEntry("centersun", false ));
+    m_map->setLockToSubSolarPoint(cg.readEntry("centersun", false ));
+    m_map->setSubSolarPointIconVisible(true);
 
     m_customTz = cg.readEntry("customtz", false );
     m_locationkey = KSystemTimeZones::local().name();
@@ -136,7 +140,7 @@ void WorldClock::init()
     Plasma::DataEngine *m_timeEngine = dataEngine("time");
     m_timeEngine->connectSource( "Local", this, 6000, Plasma::AlignToMinute);
 
-    connect(m_map, SIGNAL(repaintNeeded(const QRegion&)), this, SLOT(slotRepaint()));
+    connect(m_map, SIGNAL(repaintNeeded(QRegion)), this, SLOT(slotRepaint()));
 }
 
 WorldClock::~WorldClock()
@@ -232,8 +236,7 @@ QString WorldClock::getZone()
     qreal lat, lon;
     // get the hover zone only if the hove point exists
     bool ok = !m_hover.isNull() && 
-              m_map->viewport()->currentProjection()->geoCoordinates(
-                m_hover.x(), m_hover.y(), m_map->viewport(), lon, lat );
+              m_map->viewport()->geoCoordinates( m_hover.x(), m_hover.y(), lon, lat );
 
     if( !ok ) {
         return KSystemTimeZones::local().name();
@@ -353,7 +356,7 @@ void WorldClock::paintInterface(QPainter *p,
     QPixmap pixmap( m_map->width(), m_map->height() );
     pixmap.fill( Qt::transparent );
     GeoPainter gp( &pixmap, m_map->viewport(),
-                   Marble::NormalQuality, true );
+                   Marble::NormalQuality );
     QRect mapRect( 0, 0, m_map->width(), m_map->height() );
     m_map->paint(gp, mapRect );
     p->drawPixmap( m_t, pixmap );
@@ -367,8 +370,7 @@ void WorldClock::paintInterface(QPainter *p,
     qreal tzy = 0;
     qreal lon = m_locations.value(m_locationkey).longitude() * DEG2RAD;
     qreal lat = m_locations.value(m_locationkey).latitude() * DEG2RAD;
-    bool ok = m_map->viewport()->currentProjection()
-              ->screenCoordinates(lon, lat, m_map->viewport(), tzx, tzy);
+    bool ok = m_map->viewport()->screenCoordinates(lon, lat, tzx, tzy);
     if ( ok /*&& m_isHovered*/ ) {
         QPoint tz( tzx, tzy );
         tz += m_t;
@@ -443,7 +445,7 @@ void WorldClock::configAccepted()
     KConfigGroup cg = config();
 
     if( ui.daylightButton->isChecked() )
-        m_map->setShowSunInZenith(true);
+        m_map->setSubSolarPointIconVisible(true);
     else {
         m_map->centerOn(ui.longitudeEdit->value(), 0);
         update();

@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Bernhard Beschow  <bbeschow@cs.tu-berlin.de>
 //
 
 #ifndef MARBLE_DATABASEQUERY_H
@@ -14,12 +15,13 @@
 #include "GeoDataCoordinates.h"
 #include "OsmPlacemark.h"
 
-#include <QtCore/QList>
-#include <QtCore/QString>
+#include <QList>
+#include <QString>
 
 namespace Marble {
 
 class MarbleModel;
+class GeoDataLatLonAltBox;
 
 /**
   * Parse result of a user's search term
@@ -27,18 +29,18 @@ class MarbleModel;
 class DatabaseQuery
 {
 public:
-    enum QueryType {
-        AddressSearch,
-        CategorySearch,
-        BroadSearch
+    enum QueryType { 
+        AddressSearch,  /// precise search for an address
+        CategorySearch, /// search which contains a poi category
+        BroadSearch     /// any other non specific search
     };
 
     enum ResultFormat {
-        AddressFormat,
-        DistanceFormat
+        AddressFormat, /// display results with location information
+        DistanceFormat /// display results with distance information
     };
 
-    DatabaseQuery( MarbleModel* model, const QString &searchTerm );
+    DatabaseQuery( const MarbleModel* model, const QString &searchTerm, const GeoDataLatLonAltBox &preferred );
 
     QueryType queryType() const;
 

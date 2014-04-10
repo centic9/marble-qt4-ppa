@@ -14,19 +14,51 @@
 namespace Marble
 {
 
-YoursPlugin::YoursPlugin( QObject *parent ) : RunnerPlugin( parent )
+YoursPlugin::YoursPlugin( QObject *parent ) :
+    RoutingRunnerPlugin( parent )
 {
-    setCapabilities( Routing );
     setSupportedCelestialBodies( QStringList() << "earth" );
     setCanWorkOffline( false );
-    setName( tr( "Yours" ) );
-    setNameId( "yours" );
-    setDescription( tr( "Worldwide routing using a YOURS server" ) );
     setStatusMessage( tr ( "This service requires an Internet connection." ) );
-    setGuiString( tr( "Yours Routing" ) );
 }
 
-MarbleAbstractRunner* YoursPlugin::newRunner() const
+QString YoursPlugin::name() const
+{
+    return tr( "Yours Routing" );
+}
+
+QString YoursPlugin::guiString() const
+{
+    return tr( "Yours" );
+}
+
+QString YoursPlugin::nameId() const
+{
+    return "yours";
+}
+
+QString YoursPlugin::version() const
+{
+    return "1.0";
+}
+
+QString YoursPlugin::description() const
+{
+    return tr( "Worldwide routing using a YOURS server" );
+}
+
+QString YoursPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> YoursPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
+RoutingRunner *YoursPlugin::newRunner() const
 {
     return new YoursRunner;
 }

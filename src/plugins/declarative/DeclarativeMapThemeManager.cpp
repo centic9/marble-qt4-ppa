@@ -13,17 +13,12 @@
 #include "GeoSceneDocument.h"
 #include "GeoSceneHead.h"
 
-#include <QtGui/QIcon>
-#include <QtGui/QStandardItemModel>
-#include <QtCore/QDebug>
-
-namespace Marble
-{
-namespace Declarative
-{
+#include <QIcon>
+#include <QStandardItemModel>
+#include <QDebug>
 
 MapThemeImageProvider::MapThemeImageProvider() :
-        QDeclarativeImageProvider( QDeclarativeImageProvider::Pixmap )
+        QQuickImageProvider( QQuickImageProvider::Pixmap )
 {
     // nothing to do
 }
@@ -38,7 +33,7 @@ QPixmap MapThemeImageProvider::requestPixmap( const QString &id, QSize *size, co
     QStandardItemModel *model = m_mapThemeManager.mapThemeModel();
     for( int i = 0; i < model->rowCount(); ++i ) {
         if ( model->data( model->index( i, 0 ), Qt::UserRole + 1 ) == id ) {
-            QIcon icon = qVariantValue<QIcon>( model->data( model->index( i, 0 ), Qt::DecorationRole ) );
+            QIcon icon = model->data( model->index( i, 0 ), Qt::DecorationRole ).value<QIcon>();
             QPixmap result = icon.pixmap( resultSize );
             return result;
         }
@@ -57,23 +52,6 @@ MapThemeManager::MapThemeManager( QObject *parent ) : QObject( parent )
 QStringList MapThemeManager::mapThemeIds() const
 {
     return m_mapThemeManager.mapThemeIds();
-}
-
-QList<QObject*> MapThemeManager::mapThemes()
-{
-    QList<QObject*> dataList;
-
-    QStandardItemModel *model =  m_mapThemeManager.mapThemeModel();
-    for( int i = 0; i < model->rowCount(); ++i ) {
-        QString name = model->data( model->index( i, 0 ), Qt::DisplayRole  ).toString();
-        QString id   = model->data( model->index( i, 0 ), Qt::UserRole + 1 ).toString();
-        dataList.append( new MapTheme( id, name ) );
-    }
-
-    return dataList;
-}
-
-}
 }
 
 #include "DeclarativeMapThemeManager.moc"

@@ -11,8 +11,8 @@
 #ifndef WEATHERDATA_H
 #define WEATHERDATA_H
 
-#include<QtCore/QtGlobal>
-#include<QtCore/QCoreApplication>
+#include<QtGlobal>
+#include<QCoreApplication>
 
 class QDate;
 class QDateTime;
@@ -165,6 +165,8 @@ class WeatherData
      * Get the icon showing the current condition.
      */
     QImage icon() const;
+
+    QString iconSource() const;
     
     WeatherData::WindDirection windDirection() const;
     void setWindDirection( WeatherData::WindDirection direction );

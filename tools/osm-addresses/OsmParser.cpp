@@ -11,24 +11,51 @@
 #include "OsmParser.h"
 #include "OsmRegionTree.h"
 
-#include "marble/GeoDataLinearRing.h"
-#include "marble/GeoDataLineString.h"
-#include "marble/GeoDataPolygon.h"
-#include "marble/GeoDataDocument.h"
-#include "marble/GeoDataFolder.h"
-#include "marble/GeoDataPlacemark.h"
-#include "marble/GeoDataMultiGeometry.h"
-#include "marble/GeoDataStyle.h"
-#include "marble/GeoDataStyleMap.h"
-#include "marble/GeoDataLineStyle.h"
-#include "marble/GeoDataFeature.h"
+#include "GeoDataLinearRing.h"
+#include "GeoDataLineString.h"
+#include "GeoDataPolygon.h"
+#include "GeoDataDocument.h"
+#include "GeoDataFolder.h"
+#include "GeoDataPlacemark.h"
+#include "GeoDataMultiGeometry.h"
+#include "GeoDataStyle.h"
+#include "GeoDataStyleMap.h"
+#include "GeoDataLineStyle.h"
+#include "GeoDataFeature.h"
 #include "geodata/writer/GeoWriter.h"
+#include "geodata/data/GeoDataExtendedData.h"
 
-#include <QtCore/QDebug>
-#include <QtCore/QTime>
+#include <QDebug>
+#include <QTime>
 
 namespace Marble
 {
+
+using namespace Oxygen;
+
+namespace {
+    struct GrahamScanHelper {
+        Coordinate coordinate;
+        qreal direction;
+
+        GrahamScanHelper( const Coordinate &coordinate_=Coordinate(), qreal direction_=0.0 )
+            : coordinate( coordinate_ ), direction( direction_ )
+        {
+            // nothing to do
+        }
+
+        double turnDirection( const GrahamScanHelper &two, const GrahamScanHelper &three )
+        {
+            return    ( two.coordinate.lat - coordinate.lat ) * ( three.coordinate.lon - coordinate.lon )
+                    - ( two.coordinate.lon - coordinate.lon ) * ( three.coordinate.lat - coordinate.lat );
+        }
+
+        static bool directionLessThan( const GrahamScanHelper &one, const GrahamScanHelper &two )
+        {
+            return one.direction < two.direction;
+        }
+    };
+}
 
 bool moreImportantAdminArea( const OsmRegion &a, const OsmRegion b )
 {
@@ -36,7 +63,7 @@ bool moreImportantAdminArea( const OsmRegion &a, const OsmRegion b )
 }
 
 OsmParser::OsmParser( QObject *parent ) :
-    QObject( parent )
+    QObject( parent ), m_convexHull( 0 )
 {
     m_categoryMap["tourism/camp_site"] = OsmPlacemark::AccomodationCamping;
     m_categoryMap["tourism/hostel"] = OsmPlacemark::AccomodationHostel;
@@ -211,11 +238,13 @@ void OsmParser::read( const QFileInfo &content, const QString &areaName )
     qWarning() << "Step 2: " << m_coordinates.size() << "coordinates."
                << "Now extracting regions from" << m_relations.size() << "relations";
 
-    foreach( const Relation & relation, m_relations.values() ) {
-        if ( relation.isAdministrativeBoundary /*&& relation.isMultipolygon*/ ) {
-            importMultipolygon( relation );
-            if ( !relation.relations.isEmpty() ) {
-                qDebug() << "Ignoring relations inside the relation " << relation.name;
+    QHash<int, Relation>::iterator itpoint = m_relations.begin();
+    QHash<int, Relation>::iterator const endpoint = m_relations.end();
+    for(; itpoint != endpoint; ++itpoint ) {
+        if ( itpoint.value().isAdministrativeBoundary /*&& relation.isMultipolygon*/ ) {
+            importMultipolygon( itpoint.value() );
+            if ( !itpoint.value().relations.isEmpty() ) {
+                qDebug() << "Ignoring relations inside the relation " << itpoint.value().name;
             }
         }
     }
@@ -239,8 +268,10 @@ void OsmParser::read( const QFileInfo &content, const QString &areaName )
     for ( int i = 0; i < m_osmOsmRegions.size(); ++i ) {
         GeoDataLinearRing const & ring = m_osmOsmRegions[i].region.geometry().outerBoundary();
         OsmOsmRegion* parent = 0;
+        qDebug() << "Examining admin region " << i << " of " << m_osmOsmRegions.count();
         for ( int level=m_osmOsmRegions[i].region.adminLevel()-1; level >= 0 && parent == 0; --level ) {
             QList<int> candidates = sortedRegions.values( level );
+            qDebug() << "Examining " << candidates.count() << "admin regions on level" << level;
             foreach( int j, candidates ) {
                 GeoDataLinearRing const & outer = m_osmOsmRegions[j].region.geometry().outerBoundary();
                 if ( contains<GeoDataLinearRing, GeoDataLinearRing>( outer, ring ) ) {
@@ -354,6 +385,7 @@ void OsmParser::read( const QFileInfo &content, const QString &areaName )
         }
     }
 
+    m_convexHull = convexHull();
     m_coordinates.clear();
     m_nodes.clear();
     m_ways.clear();
@@ -588,7 +620,7 @@ bool OsmParser::shouldSave( ElementType /*type*/, const QString &key, const QStr
 
 void OsmParser::setCategory( Element &element, const QString &key, const QString &value )
 {
-    QString const term = key + "/" + value;
+    QString const term = key + '/' + value;
     if ( m_categoryMap.contains( term ) ) {
         if ( element.category != OsmPlacemark::UnknownCategory ) {
             qDebug() << "Overwriting category " << element.category << " with " << m_categoryMap[term] << " for " << element.name;
@@ -597,49 +629,124 @@ void OsmParser::setCategory( Element &element, const QString &key, const QString
     }
 }
 
+// From http://en.wikipedia.org/wiki/Graham_scan#Pseudocode
+GeoDataLinearRing* OsmParser::convexHull() const
+{
+    Q_ASSERT(m_coordinates.size()>2);
+    QList<Coordinate> coordinates = m_coordinates.values();
+
+    QVector<GrahamScanHelper> points;
+    points.reserve( coordinates.size()+1 );
+    Coordinate start = coordinates.first();
+    int startPos = 0;
+    for ( int i=0; i<coordinates.size(); ++i ) {
+        if ( coordinates[i].lon < start.lon ) {
+            start = coordinates[i];
+            startPos = i;
+        }
+        points << coordinates[i];
+    }
+
+    int const n = points.size();
+    Q_ASSERT( n == coordinates.size() );
+    Q_ASSERT( n>2 );
+    qSwap( points[1], points[startPos] );
+
+    Q_ASSERT( start.lat != 360.0 );
+
+    for ( int i=0; i<points.size(); ++i ) {
+        points[i].direction = atan2( start.lon - points[i].coordinate.lon,
+                                   start.lat - points[i].coordinate.lat );
+    }
+
+    qSort( points.begin(), points.end(), GrahamScanHelper::directionLessThan );
+    points << points.first();
+
+    int m = 2;
+    for ( int i=3; i<=n; ++i ) {
+        while ( points[m-1].turnDirection( points[m], points[i] ) <= 0 ) {
+            if ( m == 2 ) {
+                qSwap( points[m], points[i] );
+                ++i;
+            } else {
+                --m;
+            }
+
+            Q_ASSERT( n+1 == points.size() );
+            Q_ASSERT( m > 0 );
+            Q_ASSERT( m <= n );
+            Q_ASSERT( i >= 0 );
+            Q_ASSERT( i <= n );
+        }
+
+        ++m;
+        qSwap( points[m], points[i] );
+    }
+
+    GeoDataLinearRing* ring = new GeoDataLinearRing;
+    for ( int i=1; i<=m; ++i ) {
+        ring->append(GeoDataCoordinates(points[i].coordinate.lon, points[i].coordinate.lat, 0.0, GeoDataCoordinates::Degree));
+    }
+
+    return ring;
+}
+
 QColor OsmParser::randomColor() const
 {
-    QVector<QColor> colors = QVector<QColor>() << oxygenAluminumGray4 << oxygenBrickRed4;
-    colors << oxygenBrownOrange4 << oxygenForestGreen4 << oxygenHotOrange4;
-    colors << oxygenSeaBlue2 << oxygenSkyBlue4 << oxygenSunYellow6;
+    QVector<QColor> colors = QVector<QColor>() << aluminumGray4 << brickRed4;
+    colors << woodBrown4 << forestGreen4 << hotOrange4;
+    colors << seaBlue2 << skyBlue4 << sunYellow6;
     return colors.at( qrand() % colors.size() );
 }
 
-void OsmParser::writeOutlineKml( const QString & ) const
+void OsmParser::writeKml( const QString &area, const QString &version, const QString &date, const QString &transport, const QString &payload, const QString &filename ) const
 {
-    Q_ASSERT( !m_osmOsmRegions.isEmpty() );
-
     GeoDataDocument* document = new GeoDataDocument;
 
-    foreach( const OsmOsmRegion & region, m_osmOsmRegions ) {
-        GeoDataPlacemark* placemark = new GeoDataPlacemark;
-        placemark->setName( region.region.name() );
-
-        GeoDataStyle style;
-        GeoDataLineStyle lineStyle;
-        QColor color = randomColor();
-        color.setAlpha( 200 );
-        lineStyle.setColor( color );
-        lineStyle.setWidth( 4 );
-        style.setLineStyle( lineStyle );
-        style.setStyleId( color.name().replace( '#', 'f' ) );
-
-        GeoDataStyleMap styleMap;
-        styleMap.setStyleId( color.name().replace( '#', 'f' ) );
-        styleMap.insert( "normal", QString( "#" ).append( style.styleId() ) );
-        document->addStyle( style );
-
-        placemark->setStyleUrl( QString( "#" ).append( styleMap.styleId() ) );
-
-        placemark->setGeometry( new GeoDataLinearRing( region.region.geometry().outerBoundary() ) );
-        document->append( placemark );
-        document->addStyleMap( styleMap );
+    //foreach( const OsmOsmRegion & region, m_osmOsmRegions ) {
+    GeoDataPlacemark* placemark = new GeoDataPlacemark;
+    placemark->setName( area );
+    if ( !version.isEmpty() ) {
+        placemark->extendedData().addValue( GeoDataData( "version", version ) );
     }
+    if ( !date.isEmpty() ) {
+        placemark->extendedData().addValue( GeoDataData( "date", date ) );
+    }
+    if ( !transport.isEmpty() ) {
+        placemark->extendedData().addValue( GeoDataData( "transport", transport ) );
+    }
+    if ( !payload.isEmpty() ) {
+        placemark->extendedData().addValue( GeoDataData( "payload", payload ) );
+    }
+
+    GeoDataStyle style;
+    GeoDataLineStyle lineStyle;
+    QColor color = randomColor();
+    color.setAlpha( 200 );
+    lineStyle.setColor( color );
+    lineStyle.setWidth( 4 );
+    style.setLineStyle( lineStyle );
+    style.setStyleId( color.name().replace( '#', 'f' ) );
+
+    GeoDataStyleMap styleMap;
+    styleMap.setStyleId( color.name().replace( '#', 'f' ) );
+    styleMap.insert( "normal", QString( "#" ).append( style.styleId() ) );
+    document->addStyle( style );
+
+    placemark->setStyleUrl( QString( "#" ).append( styleMap.styleId() ) );
+
+    //placemark->setGeometry( new GeoDataLinearRing( region.region.geometry().outerBoundary() ) );
+    GeoDataMultiGeometry *geometry = new GeoDataMultiGeometry;
+    geometry->append( m_convexHull );
+    placemark->setGeometry( geometry );
+
+    document->append( placemark );
+    document->addStyleMap( styleMap );
+//    }
 
     GeoWriter writer;
     writer.setDocumentType( "http://earth.google.com/kml/2.2" );
 
-    QString const filename = "test.kml";
     QFile file( filename );
     if ( !file.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
         qCritical() << "Cannot write to " << file.fileName();
@@ -651,4 +758,11 @@ void OsmParser::writeOutlineKml( const QString & ) const
     file.close();
 }
 
+Coordinate::Coordinate(float lon_, float lat_) : lon(lon_), lat(lat_)
+{
+    // nothing to do
 }
+
+}
+
+#include "OsmParser.moc"

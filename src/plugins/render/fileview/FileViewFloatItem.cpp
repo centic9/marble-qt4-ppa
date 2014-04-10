@@ -11,16 +11,16 @@
 
 #include "FileViewFloatItem.h"
 
-#include <QtCore/QRect>
-#include <QtCore/QPoint>
-#include <QtGui/QApplication>
-#include <QtGui/QFileDialog>
-#include <QtGui/QListView>
-#include <QtGui/QListWidget>
-#include <QtGui/QMenu>
-#include <QtGui/QPixmap>
-#include <QtGui/QSlider>
-#include <QtGui/QMouseEvent>
+#include <QRect>
+#include <QPoint>
+#include <QApplication>
+#include <QFileDialog>
+#include <QListView>
+#include <QListWidget>
+#include <QMenu>
+#include <QPixmap>
+#include <QSlider>
+#include <QMouseEvent>
 
 #include "MarbleDebug.h"
 #include "FileViewModel.h"
@@ -85,8 +85,8 @@ void FileViewFloatItem::initialize()
     m_fileView->resize(100, 240);
     m_fileView->setResizeMode(QListView::Adjust);
     m_fileView->setContextMenuPolicy( Qt::CustomContextMenu );
-    connect(m_fileView, SIGNAL(customContextMenuRequested ( const QPoint & )),
-            this,       SLOT(contextMenu(const QPoint& )));
+    connect(m_fileView, SIGNAL(customContextMenuRequested(QPoint)),
+            this,       SLOT(contextMenu(QPoint)));
 }
 
 bool FileViewFloatItem::isInitialized() const
@@ -212,16 +212,17 @@ void FileViewFloatItem::contextMenu( const QPoint& pos )
     if( !m_marbleWidget )
         return;
 
-    QMenu *test = new QMenu( m_fileView );
+    QPointer<QMenu> test = new QMenu( m_fileView );
     // We need the global position to move the menu.
     // pos contains the relative position.
     test->move( m_itemPosition );
-    connect( test->addAction( tr( "Open file..." ) ), SIGNAL( triggered() ),
-             this, SLOT( addFile() ) );
-    connect( test->addAction( tr( "Close this file" ) ), SIGNAL( triggered() ),
-             this, SLOT( removeFile() ) );
+    connect( test->addAction( tr( "Open file..." ) ), SIGNAL(triggered()),
+             this, SLOT(addFile()) );
+    connect( test->addAction( tr( "Close this file" ) ), SIGNAL(triggered()),
+             this, SLOT(removeFile()) );
     m_persIndex = new QPersistentModelIndex( m_fileView->indexAt( pos ) );
     test->exec();
+    delete test;
 }
 
 void FileViewFloatItem::addFile()

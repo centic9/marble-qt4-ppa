@@ -14,12 +14,12 @@
 #include "PositionMarker.h"
 
 #include "MarbleDebug.h"
-#include <QtCore/QRect>
-#include <QtGui/QFileDialog>
-#include <QtGui/QMessageBox>
-#include <QtGui/QPushButton>
-#include <QtGui/QColorDialog>
-#include <QtGui/QTransform>
+#include <QRect>
+#include <qmath.h>
+#include <QFileDialog>
+#include <QPushButton>
+#include <QColorDialog>
+#include <QTransform>
 
 #include <cmath>
 
@@ -37,28 +37,27 @@ const int PositionMarker::sm_defaultSizeStep = 2;
 const float PositionMarker::sm_resizeSteps[] = { 0.25, 0.5, 1.0, 2.0, 4.0 };
 const int PositionMarker::sm_numResizeSteps = sizeof( sm_resizeSteps ) / sizeof( sm_resizeSteps[0] );
 
-PositionMarker::PositionMarker ()
-    : RenderPlugin(),
+PositionMarker::PositionMarker( const MarbleModel *marbleModel )
+    : RenderPlugin( marbleModel ),
       m_isInitialized( false ),
       m_useCustomCursor( false ),
       m_defaultCursorPath( MarbleDirs::path( "svg/track_turtle.svg" ) ),
       m_lastBoundingBox(),
       ui_configWidget( 0 ),
-      m_aboutDialog( 0 ),
       m_configDialog( 0 ),
+      m_cursorPath( m_defaultCursorPath ),
       m_cursorSize( 1.0 ),
+      m_accuracyColor( Oxygen::brickRed4 ),
+      m_trailColor( 0, 0, 255 ),
       m_heading( 0.0 ),
       m_showTrail ( false )
 {
-    setSettings( QHash<QString,QVariant>() );
-    updateSettings();
-    connect( this, SIGNAL( settingsChanged( QString ) ),
-             this, SLOT( updateSettings() ) );
+    const bool smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
+    m_accuracyColor.setAlpha( smallScreen ? 80 : 40 );
 }
 
 PositionMarker::~PositionMarker ()
 {
-    delete m_aboutDialog;
     delete ui_configWidget;
     delete m_configDialog;
 }
@@ -93,46 +92,33 @@ QString PositionMarker::nameId() const
     return QString( "positionMarker" );
 }
 
+QString PositionMarker::version() const
+{
+    return "1.0";
+}
+
 QString PositionMarker::description() const
 {
     return tr( "draws a marker at the current position" );
 }
 
-QIcon PositionMarker::icon() const
+QString PositionMarker::copyrightYears() const
 {
-    return QIcon();
+    return "2009, 2010";
 }
 
-QDialog *PositionMarker::aboutDialog()
+QList<PluginAuthor> PositionMarker::pluginAuthors() const
 {
-    if ( !m_aboutDialog ) {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "Position Marker Plugin" );
-        m_aboutDialog->setVersion( "0.1" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2009, 2010 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        QList<Author> authors;
-        Author amanson, ewoerner, tgridel, dmarth;
-        amanson.name = "Andrew Manson";
-        amanson.task = tr( "Developer" );
-        amanson.email = "g.real.ate@gmail.com";
-        ewoerner.name = "Eckhart Woerner";
-        ewoerner.task = tr( "Developer" );
-        ewoerner.email = "ewoerner@kde.org";
-        tgridel.name = "Thibaut Gridel";
-        tgridel.task = tr( "Developer" );
-        tgridel.email = "tgridel@free.fr";
-        dmarth.name = "Daniel Marth";
-        dmarth.task = tr( "Developer" );
-        dmarth.email = "danielmarth@gmx.at";
-        authors.append( amanson );
-        authors.append( ewoerner );
-        authors.append( tgridel );
-        authors.append( dmarth );
-        m_aboutDialog->setAuthors( authors );
-    }
-    return m_aboutDialog;
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Andrew Manson", "g.real.ate@gmail.com" )
+            << PluginAuthor( "Eckhart Woerner", "ewoerner@kde.org" )
+            << PluginAuthor( "Thibaut Gridel", "tgridel@free.fr" )
+            << PluginAuthor( "Daniel Marth", "danielmarth@gmx.at" );
+}
+
+QIcon PositionMarker::icon() const
+{
+    return QIcon(":/icons/positionmarker.png");
 }
 
 QDialog *PositionMarker::configDialog()
@@ -144,23 +130,23 @@ QDialog *PositionMarker::configDialog()
         ui_configWidget->setupUi( m_configDialog );
         ui_configWidget->m_resizeSlider->setMaximum( sm_numResizeSteps - 1 );
         readSettings();
-        connect( ui_configWidget->m_buttonBox, SIGNAL( accepted() ),
-                 SLOT( writeSettings() ) );
-        connect( ui_configWidget->m_buttonBox, SIGNAL( rejected() ),
-                 SLOT( readSettings() ) );
-        connect( ui_configWidget->m_buttonBox->button( QDialogButtonBox::RestoreDefaults ), SIGNAL( clicked () ),
-                 SLOT( restoreDefaultSettings() ) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(accepted()),
+                 SLOT(writeSettings()) );
+        connect( ui_configWidget->m_buttonBox, SIGNAL(rejected()),
+                 SLOT(readSettings()) );
+        connect( ui_configWidget->m_buttonBox->button( QDialogButtonBox::RestoreDefaults ), SIGNAL(clicked()),
+                 SLOT(restoreDefaultSettings()) );
         QPushButton *applyButton = ui_configWidget->m_buttonBox->button( QDialogButtonBox::Apply );
-        connect( applyButton, SIGNAL( clicked() ),
-                 SLOT( writeSettings() ) );
-        connect( ui_configWidget->m_fileChooserButton, SIGNAL( clicked() ),
-                 SLOT( chooseCustomCursor() ) );
-        connect( ui_configWidget->m_resizeSlider, SIGNAL( valueChanged( int ) ),
-                 SLOT( resizeCursor( int ) ) );
-        connect( ui_configWidget->m_acColorChooserButton, SIGNAL( clicked() ),
-                 SLOT( chooseColor() ) );
-        connect( ui_configWidget->m_trailColorChooserButton, SIGNAL( clicked() ),
-                 SLOT( chooseColor() ) );
+        connect( applyButton, SIGNAL(clicked()),
+                 SLOT(writeSettings()) );
+        connect( ui_configWidget->m_fileChooserButton, SIGNAL(clicked()),
+                 SLOT(chooseCustomCursor()) );
+        connect( ui_configWidget->m_resizeSlider, SIGNAL(valueChanged(int)),
+                 SLOT(resizeCursor(int)) );
+        connect( ui_configWidget->m_acColorChooserButton, SIGNAL(clicked()),
+                 SLOT(chooseColor()) );
+        connect( ui_configWidget->m_trailColorChooserButton, SIGNAL(clicked()),
+                 SLOT(chooseColor()) );
     }
     return m_configDialog;
 }
@@ -168,8 +154,8 @@ QDialog *PositionMarker::configDialog()
 void PositionMarker::initialize()
 {
     if ( marbleModel() ) {
-        connect( marbleModel()->positionTracking(), SIGNAL( gpsLocation( GeoDataCoordinates,qreal ) ),
-                this, SLOT( setPosition( GeoDataCoordinates ) ) );
+        connect( marbleModel()->positionTracking(), SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
+                this, SLOT(setPosition(GeoDataCoordinates)) );
         m_isInitialized = true;
     }
     loadDefaultCursor();
@@ -180,63 +166,56 @@ bool PositionMarker::isInitialized() const
     return m_isInitialized;
 }
 
-void PositionMarker::update( const ViewportParams *viewport )
-{
-    if( ! ( m_currentPosition == m_previousPosition ) )
-    {
-        QPointF position;
-        QPointF previousPosition;
-
-        viewport->screenCoordinates( m_currentPosition, position );
-        viewport->screenCoordinates( m_previousPosition, previousPosition );
-
-        // calculate the arrow shape, oriented by the heading
-        // and with constant size
-        QPointF unitVector = position - previousPosition;
-        // check that some screen progress was made
-        if( unitVector.x() || unitVector.y() ) {
-            // magnitude should be >0
-            qreal magnitude = sqrt( ( unitVector.x() * unitVector.x() )
-                                    + ( unitVector.y() * unitVector.y() ) );
-            m_heading = atan( unitVector.y() / unitVector.x() ) + M_PI / 2.0;
-            unitVector = unitVector / magnitude;
-            QPointF unitVector2 = QPointF ( -unitVector.y(), unitVector.x() );
-            QPointF relativeLeft = - ( unitVector * 9   ) + ( unitVector2 * 9 );
-            QPointF relativeRight = - ( unitVector * 9 ) - ( unitVector2 * 9 );
-            QPointF relativeTip =  unitVector * 19.0 ;
-
-            m_arrow.clear();
-            m_arrow << position
-                    << position + ( relativeLeft * m_cursorSize )
-                    << position + ( relativeTip * m_cursorSize )
-                    << position + ( relativeRight * m_cursorSize );
-
-            m_dirtyRegion = QRegion();
-            m_dirtyRegion += ( m_arrow.boundingRect().toRect() );
-            m_dirtyRegion += ( m_previousArrow.boundingRect().toRect() );
-
-            // Check if position has changed.
-            m_trail.push_front( m_currentPosition );
-            for( int i = sm_numTrailPoints + 1; i< m_trail.size(); ++i ) {
-                    m_trail.pop_back();
-            }
-        }
-    }
-}
-
 bool PositionMarker::render( GeoPainter *painter,
                            ViewportParams *viewport,
                            const QString& renderPos,
                            GeoSceneLayer * layer )
 {
+    Q_UNUSED( renderPos )
     Q_UNUSED( layer )
+
     bool const gpsActive = marbleModel()->positionTracking()->positionProviderPlugin() != 0;
-    if ( gpsActive && renderPosition().contains(renderPos) )
-    {
+    if ( gpsActive ) {
         m_lastBoundingBox = viewport->viewLatLonAltBox();
-        update( viewport );
+
+        if( m_currentPosition != m_previousPosition ) {
+            qreal screenPositionX, screenPositionY;
+            viewport->screenCoordinates( m_currentPosition, screenPositionX, screenPositionY );
+            const GeoDataCoordinates top( m_currentPosition.longitude(), m_currentPosition.latitude()+0.1 );
+            qreal screenTopX, screenTopY;
+            viewport->screenCoordinates( top, screenTopX, screenTopY );
+            qreal const correction = -90.0 + RAD2DEG * atan2( screenPositionY -screenTopY, screenPositionX - screenTopX );
+            const qreal rotation = m_heading + correction;
+
+            if ( m_useCustomCursor ) {
+                QTransform transform;
+                transform.rotate( rotation );
+                bool const highQuality = painter->mapQuality() == HighQuality || painter->mapQuality() == PrintQuality;
+                Qt::TransformationMode const mode = highQuality ? Qt::SmoothTransformation : Qt::FastTransformation;
+                m_customCursorTransformed = m_customCursor.transformed( transform, mode );
+            } else {
+                // Calculate the scaled arrow shape
+                const QPointF baseX( m_cursorSize, 0.0 );
+                const QPointF baseY( 0.0, m_cursorSize );
+                const QPointF relativeLeft  = - ( baseX * 9 ) + ( baseY * 9 );
+                const QPointF relativeRight =   ( baseX * 9 ) + ( baseY * 9 );
+                const QPointF relativeTip   = - ( baseY * 19.0 );
+                m_arrow = QPolygonF() << QPointF( 0.0, 0.0 ) << relativeLeft << relativeTip << relativeRight;
+
+                // Rotate the shape according to the current direction and move it to the screen center
+                QMatrix transformation;
+                transformation.translate( screenPositionX, screenPositionY );
+                transformation.rotate( rotation );
+                m_arrow = m_arrow * transformation;
+
+                m_dirtyRegion = QRegion();
+                m_dirtyRegion += ( m_arrow.boundingRect().toRect() );
+                m_dirtyRegion += ( m_previousArrow.boundingRect().toRect() );
+            }
+
+        }
+
         painter->save();
-        painter->autoMapQuality();
 
         GeoDataAccuracy accuracy = marbleModel()->positionTracking()->accuracy();
         if ( accuracy.horizontal > 0 && accuracy.horizontal < 1000 ) {
@@ -248,49 +227,42 @@ bool PositionMarker::render( GeoPainter *painter,
                 width = qMax<int>( width, arrowSize + 10 );
             }
 
-            painter->setBrush( m_acColor );
+            painter->setBrush( m_accuracyColor );
             painter->drawEllipse( m_currentPosition, width, width );
         }
 
         // Draw trail if requested.
         if( m_showTrail ) {
             painter->save();
+
             // Use selected color to draw trail.
             painter->setBrush( m_trailColor );
             painter->setPen( m_trailColor );
-            QRectF trailRect;
-            QPointF trailPoint;
-            float opacity = 1.0;
+
             // we don't draw m_trail[0] which is current position
             for( int i = 1; i < m_trail.size(); ++i ) {
                 // Get screen coordinates from coordinates on the map.
-                viewport->screenCoordinates( m_trail[i], trailPoint );
-                int size = ( sm_numTrailPoints - i ) * 3;
-                trailRect.setX( trailPoint.x() - size / 2.0 );
-                trailRect.setY( trailPoint.y() - size / 2.0 );
+                qreal trailPointX, trailPointY;
+                viewport->screenCoordinates( m_trail[i], trailPointX, trailPointY );
+
+                const int size = ( sm_numTrailPoints - i ) * 3;
+                QRectF trailRect;
+                trailRect.setX( trailPointX - size / 2.0 );
+                trailRect.setY( trailPointY - size / 2.0 );
                 trailRect.setWidth( size );
                 trailRect.setHeight( size );
+
+                const qreal opacity = 1.0 - 0.15 * ( i - 1 );
                 painter->setOpacity( opacity );
                 painter->drawEllipse( trailRect );
-                opacity -= 0.15;
             }
+
             painter->restore();
         }
 
         if( m_useCustomCursor)
         {
-            QRect rect = m_arrow.boundingRect().toRect();
-            if( rect.isValid() )
-            {
-                QTransform transform;
-                transform.translate( -m_customCursor.width() / 2, -m_customCursor.height() / 2 );
-                transform.rotateRadians( m_heading );
-                transform.translate( m_customCursor.width() / 2, m_customCursor.height() / 2 );
-                if( painter->mapQuality() == HighQuality || painter->mapQuality() == PrintQuality )
-                    painter->drawPixmap( rect.topLeft(), m_customCursor.transformed( transform, Qt::SmoothTransformation ) );
-                else
-                    painter->drawPixmap( rect.topLeft(), m_customCursor.transformed( transform ) );
-            }
+            painter->drawPixmap( m_currentPosition, m_customCursorTransformed );
         }
         else
         {
@@ -307,36 +279,36 @@ bool PositionMarker::render( GeoPainter *painter,
 
 QHash<QString,QVariant> PositionMarker::settings() const
 {
-    return m_settings;
+    QHash<QString, QVariant> settings = RenderPlugin::settings();
+
+    settings.insert( "useCustomCursor", m_useCustomCursor );
+    settings.insert( "cursorPath", m_cursorPath );
+    settings.insert( "cursorSize", m_cursorSize );
+    settings.insert( "acColor", m_accuracyColor );
+    settings.insert( "trailColor", m_trailColor );
+    settings.insert( "showTrail", m_showTrail );
+
+    return settings;
 }
 
-void PositionMarker::setSettings( QHash<QString,QVariant> settings )
+void PositionMarker::setSettings( const QHash<QString, QVariant> &settings )
 {
-    if ( !settings.contains( "useCustomCursor" ) ) {
-        settings.insert( "useCustomCursor", false );
-    }
-    if ( !settings.contains( "cursorPath" ) ) {
-        settings.insert( "cursorPath", m_defaultCursorPath );
-    }
-    if ( !settings.contains( "cursorSize" ) ) {
-        settings.insert( "cursorSize", 1.0 );
-    }
-    if( !settings.contains( "acColor" ) ) {
-        QColor defaultColor = oxygenBrickRed4;
-        bool const smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
-        defaultColor.setAlpha( smallScreen ? 80 : 40 );
-        settings.insert( "acColor", defaultColor );
-    }
-    if( !settings.contains( "trailColor" ) ) {
-        settings.insert( "trailColor", QColor( 0, 0, 255 ) );
-    }
-    if( !settings.contains( "showTrail" ) ) {
-        settings.insert( "showTrail", false );
-    }
+    RenderPlugin::setSettings( settings );
 
-    m_settings = settings;
+    const bool smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
+    QColor defaultColor = Oxygen::brickRed4;
+    defaultColor.setAlpha( smallScreen ? 80 : 40 );
+
+    m_useCustomCursor = settings.value( "useCustomCursor", false ).toBool();
+    m_cursorPath = settings.value( "cursorPath", m_defaultCursorPath ).toString();
+    m_cursorSize = settings.value( "cursorSize", 1.0 ).toFloat();
+    loadCustomCursor( m_cursorPath, m_useCustomCursor );
+
+    m_accuracyColor = settings.value( "acColor", defaultColor ).value<QColor>();
+    m_trailColor = settings.value( "trailColor", QColor( 0, 0, 255 ) ).value<QColor>();
+    m_showTrail = settings.value( "showTrail", false ).toBool();
+
     readSettings();
-    emit settingsChanged( nameId() );
 }
 
 void PositionMarker::readSettings()
@@ -345,13 +317,13 @@ void PositionMarker::readSettings()
         return;
     }
 
-    if( m_settings.value( "useCustomCursor" ).toBool() )
+    if( m_useCustomCursor )
         ui_configWidget->m_customCursor->click();
     else
         ui_configWidget->m_originalCursor->click();
 
     bool found = false;
-    float cursorSize = m_settings.value( "cursorSize" ).toFloat();
+    float cursorSize = m_cursorSize;
     for( int i = 0; i < sm_numResizeSteps && !found; i++ )
     {
         if( sm_resizeSteps[i] == cursorSize )
@@ -368,12 +340,12 @@ void PositionMarker::readSettings()
 
     ui_configWidget->m_sizeLabel->setText( tr( "Cursor Size: %1" ).arg( cursorSize ) );
     QPalette palette = ui_configWidget->m_acColorChooserButton->palette();
-    palette.setColor( QPalette::Button, QColor( m_settings.value( "acColor" ).value<QColor>()) );
+    palette.setColor( QPalette::Button, m_accuracyColor );
     ui_configWidget->m_acColorChooserButton->setPalette( palette );
     palette = ui_configWidget->m_trailColorChooserButton->palette();
-    palette.setColor( QPalette::Button, QColor( m_settings.value( "trailColor" ).value<QColor>()) );
+    palette.setColor( QPalette::Button, m_trailColor );
     ui_configWidget->m_trailColorChooserButton->setPalette( palette );
-    ui_configWidget->m_trailCheckBox->setChecked( m_settings.value( "showTrail" ).toBool() );
+    ui_configWidget->m_trailCheckBox->setChecked( m_showTrail );
 }
 
 void PositionMarker::writeSettings()
@@ -382,31 +354,26 @@ void PositionMarker::writeSettings()
         return;
     }
 
-    m_settings.insert( "useCustomCursor", ui_configWidget->m_customCursor->isChecked() );
-    m_settings.insert( "cursorPath", m_cursorPath );
-    m_settings.insert( "cursorSize", sm_resizeSteps[ui_configWidget->m_resizeSlider->value()] );
-    m_settings.insert( "acColor", m_acColor );
-    m_settings.insert( "trailColor", m_trailColor );
-    m_settings.insert( "showTrail", ui_configWidget->m_trailCheckBox->isChecked() );
+    m_useCustomCursor = ui_configWidget->m_customCursor->isChecked();
+    m_cursorPath = m_cursorPath;
+    m_cursorSize = sm_resizeSteps[ui_configWidget->m_resizeSlider->value()];
+    m_accuracyColor = m_accuracyColor;
+    m_trailColor = m_trailColor;
+    m_showTrail = ui_configWidget->m_trailCheckBox->isChecked();
 
     emit settingsChanged( nameId() );
-}
-
-void PositionMarker::updateSettings()
-{
-    m_useCustomCursor = m_settings.value( "useCustomCursor" ).toBool();
-    m_cursorPath = m_settings.value( "cursorPath" ).toString();
-    m_cursorSize =  m_settings.value( "cursorSize" ).toFloat();
-    loadCustomCursor( m_cursorPath, m_useCustomCursor );
-    m_acColor = m_settings.value( "acColor" ).value<QColor>();
-    m_trailColor = m_settings.value( "trailColor" ).value<QColor>();
-    m_showTrail = m_settings.value( "showTrail" ).toBool();
 }
 
 void PositionMarker::setPosition( const GeoDataCoordinates &position )
 {
     m_previousPosition = m_currentPosition;
     m_currentPosition = position;
+    m_heading = marbleModel()->positionTracking()->direction();
+    // Update the trail
+    m_trail.push_front( m_currentPosition );
+    for( int i = sm_numTrailPoints + 1; i< m_trail.size(); ++i ) {
+            m_trail.pop_back();
+    }
     if ( m_lastBoundingBox.contains( m_currentPosition ) )
     {
         emit repaintNeeded( m_dirtyRegion );
@@ -436,8 +403,8 @@ void PositionMarker::loadCustomCursor( const QString& filename, bool useCursor )
     }
     else
     {
-        QMessageBox::warning( NULL, tr( "Position Marker Plugin" ), tr( "Unable to load custom cursor, default cursor will be used. "
-                                                       "Make sure this is a valid image file." ), QMessageBox::Ok );
+        mDebug() << "Unable to load custom cursor from " << filename << ". "
+                 << "The default cursor will be used instead";
         if ( m_configDialog )
             ui_configWidget->m_fileChooserButton->setIcon( QIcon( m_defaultCursor ) );
         m_customCursor = m_defaultCursor;
@@ -454,7 +421,7 @@ void PositionMarker::chooseColor()
 {
     QColor initialColor;
     if( sender() == ui_configWidget->m_acColorChooserButton ) {
-        initialColor = m_acColor;
+        initialColor = m_accuracyColor;
     }
     else if( sender() == ui_configWidget->m_trailColorChooserButton ) {
         initialColor = m_trailColor;
@@ -466,9 +433,9 @@ void PositionMarker::chooseColor()
     {
         QPalette palette;
         if( sender() == ui_configWidget->m_acColorChooserButton ) {
-            m_acColor = color;
+            m_accuracyColor = color;
             palette = ui_configWidget->m_acColorChooserButton->palette();
-            palette.setColor( QPalette::Button, m_acColor );
+            palette.setColor( QPalette::Button, m_accuracyColor );
             ui_configWidget->m_acColorChooserButton->setPalette( palette );
         }
         else if( sender() == ui_configWidget->m_trailColorChooserButton ) {

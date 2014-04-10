@@ -28,8 +28,7 @@ public:
                             GeoDataFeature ();
                             GeoDataFeature (const QString& name);
                             GeoDataFeature (const Marble::GeoDataFeature& other);
-    bool                    operator == (const Marble::GeoDataFeature&) const;
-    EnumFeatureId           featureId () const;
+    Marble::EnumFeatureId   featureId () const;
 
     enum GeoDataVisualCategory
     {
@@ -195,19 +194,14 @@ public:
     void                    setStyleUrl (const QString& value);
     bool                    isVisible () const;
     void                    setVisible (bool value);
-    Marble::GeoDataStyle*   style () const;
-    void                    setStyle (Marble::GeoDataStyle* style);
+    const Marble::GeoDataStyle*  style () const;
     Marble::GeoDataFeature::GeoDataVisualCategory  visualCategory () const;
     void                    setVisualCategory (Marble::GeoDataFeature::GeoDataVisualCategory category);
 //ig    const QChar             role () const;
-    int                     popularityIndex () const;
-    void                    setPopularityIndex (int index);
     qint64                  popularity () const;
     void                    setPopularity (qint64 popularity);
-    Marble::GeoDataStyleMap*  styleMap () const;
-    void                    setStyleMap (Marble::GeoDataStyleMap* map);
+    const Marble::GeoDataStyleMap*  styleMap () const;
     const QSize             symbolSize () const;
-    const QPixmap           symbolPixmap () const;
     static void             resetDefaultStyles ();
     virtual void            pack (QDataStream& stream) const;
     virtual void            unpack (QDataStream& stream);
@@ -224,15 +218,25 @@ public:
 protected:
 //ig                            GeoDataFeature (GeoDataFeaturePrivate* priv);
 public:
-    Marble::GeoDataAbstractView  abstractView () const;
-    void                    setAbstractView (const Marble::GeoDataAbstractView& abstractView);
 //ig    Marble::GeoDataTimeSpan&  timeSpan () const;
 //ig    GeoDataTimeStamp&       timeStamp () const;
-//ig    void                    setTimeStamp (GeoDataTimeStamp timeStamp);
 //ig    GeoDataExtendedData&    extendedData () const;
 //ig    void                    setExtendedData (const GeoDataExtendedData& extendedData);
     void                    setRole (const QString& role);
-//ig    void                    setTimeSpan (GeoDataTimeSpan timeSpan);
+    static Marble::GeoDataFeature::GeoDataVisualCategory  OsmVisualCategory (const QString& keyValue);
+    bool                    isGloballyVisible () const;
+    const QImage            symbol () const;
+    int                     zoomLevel () const;
+    void                    setZoomLevel (int index);
+    static QColor           defaultLabelColor ();
+    static void             setDefaultLabelColor (const QColor& color);
+    void                    setStyleMap (const Marble::GeoDataStyleMap* map);
+    const Marble::GeoDataAbstractView*  abstractView () const;
+//ig    Marble::GeoDataAbstractView*  abstractView ();
+    void                    setAbstractView (Marble::GeoDataAbstractView* abstractView);
+    void                    setTimeSpan (const Marble::GeoDataTimeSpan& timeSpan);
+    void                    setTimeStamp (const Marble::GeoDataTimeStamp& timeStamp);
+    void                    setStyle (Marble::GeoDataStyle* style);
 };
 // GeoDataFeature
 

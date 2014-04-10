@@ -27,20 +27,23 @@
 #include <AbstractFloatItem.h>
 #include <AbstractWorkerThread.h>
 #include <routing/AlternativeRoutesModel.h>
+#include <AutoNavigation.h>
 #include <BookmarkManager.h>
 #include <CurrentLocationWidget.h>
+#include <DownloadRegion.h>
 #include <DownloadRegionDialog.h>
 #include <ElevationModel.h>
 #include <FileViewWidget.h>
+#include <GeoDataTreeModel.h>
 #include <GeoGraphicsScene.h>
 #include <LatLonBoxWidget.h>
 #include <LatLonEdit.h>
 #include <LegendWidget.h>
+#include <MapThemeDownloadDialog.h>
 #include <MapThemeManager.h>
 #include <MapViewWidget.h>
 #include <MapWizard.h>
 #include <MarbleAboutDialog.h>
-#include <MarbleAbstractRunner.h>
 #include <MarbleControlBox.h>
 #include <MarbleMap.h>
 #include <MarbleModel.h>
@@ -48,13 +51,20 @@
 #include <MarbleRunnerManager.h>
 #include <MarbleWidget.h>
 #include <NavigationWidget.h>
+#include <ParseRunnerPlugin.h>
+#include <ParsingRunner.h>
 #include <PluginAboutDialog.h>
 #include <PositionTracking.h>
 #include <QtMarbleConfigDialog.h>
 #include <RenderPlugin.h>
+#include <ReverseGeocodingRunner.h>
+#include <ReverseGeocodingRunnerPlugin.h>
 #include <routing/RouteRequest.h>
 #include <routing/RoutingModel.h>
-#include <RunnerPlugin.h>
+#include <RoutingRunner.h>
+#include <RoutingRunnerPlugin.h>
+#include <SearchRunner.h>
+#include <SearchRunnerPlugin.h>
 #include <SunLocator.h>
 #include <TileCreator.h>
 #include <TileLevelRangeWidget.h>
@@ -81,7 +91,6 @@ public:
     void                    setAddedAngularResolution (qreal resolution);
     virtual QAction*        action ()=0;
     virtual QString         itemType () const=0;
-    virtual bool            initialized ()=0;
     virtual void            addDownloadedFile (const QString& url, const QString& type)=0;
 //ig    virtual bool            operator < (const Marble::AbstractDataPluginItem* other) const;
 
@@ -96,22 +105,28 @@ public:
         sipType = sipType_Marble_AbstractDataPluginItem;
     else if (dynamic_cast<Marble::AbstractDataPluginModel*>(sipCpp))
         sipType = sipType_Marble_AbstractDataPluginModel;
+    else if (dynamic_cast<Marble::AutoNavigation*>(sipCpp))
+        sipType = sipType_Marble_AutoNavigation;
     else if (dynamic_cast<Marble::BookmarkManager*>(sipCpp))
         sipType = sipType_Marble_BookmarkManager;
+    else if (dynamic_cast<Marble::DownloadRegion*>(sipCpp))
+        sipType = sipType_Marble_DownloadRegion;
     else if (dynamic_cast<Marble::ElevationModel*>(sipCpp))
         sipType = sipType_Marble_ElevationModel;
     else if (dynamic_cast<Marble::GeoGraphicsScene*>(sipCpp))
         sipType = sipType_Marble_GeoGraphicsScene;
     else if (dynamic_cast<Marble::MapThemeManager*>(sipCpp))
         sipType = sipType_Marble_MapThemeManager;
-    else if (dynamic_cast<Marble::MarbleAbstractRunner*>(sipCpp))
-        sipType = sipType_Marble_MarbleAbstractRunner;
     else if (dynamic_cast<Marble::MarbleMap*>(sipCpp))
         sipType = sipType_Marble_MarbleMap;
     else if (dynamic_cast<Marble::MarbleModel*>(sipCpp))
         sipType = sipType_Marble_MarbleModel;
     else if (dynamic_cast<Marble::MarbleRunnerManager*>(sipCpp))
         sipType = sipType_Marble_MarbleRunnerManager;
+    else if (dynamic_cast<Marble::ParseRunnerPlugin*>(sipCpp))
+        sipType = sipType_Marble_ParseRunnerPlugin;
+    else if (dynamic_cast<Marble::ParsingRunner*>(sipCpp))
+        sipType = sipType_Marble_ParsingRunner;
     else if (dynamic_cast<Marble::PositionTracking*>(sipCpp))
         sipType = sipType_Marble_PositionTracking;
     else if (dynamic_cast<Marble::RenderPlugin*>(sipCpp))
@@ -122,12 +137,24 @@ public:
         else if (dynamic_cast<Marble::AbstractFloatItem*>(sipCpp))
             sipType = sipType_Marble_AbstractFloatItem;
         }
+    else if (dynamic_cast<Marble::ReverseGeocodingRunner*>(sipCpp))
+        sipType = sipType_Marble_ReverseGeocodingRunner;
+    else if (dynamic_cast<Marble::ReverseGeocodingRunnerPlugin*>(sipCpp))
+        sipType = sipType_Marble_ReverseGeocodingRunnerPlugin;
     else if (dynamic_cast<Marble::RouteRequest*>(sipCpp))
         sipType = sipType_Marble_RouteRequest;
-    else if (dynamic_cast<Marble::RunnerPlugin*>(sipCpp))
-        sipType = sipType_Marble_RunnerPlugin;
+    else if (dynamic_cast<Marble::RoutingRunner*>(sipCpp))
+        sipType = sipType_Marble_RoutingRunner;
+    else if (dynamic_cast<Marble::RoutingRunnerPlugin*>(sipCpp))
+        sipType = sipType_Marble_RoutingRunnerPlugin;
+    else if (dynamic_cast<Marble::SearchRunner*>(sipCpp))
+        sipType = sipType_Marble_SearchRunner;
+    else if (dynamic_cast<Marble::SearchRunnerPlugin*>(sipCpp))
+        sipType = sipType_Marble_SearchRunnerPlugin;
     else if (dynamic_cast<Marble::SunLocator*>(sipCpp))
         sipType = sipType_Marble_SunLocator;
+    else if (dynamic_cast<Marble::GeoDataTreeModel*>(sipCpp))
+        sipType = sipType_Marble_GeoDataTreeModel;
     else if (dynamic_cast<Marble::AlternativeRoutesModel*>(sipCpp))
         sipType = sipType_Marble_AlternativeRoutesModel;
     else if (dynamic_cast<Marble::RoutingModel*>(sipCpp))
@@ -160,6 +187,8 @@ public:
         sipType = sipType_Marble_TileLevelRangeWidget;
     else if (dynamic_cast<Marble::DownloadRegionDialog*>(sipCpp))
         sipType = sipType_Marble_DownloadRegionDialog;
+    else if (dynamic_cast<Marble::MapThemeDownloadDialog*>(sipCpp))
+        sipType = sipType_Marble_MapThemeDownloadDialog;
     else if (dynamic_cast<Marble::MarbleAboutDialog*>(sipCpp))
         sipType = sipType_Marble_MarbleAboutDialog;
     else if (dynamic_cast<Marble::PluginAboutDialog*>(sipCpp))
@@ -173,11 +202,26 @@ public:
 %End
 
     virtual ~AbstractDataPluginItem ();
-    virtual bool            isGeoProjected ();
 signals:
     void                    updated ();
 public:
     virtual void            setSettings (const QHash<QString,QVariant>& settings);
+    bool                    isFavorite () const;
+    virtual void            setFavorite (bool favorite);
+    virtual QList<QAction*>  actions ();
+signals:
+    void                    favoriteChanged (const QString& id, bool favorite);
+public:
+    void                    toggleFavorite ();
+    QString                 toolTip () const;
+    void                    setToolTip (const QString& toolTip);
+    bool                    isSticky () const;
+    void                    setSticky (bool sticky);
+signals:
+    void                    idChanged ();
+    void                    stickyChanged ();
+public:
+    virtual bool            initialized () const=0;
 };
 // AbstractDataPluginItem
 

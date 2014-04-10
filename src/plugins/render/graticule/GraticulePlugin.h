@@ -15,17 +15,17 @@
 #ifndef MARBLEGRATICULEPLUGIN_H
 #define MARBLEGRATICULEPLUGIN_H
 
-#include <QtCore/QMap>
-#include <QtCore/QObject>
-#include <QtCore/QVector>
-#include <QtCore/QHash>
-#include <QtGui/QPen>
-#include <QtGui/QIcon>
-#include <QtGui/QColorDialog>
-#include <QtGui/QAbstractButton>
+#include <QMap>
+#include <QObject>
+#include <QVector>
+#include <QHash>
+#include <QPen>
+#include <QIcon>
+#include <QColorDialog>
+#include <QAbstractButton>
 
 
-#include "AbstractDataPlugin.h"
+#include "DialogConfigurationInterface.h"
 #include "RenderPlugin.h"
 #include "RenderPluginInterface.h"
 
@@ -51,17 +51,19 @@ class GeoDataLatLonAltBox;
  * on the degree system. 
  */
 
-class PluginAboutDialog;
-
-class GraticulePlugin : public RenderPlugin
+class GraticulePlugin : public RenderPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.GraticulePlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( GraticulePlugin )
 
  public:
     GraticulePlugin();
-    
+
+    explicit GraticulePlugin( const MarbleModel *marbleModel );
+
     QStringList backendTypes() const;
 
     QString renderPolicy() const;
@@ -74,13 +76,17 @@ class GraticulePlugin : public RenderPlugin
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon () const;
 
     QDialog *configDialog();
-
-    QDialog *aboutDialog();
 
     void initialize ();
 
@@ -90,25 +96,19 @@ class GraticulePlugin : public RenderPlugin
 
     virtual qreal zValue() const;
 
-//    QHash<QString,QVariant> settings() const;
-
-//    void setSettings( QHash<QString,QVariant> settings );
-
     virtual QHash<QString,QVariant> settings() const;
 
-    virtual void setSettings( QHash<QString,QVariant> settings );
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
 
 
 
  public Q_SLOTS:
     void readSettings();
     void writeSettings();
-    
+
     void gridGetColor();
     void tropicsGetColor();
     void equatorGetColor();
-    
-    void updateSettings();
 
 
  private:
@@ -146,7 +146,7 @@ class GraticulePlugin : public RenderPlugin
      */
     void renderLongitudeLine( GeoPainter *painter, qreal longitude,                         
                               const GeoDataLatLonAltBox& viewLatLonAltBox = GeoDataLatLonAltBox(),
-                              qreal polarGap = 0.0,
+                              qreal northPolarGap = 0.0, qreal southPolarGap = 0.0,
                               const QString& lineLabel = QString(),
                               LabelPositionFlags labelPositionFlags = LineCenter );
 
@@ -163,11 +163,15 @@ class GraticulePlugin : public RenderPlugin
                             );
 
     /**
-     * @brief Renders the latitude lines that are visible within the defined view bounding box.
+     * @brief Renders the longitude lines that are visible within the defined view bounding box.
      * @param painter the painter used to draw the latitude lines
      * @param viewLatLonAltBox the latitude longitude bounding box that is covered by the view.
      * @param step the angular distance between the lines measured in degrees .
-     * @param polarGap the area around the poles in which most longitude lines are not drawn
+     * @param northPolarGap the area around the north pole in which most longitude lines are not drawn
+     *        for reasons of aesthetics and clarity of the map. The polarGap avoids narrow
+     *        concurring lines around the poles which obstruct the view onto the surface.
+     *        The radius of the polarGap area is measured in degrees.
+     * @param southPolarGap the area around the south pole in which most longitude lines are not drawn
      *        for reasons of aesthetics and clarity of the map. The polarGap avoids narrow
      *        concurring lines around the poles which obstruct the view onto the surface.
      *        The radius of the polarGap area is measured in degrees. 
@@ -175,8 +179,30 @@ class GraticulePlugin : public RenderPlugin
     void renderLongitudeLines( GeoPainter *painter, 
                               const GeoDataLatLonAltBox& viewLatLonAltBox, 
                               qreal step, 
-                              qreal polarGap = 0.0,
+                              qreal northPolarGap = 0.0, qreal southPolarGap = 0.0,
                               LabelPositionFlags labelPositionFlags = LineCenter
+                             );
+
+    /**
+     * @brief Renders UTM exceptions that are visible within the defined view bounding box.
+     * @param painter the painter used to draw the latitude lines
+     * @param viewLatLonAltBox the latitude longitude bounding box that is covered by the view.
+     * @param step the angular distance between the lines measured in degrees .
+     * @param northPolarGap the area around the north pole in which most longitude lines are not drawn
+     *        for reasons of aesthetics and clarity of the map. The polarGap avoids narrow
+     *        concurring lines around the poles which obstruct the view onto the surface.
+     *        The radius of the polarGap area is measured in degrees.
+     * @param southPolarGap the area around the south pole in which most longitude lines are not drawn
+     *        for reasons of aesthetics and clarity of the map. The polarGap avoids narrow
+     *        concurring lines around the poles which obstruct the view onto the surface.
+     *        The radius of the polarGap area is measured in degrees.
+     */
+    void renderUtmExceptions( GeoPainter *painter,
+                              const GeoDataLatLonAltBox& viewLatLonAltBox,
+                              qreal step,
+                              qreal northPolarGap, qreal southPolarGap,
+                              const QString & label,
+                              LabelPositionFlags labelPositionFlags
                              );
 
     /**
@@ -194,17 +220,13 @@ class GraticulePlugin : public RenderPlugin
     QPen m_equatorCirclePen;
     QPen m_tropicsCirclePen;
     QPen m_gridCirclePen;
-    QPen m_shadowPen;
-    
-    QColor m_gridColor, m_tropicsColor, m_equatorColor;
+    bool m_showPrimaryLabels;
+    bool m_showSecondaryLabels;
 
     bool m_isInitialized;
 
-    QHash<QString,QVariant> m_settings;
-
     QIcon m_icon;
-    PluginAboutDialog *m_aboutDialog;
-        
+
     Ui::GraticuleConfigWidget *ui_configWidget;
     QDialog *m_configDialog;
 };

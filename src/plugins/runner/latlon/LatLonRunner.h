@@ -10,21 +10,20 @@
 #ifndef MARBLE_LATLONRUNNER_H
 #define MARBLE_LATLONRUNNER_H
 
-#include "MarbleAbstractRunner.h"
+#include "SearchRunner.h"
 
-#include <QtCore/QString>
+#include <QString>
 
 namespace Marble
 {
 
-class LatLonRunner : public MarbleAbstractRunner
+class LatLonRunner : public SearchRunner
 {
     Q_OBJECT
 public:
-    LatLonRunner(QObject *parent = 0);
+    explicit LatLonRunner(QObject *parent = 0);
     ~LatLonRunner();
-    GeoDataFeature::GeoDataVisualCategory category() const;
-    virtual void search( const QString &searchTerm );
+    virtual void search( const QString &searchTerm, const GeoDataLatLonAltBox &preferred );
 
 };
 

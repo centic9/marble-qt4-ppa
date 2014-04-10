@@ -5,78 +5,153 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010 Utku Aydın <utkuaydin34@gmail.com>
+// Copyright 2010 Utku Aydın        <utkuaydin34@gmail.com>
+// Copyright 2012 Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
 //
 
 #include "OpenDesktopPlugin.h"
 #include "OpenDesktopModel.h"
-#include "PluginAboutDialog.h"
- 
+#include "MarbleWidget.h"
+
+#include "ui_OpenDesktopConfigWidget.h"
+
+#include <QPushButton>
+
 using namespace Marble;
- 
+
 OpenDesktopPlugin::OpenDesktopPlugin()
-    : m_isInitialized(false),
-      m_aboutDialog( 0 )
+    : AbstractDataPlugin( 0 ),
+      m_configDialog( 0 ),
+      m_uiConfigWidget( 0 )
 {
-    setNameId( "opendesktop" );
+}
+
+OpenDesktopPlugin::OpenDesktopPlugin( const MarbleModel *marbleModel )
+    : AbstractDataPlugin( marbleModel ),
+      m_configDialog( 0 ),
+      m_uiConfigWidget( 0 )
+{
     setEnabled( true ); // Plugin is enabled by default
     setVisible( false ); // Plugin is invisible by default
 }
- 
+
 void OpenDesktopPlugin::initialize()
 {
-    setModel( new OpenDesktopModel( pluginManager(), this ) );
-    setNumberOfItems( numberOfItemsOnScreen ); // Setting the number of items on the screen.
-    m_isInitialized = true;
+    setModel( new OpenDesktopModel( marbleModel(), this ) );
+    setNumberOfItems( defaultItemsOnScreen ); // Setting the number of items on the screen.
 }
- 
-bool OpenDesktopPlugin::isInitialized() const
-{
-    return m_isInitialized;
-}
- 
+
 QString OpenDesktopPlugin::name() const
 {
     return tr( "OpenDesktop Items" );
 }
- 
+
 QString OpenDesktopPlugin::guiString() const
 {
     return tr( "&OpenDesktop Community" );
+}
+
+QString OpenDesktopPlugin::nameId() const
+{
+    return "opendesktop";
+}
+
+QString OpenDesktopPlugin::version() const
+{
+    return "1.0";
 }
 
 QString OpenDesktopPlugin::description() const
 {
     return tr( "Shows OpenDesktop users' avatars and some extra information about them on the map." );
 }
- 
-QIcon OpenDesktopPlugin::icon() const
+
+QString OpenDesktopPlugin::copyrightYears() const
 {
-    return QIcon();
+    return "2010";
 }
 
-QDialog *OpenDesktopPlugin::aboutDialog()
+QList<PluginAuthor> OpenDesktopPlugin::pluginAuthors() const
 {
-    if ( !m_aboutDialog ) {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "OpenDesktop Plugin" );
-        m_aboutDialog->setVersion( "0.1" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2010 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        
-        QList<Author> authors;
-        Author utku;
-        utku.name = QString::fromUtf8( "Utku Aydın" );
-        utku.task = tr( "Developer" );
-        utku.email = "utkuaydin34@gmail.com";
-        authors.append( utku );
-        m_aboutDialog->setAuthors( authors );
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Utku Aydin" ), "utkuaydin34@gmail.com" );
+}
+
+QIcon OpenDesktopPlugin::icon() const
+{
+    return QIcon(":/icons/social.png");
+}
+
+QDialog *OpenDesktopPlugin::configDialog()
+{
+    if ( !m_configDialog ) {
+        m_configDialog = new QDialog();
+        m_uiConfigWidget = new Ui::OpenDesktopConfigWidget;
+        m_uiConfigWidget->setupUi( m_configDialog );
+        readSettings();
+
+        connect( m_uiConfigWidget->m_buttonBox, SIGNAL(accepted()),
+                SLOT(writeSettings()) );
+        connect( m_uiConfigWidget->m_buttonBox, SIGNAL(rejected()),
+                SLOT(readSettings()) );
+        QPushButton *applyButton = m_uiConfigWidget->m_buttonBox->button( 
+                                                         QDialogButtonBox::Apply );
+        connect( applyButton, SIGNAL(clicked()),
+                 this,        SLOT(writeSettings()) );
     }
-    return m_aboutDialog;
+
+    return m_configDialog;
+}
+
+QHash<QString,QVariant> OpenDesktopPlugin::settings() const
+{
+    QHash<QString, QVariant> settings = AbstractDataPlugin::settings();
+
+    settings.insert( "itemsOnScreen", numberOfItems() );
+
+    return settings;
+}
+
+bool OpenDesktopPlugin::eventFilter(QObject *object, QEvent *event)
+{
+    if ( isInitialized() ) {
+        OpenDesktopModel *odModel = qobject_cast<OpenDesktopModel*>( model() );
+        Q_ASSERT(odModel);
+        MarbleWidget* widget = qobject_cast<MarbleWidget*>( object );
+        if ( widget ) {
+            odModel->setMarbleWidget(widget);
+        }
+    }
+
+    return AbstractDataPlugin::eventFilter( object, event );
+}
+
+void OpenDesktopPlugin::setSettings( const QHash<QString,QVariant> &settings )
+{
+    AbstractDataPlugin::setSettings( settings );
+
+    setNumberOfItems( settings.value( "itemsOnScreen", defaultItemsOnScreen ).toInt() );
+
+    emit settingsChanged( nameId() );
+}
+
+void OpenDesktopPlugin::readSettings()
+{
+    if ( m_uiConfigWidget ) {
+        m_uiConfigWidget->m_itemsOnScreenSpin->setValue( numberOfItems() );
+    }
+}
+
+void OpenDesktopPlugin::writeSettings()
+{
+    if ( m_uiConfigWidget ) {
+        setNumberOfItems( m_uiConfigWidget->m_itemsOnScreenSpin->value() );
+    }
+
+    emit settingsChanged( nameId() );
 }
 
 // Because we want to create a plugin, we have to do the following line.
 Q_EXPORT_PLUGIN2( OpenDesktopPlugin, Marble::OpenDesktopPlugin )
- 
+
 #include "OpenDesktopPlugin.moc"

@@ -10,7 +10,6 @@
 
 #include "YoursRunner.h"
 
-#include "MarbleAbstractRunner.h"
 #include "MarbleDebug.h"
 #include "MarbleLocale.h"
 #include "GeoDataDocument.h"
@@ -18,26 +17,27 @@
 #include "TinyWebBrowser.h"
 #include "GeoDataParser.h"
 #include "GeoDataFolder.h"
+#include "routing/RouteRequest.h"
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtCore/QUrl>
-#include <QtCore/QTime>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtXml/QDomDocument>
-#include <QtCore/QBuffer>
-#include <QtCore/QTimer>
+#include <QString>
+#include <QVector>
+#include <QUrl>
+#include <QTime>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QDomDocument>
+#include <QBuffer>
+#include <QTimer>
 
 namespace Marble
 {
 
 YoursRunner::YoursRunner( QObject *parent ) :
-        MarbleAbstractRunner( parent ),
-        m_networkAccessManager( new QNetworkAccessManager( this ) )
+        RoutingRunner( parent ),
+        m_networkAccessManager()
 {
-    connect( m_networkAccessManager, SIGNAL( finished( QNetworkReply* ) ),
-             this, SLOT( retrieveData( QNetworkReply* ) ) );
+    connect( &m_networkAccessManager, SIGNAL(finished(QNetworkReply*)),
+             this, SLOT(retrieveData(QNetworkReply*)) );
 }
 
 YoursRunner::~YoursRunner()
@@ -45,14 +45,9 @@ YoursRunner::~YoursRunner()
     // nothing to do
 }
 
-GeoDataFeature::GeoDataVisualCategory YoursRunner::category() const
-{
-    return GeoDataFeature::OsmSite;
-}
-
 void YoursRunner::retrieveRoute( const RouteRequest *route )
 {
-    if ( route->size() < 2 ) {
+    if ( route->size() != 2 ) {
         return;
     }
 
@@ -77,20 +72,27 @@ void YoursRunner::retrieveRoute( const RouteRequest *route )
 
     QEventLoop eventLoop;
 
-    connect( this, SIGNAL( routeCalculated( GeoDataDocument* ) ),
-             &eventLoop, SLOT( quit() ) );
+    QTimer timer;
+    timer.setSingleShot( true );
+    timer.setInterval( 15000 );
+
+    connect( &timer, SIGNAL(timeout()),
+             &eventLoop, SLOT(quit()));
+    connect( this, SIGNAL(routeCalculated(GeoDataDocument*)),
+             &eventLoop, SLOT(quit()) );
 
     // @todo FIXME Must currently be done in the main thread, see bug 257376
-    QTimer::singleShot( 0, this, SLOT( get() ) );
+    QTimer::singleShot( 0, this, SLOT(get()) );
+    timer.start();
 
     eventLoop.exec();
 }
 
 void YoursRunner::get()
 {
-    QNetworkReply *reply = m_networkAccessManager->get( m_request );
-    connect( reply, SIGNAL( error( QNetworkReply::NetworkError ) ),
-             this, SLOT( handleError( QNetworkReply::NetworkError ) ) );
+    QNetworkReply *reply = m_networkAccessManager.get( m_request );
+    connect( reply, SIGNAL(error(QNetworkReply::NetworkError)),
+             this, SLOT(handleError(QNetworkReply::NetworkError)) );
 }
 
 void YoursRunner::retrieveData( QNetworkReply *reply )
@@ -102,7 +104,7 @@ void YoursRunner::retrieveData( QNetworkReply *reply )
         GeoDataDocument* result = parse( data );
         if ( result ) {
             QString name = "%1 %2 (Yours)";
-            QString unit = "m";
+            QString unit = QLatin1String( "m" );
             qreal length = distance( result );
             if ( length == 0.0 ) {
                 delete result;
@@ -146,9 +148,9 @@ qreal YoursRunner::distance( const GeoDataDocument* document ) const
     QVector<GeoDataFolder*> folders = document->folderList();
     foreach( const GeoDataFolder *folder, folders ) {
         foreach( const GeoDataPlacemark *placemark, folder->placemarkList() ) {
-            GeoDataGeometry* geometry = placemark->geometry();
+            const GeoDataGeometry* geometry = placemark->geometry();
             if ( geometry->geometryId() == GeoDataLineStringId ) {
-                GeoDataLineString* lineString = dynamic_cast<GeoDataLineString*>( geometry );
+                const GeoDataLineString* lineString = dynamic_cast<const GeoDataLineString*>( geometry );
                 Q_ASSERT( lineString && "Internal error: geometry ID does not match class type" );
                 return lineString->length( EARTH_RADIUS );
             }

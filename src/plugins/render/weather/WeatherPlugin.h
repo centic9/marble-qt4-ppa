@@ -12,9 +12,10 @@
 #define WEATHERPLUGIN_H
 
 #include "AbstractDataPlugin.h"
+#include "DialogConfigurationInterface.h"
 
 // Qt
-#include <QtCore/QHash>
+#include <QHash>
 
 class QIcon;
 
@@ -26,52 +27,64 @@ namespace Ui
 namespace Marble
 {
 
-class PluginAboutDialog;
-
-class WeatherPlugin : public AbstractDataPlugin
+class WeatherPlugin : public AbstractDataPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.WeatherPlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( WeatherPlugin )
     
  public:
     WeatherPlugin();
-    
+
+    explicit WeatherPlugin( const MarbleModel *marbleModel );
+
     ~WeatherPlugin();
     
     void initialize();
 
-    bool isInitialized() const;
-    
     QString name() const;
     
     QString guiString() const;
-    
-    QString description() const;
-    
-    QIcon icon() const;
 
-    QDialog *aboutDialog();
+    QString nameId() const;
+    
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QString aboutDataText() const;
+
+    QIcon icon() const;
 
     QDialog *configDialog();
 
     QHash<QString,QVariant> settings() const;
 
-    void setSettings( QHash<QString,QVariant> settings );
+    void setSettings( const QHash<QString,QVariant> &settings );
+
+protected:
+    bool eventFilter(QObject *object, QEvent *event);
 
  private Q_SLOTS:
     void readSettings();
     void writeSettings();
     void updateItemSettings();
+    void favoriteItemsChanged( const QStringList& favoriteItems );
     
  Q_SIGNALS:
     void changedSettings();
 
  private:
-    bool m_isInitialized;
+    void updateSettings();
 
-    QIcon m_icon;
-    PluginAboutDialog *m_aboutDialog;
+    quint32 m_updateInterval;
+    const QIcon m_icon;
     QDialog * m_configDialog;
     Ui::WeatherConfigWidget * ui_configWidget;
 

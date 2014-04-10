@@ -1,3 +1,13 @@
+//
+// This file is part of the Marble Virtual Globe.
+//
+// This program is free software licensed under the GNU LGPL. You can
+// find a copy of this license in LICENSE.txt in the top directory of
+// the source code.
+//
+// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+//
+
 import Qt 4.7
 import org.kde.edu.marble 0.11
 
@@ -77,7 +87,8 @@ Rectangle {
             height: 400
             activeRenderPlugins: [ "navigation", "scalebar" ]
 
-            search {
+            property Search search: Search {
+                map: map
                 placemarkDelegate: myDelegate
             }
         }
@@ -100,7 +111,7 @@ Rectangle {
                     height: parent.height
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     color: "white"
-                    text: hit
+                    text: index+1
                     horizontalAlignment: Text.AlignHCenter
                 }
 
@@ -125,7 +136,7 @@ Rectangle {
                         y: 5
                         width: parent.width - 20
                         height: parent.height - 10
-                        text: name
+                        text: display
                         wrapMode: "WrapAtWordBoundaryOrAnywhere"
                         clip: true
                     }

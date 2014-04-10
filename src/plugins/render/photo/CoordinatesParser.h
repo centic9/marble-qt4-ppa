@@ -11,7 +11,7 @@
 #ifndef COORDINATESPARSER_H
 #define COORDINATESPARSER_H
 
-#include <QtCore/QXmlStreamReader>
+#include <QXmlStreamReader>
 
 class QIODevice;
 
@@ -23,7 +23,7 @@ class GeoDataCoordinates;
 class CoordinatesParser : public QXmlStreamReader
 {
 public:
-    CoordinatesParser( GeoDataCoordinates *coordinates );
+    explicit CoordinatesParser( GeoDataCoordinates *coordinates );
 
     bool read( QIODevice *device );
 
