@@ -1,0 +1,107 @@
+From 1b02b31c72702d685e92bf07e127dd7200d128d3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Dennis=20Nienh=C3=BCser?= <earthwings@gentoo.org>
+Date: Tue, 29 Jul 2014 20:34:32 +0200
+Subject: [PATCH] Revert "Fix loading of relative local resources in popup
+ dialog"
+
+Not ABI compatible. Thanks to Nicolas Alvarez for reporting.
+
+This reverts commit 459a1c83100de62069405ab838a5c81647e82c6c.
+---
+ src/lib/marble/PopupItem.cpp         | 7 +++----
+ src/lib/marble/PopupItem.h           | 3 +--
+ src/lib/marble/layers/PopupLayer.cpp | 8 +++-----
+ src/lib/marble/layers/PopupLayer.h   | 2 +-
+ 4 files changed, 8 insertions(+), 12 deletions(-)
+
+diff --git a/src/lib/marble/PopupItem.cpp b/src/lib/marble/PopupItem.cpp
+index 22f508c..c07e083 100644
+--- a/src/lib/marble/PopupItem.cpp
++++ b/src/lib/marble/PopupItem.cpp
+@@ -103,11 +103,10 @@ void PopupItem::setUrl( const QUrl &url )
+     requestUpdate();
+ }
+ 
+-void PopupItem::setContent( const QString &html, const QUrl &baseUrl )
++void PopupItem::setContent( const QString &html )
+ {
+     m_content = html;
+-    m_baseUrl = baseUrl;
+-    m_ui.webView->setHtml( html, baseUrl );
++    m_ui.webView->setHtml( html );
+ 
+     requestUpdate();
+ }
+@@ -359,7 +358,7 @@ void PopupItem::updateBackButton()
+ void PopupItem::goBack()
+ {
+     if ( m_ui.webView->history()->currentItemIndex() == 1 && !m_content.isEmpty() ) {
+-        m_ui.webView->setHtml( m_content, m_baseUrl );
++        m_ui.webView->setHtml( m_content );
+     } else {
+         m_ui.webView->back();
+     }
+diff --git a/src/lib/marble/PopupItem.h b/src/lib/marble/PopupItem.h
+index 173b4d9..a52aa74 100644
+--- a/src/lib/marble/PopupItem.h
++++ b/src/lib/marble/PopupItem.h
+@@ -89,7 +89,7 @@ public:
+      *
+      * @param html custom html for popup
+      */
+-    void setContent( const QString &html, const QUrl & baseUrl = QUrl() );
++    void setContent( const QString &html );
+ 
+     /**
+      * @brief Sets text color of the header
+@@ -177,7 +177,6 @@ private:
+     QColor m_textColor;
+     QColor m_backColor;
+     bool m_needMouseRelease;
+-    QUrl m_baseUrl;
+ };
+ 
+ }
+diff --git a/src/lib/marble/layers/PopupLayer.cpp b/src/lib/marble/layers/PopupLayer.cpp
+index 018bfbd..bb5eb21 100644
+--- a/src/lib/marble/layers/PopupLayer.cpp
++++ b/src/lib/marble/layers/PopupLayer.cpp
+@@ -122,9 +122,9 @@ void PopupLayer::setUrl( const QUrl &url )
+     m_popupItem->setUrl( url );
+ }
+ 
+-void PopupLayer::setContent( const QString &html, const QUrl &baseUrl )
++void PopupLayer::setContent( const QString &html )
+ {
+-    m_popupItem->setContent( html, baseUrl );
++    m_popupItem->setContent( html );
+     emit repaintNeeded();
+ }
+ 
+@@ -170,9 +170,7 @@ void PopupLayer::setPlacemark( const GeoDataPlacemark *placemark )
+         // @TODO: implement the line calculation, so that snippet().maxLines actually has effect.
+         content = content.replace("$[snippet]", placemark->snippet().text(), Qt::CaseInsensitive);
+         content = content.replace("$[id]", QString::number(placemark->id()), Qt::CaseInsensitive);
+-        QString const basePath = placemark->resolvePath(".");
+-        QUrl const baseUrl = basePath != "." ? QUrl::fromLocalFile( basePath + "/" ) : QUrl();
+-        m_popupItem->setContent(content, baseUrl );
++        m_popupItem->setContent(content);
+     }
+     m_popupItem->setBackgroundColor(placemark->style()->balloonStyle().backgroundColor());
+     m_popupItem->setTextColor(placemark->style()->balloonStyle().textColor());
+diff --git a/src/lib/marble/layers/PopupLayer.h b/src/lib/marble/layers/PopupLayer.h
+index b426b88..ed74503 100644
+--- a/src/lib/marble/layers/PopupLayer.h
++++ b/src/lib/marble/layers/PopupLayer.h
+@@ -127,7 +127,7 @@ public:
+      *
+      * @param html content (in html format)
+      */
+-    void setContent( const QString &html, const QUrl & baseUrl = QUrl() );
++    void setContent( const QString &html );
+ 
+     /**
+      * @brief Sets style and content of the browser
+-- 
+2.0.1
+

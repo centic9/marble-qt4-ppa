@@ -1,3 +1,37 @@
+marble (4:4.13.3-0ubuntu0.1) trusty; urgency=medium
+
+  * New upstream bugfix release (LP: #1349296)
+  * Add upstream_1b02b31c72702d685e92bf07e127dd7200d128d3.diff which reverts
+    ABI breakage
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Mon, 04 Aug 2014 20:36:31 +0200
+
+marble (4:4.13.2-0ubuntu0.1) trusty; urgency=medium
+
+  * New upstream bugfix release (LP: #1327591)
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Wed, 18 Jun 2014 12:53:46 +0200
+
+marble (4:4.13.1-0ubuntu0.1) trusty; urgency=medium
+
+  * New upstream bugfix release (LP: #1318142)
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Wed, 04 Jun 2014 16:55:35 +0200
+
+marble (4:4.13.0-0ubuntu1.1) trusty; urgency=medium
+
+  * Don't show marble-mobile desktop entry by setting Hidden=true to mark it
+    as deleted. This change is necessary because both marble and marble-mobile
+    ended up in the same package and provide equally named desktop entries
+    resulting in confusion over which marble is going to be started.
+    Should marble-mobile get a fixed desktop UI in a future patch release we
+    can look into splitting the packages properly to provide easy access to
+    marble-mobile.
+    The property is set through kubuntu_hide_marble_mobile.diff
+    LP: #1312104
+
+ -- Harald Sitter <apachelogger@kubuntu.org>  Fri, 25 Apr 2014 16:40:21 +0200
+
 marble (4:4.13.0-0ubuntu1) trusty; urgency=medium
 
   * New upstream KDE Software Compilation release

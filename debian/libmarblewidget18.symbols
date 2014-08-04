@@ -1,4 +1,4 @@
-# SymbolsHelper-Confirmed: 4:4.12.80 amd64
+# SymbolsHelper-Confirmed: 4:4.13.3 amd64 i386
 libmarblewidget.so.18 libmarblewidget18 #MINVER#
  _ZN13MarbleWebView11qt_metacallEN11QMetaObject4CallEiPPv@Base 4:4.12.0
  _ZN13MarbleWebView11qt_metacastEPKc@Base 4:4.12.0

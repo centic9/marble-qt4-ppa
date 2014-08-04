@@ -1,0 +1,9 @@
+Index: marble-4.13.0/src/apps/marble-mobile/marble-mobile.desktop
+===================================================================
+--- marble-4.13.0.orig/src/apps/marble-mobile/marble-mobile.desktop	2014-03-31 09:51:15.000000000 +0200
++++ marble-4.13.0/src/apps/marble-mobile/marble-mobile.desktop	2014-04-25 16:43:35.714309047 +0200
+@@ -94,3 +94,4 @@
+ Icon=marble
+ Terminal=false
+ Categories=Qt;KDE;Education;Geography;
++Hidden=true
