@@ -21,7 +21,7 @@
 #include "GeoDataPoint.h"
 #include "GeoDataPlacemark.h"
 #include "GeoDataTrack.h"
-#include "GeoDataCamera.h"
+#include "GeoDataAbstractView.h"
 #include "GeoDataModel.h"
 
 #include "GeoParser.h"
@@ -58,8 +58,7 @@ GeoNode* KmlaltitudeModeTagHandler::parse( GeoParser& parser ) const
 
     GeoStackItem parentItem = parser.parentElement();
 
-    if ( parentItem.is<GeoDataPlacemark>()
-         && parentItem.represents( kmlTag_Point ) ) {
+    if ( parentItem.is<GeoDataPlacemark>() ) {
          parentItem.nodeAs<GeoDataPlacemark>()->geometry()->setAltitudeMode( mode );
     } else if ( parentItem.is<GeoDataPoint>() ) {
         parentItem.nodeAs<GeoDataPoint>()->setAltitudeMode( mode );
@@ -69,8 +68,8 @@ GeoNode* KmlaltitudeModeTagHandler::parse( GeoParser& parser ) const
         parentItem.nodeAs<GeoDataTrack>()->setAltitudeMode( mode );
     } else if ( parentItem.is<GeoDataGroundOverlay>() ) {
         parentItem.nodeAs<GeoDataGroundOverlay>()->setAltitudeMode( mode );
-    } else if ( parentItem.is<GeoDataCamera>() ) {
-        parentItem.nodeAs<GeoDataCamera>()->setAltitudeMode( mode );
+    } else if ( parentItem.is<GeoDataAbstractView>() ) {
+        parentItem.nodeAs<GeoDataAbstractView>()->setAltitudeMode( mode );
     } else if ( parentItem.is<GeoDataModel>() ) {
         parentItem.nodeAs<GeoDataModel>()->setAltitudeMode( mode );
     }

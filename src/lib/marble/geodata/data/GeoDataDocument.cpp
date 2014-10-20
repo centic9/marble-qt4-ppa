@@ -28,6 +28,7 @@
 #include "GeoDataStyle.h"
 #include "GeoDataStyleMap.h"
 #include "GeoDataNetworkLinkControl.h"
+#include "GeoDataSchema.h"
 
 #include "MarbleDebug.h"
 
@@ -49,9 +50,32 @@ GeoDataDocument::~GeoDataDocument()
 {
 }
 
-GeoDataDocumentPrivate* GeoDataDocument::p() const
+GeoDataDocumentPrivate* GeoDataDocument::p()
 {
     return static_cast<GeoDataDocumentPrivate*>(d);
+}
+
+const GeoDataDocumentPrivate* GeoDataDocument::p() const
+{
+    return static_cast<GeoDataDocumentPrivate*>(d);
+}
+
+bool GeoDataDocument::operator==( const GeoDataDocument &other ) const
+{
+    return GeoDataContainer::equals(other) &&
+           p()->m_styleHash == other.p()->m_styleHash &&
+           p()->m_styleMapHash == other.p()->m_styleMapHash &&
+           p()->m_schemaHash == other.p()->m_schemaHash &&
+           p()->m_filename == other.p()->m_filename &&
+           p()->m_baseUri == other.p()->m_baseUri &&
+           p()->m_networkLinkControl == other.p()->m_networkLinkControl &&
+           p()->m_property == other.p()->m_property &&
+           p()->m_documentRole == other.p()->m_documentRole;
+}
+
+bool GeoDataDocument::operator!=( const GeoDataDocument &other ) const
+{
+    return !this->operator==( other );
 }
 
 DocumentRole GeoDataDocument::documentRole() const
@@ -110,8 +134,8 @@ void GeoDataDocument::setNetworkLinkControl( const GeoDataNetworkLinkControl &ne
 void GeoDataDocument::addStyle( const GeoDataStyle& style )
 {
     detach();
-    p()->m_styleHash.insert( style.styleId(), style );
-    p()->m_styleHash[ style.styleId() ].setParent( this );
+    p()->m_styleHash.insert( style.id(), style );
+    p()->m_styleHash[ style.id() ].setParent( this );
 }
 
 void GeoDataDocument::removeStyle( const QString& styleId )
@@ -120,13 +144,18 @@ void GeoDataDocument::removeStyle( const QString& styleId )
     p()->m_styleHash.remove( styleId );
 }
 
-GeoDataStyle& GeoDataDocument::style( const QString& styleId ) const
+GeoDataStyle& GeoDataDocument::style( const QString& styleId )
 {
     /*
      * FIXME: m_styleHash always should contain at least default
      *        GeoDataStyle element
      */
     return p()->m_styleHash[ styleId ];
+}
+
+GeoDataStyle GeoDataDocument::style( const QString &styleId ) const
+{
+    return p()->m_styleHash.value( styleId );
 }
 
 QList<GeoDataStyle> GeoDataDocument::styles() const
@@ -137,8 +166,8 @@ QList<GeoDataStyle> GeoDataDocument::styles() const
 void GeoDataDocument::addStyleMap( const GeoDataStyleMap& map )
 {
     detach();
-    p()->m_styleMapHash.insert( map.styleId(), map );
-    p()->m_styleMapHash[ map.styleId() ].setParent( this );
+    p()->m_styleMapHash.insert( map.id(), map );
+    p()->m_styleMapHash[ map.id() ].setParent( this );
 }
 
 void GeoDataDocument::removeStyleMap( const QString& mapId )
@@ -147,14 +176,48 @@ void GeoDataDocument::removeStyleMap( const QString& mapId )
     p()->m_styleMapHash.remove( mapId );
 }
 
-GeoDataStyleMap& GeoDataDocument::styleMap( const QString& styleId ) const
+GeoDataStyleMap& GeoDataDocument::styleMap( const QString& styleId )
 {
     return p()->m_styleMapHash[ styleId ];
+}
+
+GeoDataStyleMap GeoDataDocument::styleMap( const QString &styleId ) const
+{
+    return p()->m_styleMapHash.value( styleId );
 }
 
 QList<GeoDataStyleMap> GeoDataDocument::styleMaps() const
 {
     return p()->m_styleMapHash.values();
+}
+
+void GeoDataDocument::addSchema( const GeoDataSchema& schema )
+{
+    detach();
+    p()->m_schemaHash.insert( schema.id(), schema );
+    p()->m_schemaHash[ schema.id() ].setParent( this );
+}
+
+void GeoDataDocument::removeSchema( const QString& schemaId )
+{
+    detach();
+    GeoDataSchema schema = p()->m_schemaHash.take( schemaId );
+    schema.setParent( 0 );
+}
+
+GeoDataSchema GeoDataDocument::schema( const QString& schemaId ) const
+{
+    return p()->m_schemaHash.value( schemaId );
+}
+
+GeoDataSchema &GeoDataDocument::schema( const QString &schemaId )
+{
+    return p()->m_schemaHash[ schemaId ];
+}
+
+QList<GeoDataSchema> GeoDataDocument::schemas() const
+{
+    return p()->m_schemaHash.values();
 }
 
 void GeoDataDocument::pack( QDataStream& stream ) const
@@ -184,7 +247,7 @@ void GeoDataDocument::unpack( QDataStream& stream )
     for( int i = 0; i < size; i++ ) {
         GeoDataStyle style;
         style.unpack( stream );
-        p()->m_styleHash.insert( style.styleId(), style );
+        p()->m_styleHash.insert( style.id(), style );
     }
 }
 

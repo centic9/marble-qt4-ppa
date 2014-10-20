@@ -14,11 +14,12 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 using namespace Marble;
 
 static GeoTagWriterRegistrar s_writerPoint( GeoTagWriter::QualifiedName(GeoDataTypes::GeoDataTrackType,
-                                                                            kml::kmlTag_nameSpace22),
+                                                                            kml::kmlTag_nameSpaceOgc22),
                                                new KmlTrackWriter() );
 
 bool KmlTrackWriter::write( const GeoNode *node, GeoWriter &writer ) const
@@ -26,6 +27,7 @@ bool KmlTrackWriter::write( const GeoNode *node, GeoWriter &writer ) const
     const GeoDataTrack *track = static_cast<const GeoDataTrack *>( node );
 
     writer.writeStartElement( "gx:Track" );
+    KmlObjectTagWriter::writeIdentifiers( writer, track );
 
     int points = track->size();
     for ( int i = 0; i < points; i++ ) {

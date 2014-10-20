@@ -33,7 +33,7 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 endif
 
 override_dh_makeshlibs:
-	$(overridden_command) -V -- -c0
+	$(overridden_command) -V
 
 override_dh_shlibdeps:
 	$(overridden_command) $(patsubst %,-p%,$(filter lib%,$(shell dh_listpackages))) -- -xkde-runtime
@@ -44,3 +44,6 @@ override_dh_strip:
 
 override_dh_auto_test:
 	true # test suite is kind of broken. needs the package installed
+
+override_dh_clean:
+	$(overridden_command) -Xdata/mwdbii/PISLAND.PNT.orig -Xdata/mwdbii/PLAKE.PNT.orig

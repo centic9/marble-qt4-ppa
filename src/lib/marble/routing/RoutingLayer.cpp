@@ -106,6 +106,8 @@ public:
 
     bool m_viewportChanged;
 
+    bool m_isInteractive;
+
     /** Constructor */
     explicit RoutingLayerPrivate( RoutingLayer *parent, MarbleWidget *widget );
 
@@ -117,7 +119,7 @@ public:
     // keep the code clean
 
     /** Returns the same color as the given one with its alpha channel adjusted to the given value */
-    inline QColor alphaAdjusted( const QColor &color, int alpha ) const;
+    static inline QColor alphaAdjusted( const QColor &color, int alpha );
 
     /**
       * Returns the start or destination position if Ctrl key is among the
@@ -132,7 +134,7 @@ public:
     inline void renderRoute( GeoPainter *painter );
 
     /** Paint turn instruction for selected items */
-    inline void renderAnnotations( GeoPainter *painter );
+    inline void renderAnnotations( GeoPainter *painter ) const;
 
     /** Paint alternative routes in gray */
     inline void renderAlternativeRoutes( GeoPainter *painter );
@@ -173,7 +175,9 @@ RoutingLayerPrivate::RoutingLayerPrivate( RoutingLayer *parent, MarbleWidget *wi
         m_routeRequest( widget->model()->routingManager()->routeRequest() ),
         m_activeMenuIndex( -1 ),
         m_alternativeRoutesModel( widget->model()->routingManager()->alternativeRoutesModel() ),
-        m_viewContext( Still ), m_viewportChanged( true )
+        m_viewContext( Still ),
+        m_viewportChanged( true ),
+        m_isInteractive( true )
 {
     m_contextMenu = new MarbleWidgetPopupMenu( m_marbleWidget, m_marbleWidget->model() );
     m_removeViaPointAction = new QAction( QObject::tr( "&Remove this destination" ), q );
@@ -239,7 +243,7 @@ void RoutingLayerPrivate::renderAlternativeRoutes( GeoPainter *painter )
             const GeoDataLineString* points = AlternativeRoutesModel::waypoints( route );
             if ( points ) {
                 painter->drawPolyline( *points );
-                if ( m_viewportChanged && m_viewContext == Still ) {
+                if ( m_viewportChanged && m_isInteractive && m_viewContext == Still ) {
                     QRegion region = painter->regionFromPolyline( *points, 8 );
                     m_alternativeRouteRegions.push_back( RequestRegion( i, region ) );
                 }
@@ -262,7 +266,9 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
     painter->drawPolyline( waypoints );
     if ( m_viewportChanged && m_viewContext == Still ) {
         int const offset = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen ? 24 : 8;
-        m_routeRegion = painter->regionFromPolyline( waypoints, offset );
+        if ( m_isInteractive ) {
+            m_routeRegion = painter->regionFromPolyline( waypoints, offset );
+        }
     }
 
 
@@ -337,8 +343,10 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
             }
         }
 
-        QRegion region = painter->regionFromEllipse( pos, 12, 12 );
-        m_instructionRegions.push_front( ModelRegion( index, region ) );
+        if ( m_isInteractive ) {
+            QRegion region = painter->regionFromEllipse( pos, 12, 12 );
+            m_instructionRegions.push_front( ModelRegion( index, region ) );
+        }
         painter->drawEllipse( pos, 6, 6 );
 
         if( !m_routingModel->deviatedFromRoute() ) {
@@ -352,7 +360,7 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
     }
 }
 
-void RoutingLayerPrivate::renderAnnotations( GeoPainter *painter )
+void RoutingLayerPrivate::renderAnnotations( GeoPainter *painter ) const
 {
     if ( !m_selectionModel || m_selectionModel->selection().isEmpty() ) {
         // nothing to do
@@ -399,7 +407,7 @@ void RoutingLayerPrivate::storeDragPosition( const QPoint &pos )
     }
 }
 
-QColor RoutingLayerPrivate::alphaAdjusted( const QColor &color, int alpha ) const
+QColor RoutingLayerPrivate::alphaAdjusted( const QColor &color, int alpha )
 {
     QColor result( color );
     result.setAlpha( alpha );
@@ -670,9 +678,18 @@ bool RoutingLayer::render( GeoPainter *painter, ViewportParams *viewport,
     return true;
 }
 
+RenderState RoutingLayer::renderState() const
+{
+    return RenderState( "Routing", d->m_routeDirty ? WaitingForUpdate : Complete );
+}
+
 bool RoutingLayer::eventFilter( QObject *obj, QEvent *event )
 {
     Q_UNUSED( obj )
+
+    if ( !d->m_isInteractive ) {
+        return false;
+    }
 
     if ( event->type() == QEvent::MouseButtonPress ) {
         QMouseEvent *e = static_cast<QMouseEvent*>( event );
@@ -767,6 +784,16 @@ void RoutingLayer::setViewportChanged()
 void RoutingLayer::setViewContext( ViewContext viewContext )
 {
     d->m_viewContext = viewContext;
+}
+
+void RoutingLayer::setInteractive( bool interactive )
+{
+    d->m_isInteractive = interactive;
+}
+
+bool RoutingLayer::isInteractive() const
+{
+    return d->m_isInteractive;
 }
 
 } // namespace Marble

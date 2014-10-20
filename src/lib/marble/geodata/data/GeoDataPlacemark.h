@@ -75,10 +75,10 @@ class GEODATA_EXPORT GeoDataPlacemark: public GeoDataFeature
     ~GeoDataPlacemark();
 
     /**
-    * comparison operator is implemented slightly different than one would expect.
-    * Only Placemarks that are copies of each other are assumed to be equal.
+    * Equality operators.
     */
     bool operator==( const GeoDataPlacemark& other ) const;
+    bool operator!=( const GeoDataPlacemark& other ) const;
 
     /**
      * Return the coordinates of the placemark at time @p dateTime as a GeoDataCoordinates
@@ -176,6 +176,16 @@ class GEODATA_EXPORT GeoDataPlacemark: public GeoDataFeature
     void setCountryCode( const QString &code );
 
     /**
+     * Returns whether balloon is visible or not
+     */
+    bool isBalloonVisible() const;
+
+    /**
+     * Set visibility of the balloon
+     */
+    void setBalloonVisible( bool visible );
+
+    /**
      * Serialize the Placemark to a data stream. This is a binary serialisation
      * and is deserialised using @see unpack()
      * @param stream the QDataStream to serialise object to.
@@ -211,7 +221,8 @@ class GEODATA_EXPORT GeoDataPlacemark: public GeoDataFeature
     GeoDataLookAt *lookAt();
 
  private:
-    GeoDataPlacemarkPrivate *p() const;
+    GeoDataPlacemarkPrivate *p();
+    const GeoDataPlacemarkPrivate *p() const;
 };
 
 }

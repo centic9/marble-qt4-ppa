@@ -1,3 +1,2 @@
-upstream_1b02b31c72702d685e92bf07e127dd7200d128d3.diff
 fix_qmake_fallback.diff
-kubuntu_hide_marble_mobile.diff
+do_not_install_private_headers

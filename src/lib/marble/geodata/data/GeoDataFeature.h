@@ -385,9 +385,13 @@ class GEODATA_EXPORT GeoDataFeature : public GeoDataObject
     void setTimeStamp( const GeoDataTimeStamp &timeStamp );
 
     /**
-     * Return the style assigned to the placemark.
+     * Return the style assigned to the placemark, or a default style if none has been set
      */
     const GeoDataStyle* style() const;
+    /**
+     * Return the style assigned to the placemark with setStyle (can be 0)
+     */
+    const GeoDataStyle* customStyle() const;
     /**
      * Sets the style of the placemark.
      * @param  style  the new style to be used.
@@ -501,6 +505,9 @@ class GEODATA_EXPORT GeoDataFeature : public GeoDataObject
     // the d-pointer needs to be protected to be accessible from derived classes
     GeoDataFeaturePrivate* d;
     GeoDataFeature( GeoDataFeaturePrivate* priv );
+
+    bool equals( const GeoDataFeature &other ) const;
+    using GeoDataObject::equals;
 
  private:
     // the private d pointer accessor - use it instead of the d pointer directly

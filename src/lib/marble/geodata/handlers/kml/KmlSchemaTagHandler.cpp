@@ -24,8 +24,9 @@
 #include "MarbleDebug.h"
 
 #include "KmlElementDictionary.h"
-
+#include "KmlObjectTagHandler.h"
 #include "GeoDataDocument.h"
+#include "GeoDataSchema.h"
 
 #include "GeoParser.h"
 
@@ -40,17 +41,17 @@ GeoNode* KmlSchemaTagHandler::parse( GeoParser& parser ) const
     Q_ASSERT( parser.isStartElement() && parser.isValidElement( kmlTag_Schema ) );
 
     GeoStackItem parentItem = parser.parentElement();
-    
+
     if( parentItem.represents( kmlTag_Document ) ) {
-        
+        GeoDataSchema schema;
+        KmlObjectTagHandler::parseIdentifiers( parser, &schema );
         QString name = parser.attribute( "name" ).trimmed();
-        QString parent = parser.attribute( "parent" ).trimmed();
-        if( parent.toLower() == QString("placemark")) {
-        }
-        return parentItem.nodeAs<GeoDataDocument>();
-    } else {
-        return 0;
+
+        schema.setSchemaName( name );
+        parentItem.nodeAs<GeoDataDocument>()->addSchema( schema );
+        return &parentItem.nodeAs<GeoDataDocument>()->schema( schema.id() );
     }
+    return 0;
 
 }
 

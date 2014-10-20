@@ -37,11 +37,11 @@ public:
 
     QByteArray retrieveWaypoints( const QString &query ) const;
 
-    GeoDataDocument* createDocument( GeoDataLineString* routeWaypoints, const QVector<GeoDataPlacemark*> instructions ) const;
+    static GeoDataDocument* createDocument( GeoDataLineString* routeWaypoints, const QVector<GeoDataPlacemark*> instructions );
 
-    GeoDataLineString parseGosmoreOutput( const QByteArray &content ) const;
+    static GeoDataLineString parseGosmoreOutput( const QByteArray &content );
 
-    void merge( GeoDataLineString* one, const GeoDataLineString& two ) const;
+    static void merge( GeoDataLineString* one, const GeoDataLineString& two );
 
     QVector<GeoDataPlacemark*> parseGosmoreInstructions( const QByteArray &content );
 
@@ -58,7 +58,7 @@ GosmoreRunnerPrivate::GosmoreRunnerPrivate()
 
 QMap<QString, QByteArray> GosmoreRunnerPrivate::m_partialRoutes;
 
-void GosmoreRunnerPrivate::merge( GeoDataLineString* one, const GeoDataLineString& two ) const
+void GosmoreRunnerPrivate::merge( GeoDataLineString* one, const GeoDataLineString& two )
 {
     Q_ASSERT( one );
 
@@ -93,7 +93,7 @@ QByteArray GosmoreRunnerPrivate::retrieveWaypoints( const QString &query ) const
     return QByteArray();
 }
 
-GeoDataLineString GosmoreRunnerPrivate::parseGosmoreOutput( const QByteArray &content ) const
+GeoDataLineString GosmoreRunnerPrivate::parseGosmoreOutput( const QByteArray &content )
 {
     GeoDataLineString routeWaypoints;
 
@@ -158,7 +158,7 @@ QVector<GeoDataPlacemark*> GosmoreRunnerPrivate::parseGosmoreInstructions( const
     return result;
 }
 
-GeoDataDocument* GosmoreRunnerPrivate::createDocument( GeoDataLineString* routeWaypoints, const QVector<GeoDataPlacemark*> instructions ) const
+GeoDataDocument* GosmoreRunnerPrivate::createDocument( GeoDataLineString* routeWaypoints, const QVector<GeoDataPlacemark*> instructions )
 {
     if ( !routeWaypoints || routeWaypoints->isEmpty() ) {
         return 0;

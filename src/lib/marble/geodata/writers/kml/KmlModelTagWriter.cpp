@@ -16,13 +16,14 @@
 #include "KmlGroundOverlayWriter.h"
 #include "KmlLinkTagWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerModel(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataModelType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlModelTagWriter);
 
 bool KmlModelTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -30,6 +31,7 @@ bool KmlModelTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataModel *model = static_cast<const GeoDataModel*>( node );
 
     writer.writeStartElement( kml::kmlTag_Model );
+    KmlObjectTagWriter::writeIdentifiers( writer, model );
 
     KmlGroundOverlayWriter::writeAltitudeMode( writer, model->altitudeMode());
 
@@ -72,8 +74,8 @@ bool KmlModelTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataAlias alias = map.alias() ;
     writer.writeStartElement( kml::kmlTag_Alias );
 
-    writer.writeTextElement( kml::kmlTag_sourceHref, alias.sourceHref() );
     writer.writeTextElement( kml::kmlTag_targetHref, alias.targetHref() );
+    writer.writeTextElement( kml::kmlTag_sourceHref, alias.sourceHref() );
 
     writer.writeEndElement();
 

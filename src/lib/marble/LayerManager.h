@@ -12,6 +12,8 @@
 #ifndef MARBLE_LAYERMANAGER_H
 #define MARBLE_LAYERMANAGER_H
 
+#include "RenderState.h"
+
 // Qt
 #include <QList>
 #include <QObject>
@@ -83,6 +85,8 @@ class LayerManager : public QObject
 
     QList<LayerInterface *> internalLayers() const;
 
+    RenderState renderState() const;
+
  Q_SIGNALS:
     /**
      * @brief Signal that a render item has been initialized
@@ -107,8 +111,6 @@ class LayerManager : public QObject
     void setShowBackground( bool show );
 
     void setShowRuntimeTrace( bool show );
-
-    void setVisible( const QString &nameId, bool visible );
 
  private:
     Q_PRIVATE_SLOT( d, void updateVisibility( bool, const QString & ) )

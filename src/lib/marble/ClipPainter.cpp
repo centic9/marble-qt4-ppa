@@ -69,11 +69,11 @@ class ClipPainterPrivate
                                 QVector<QPolygonF> & clippedPolyObjects,
                                 const QPointF& corner,
                                 const QPointF& point,
-                                bool isClosed );
+                                bool isClosed ) const;
     inline void clipOnceEdge(   QPolygonF & clippedPolyObject,
                                 QVector<QPolygonF> & clippedPolyObjects,
                                 const QPointF& point,
-                                bool isClosed );
+                                bool isClosed ) const;
 
 
     void labelPosition( const QPolygonF & polygon, QVector<QPointF>& labelNodes, 
@@ -84,7 +84,7 @@ class ClipPainterPrivate
                                    const QPointF& currentPoint,
                                    LabelPositionFlags labelPositionFlags );
 
-    inline qreal _m( const QPointF & start, const QPointF & end ) const;
+    static inline qreal _m( const QPointF & start, const QPointF & end );
 
 #ifdef DEBUG_DRAW_NODES
     void debugDrawNodes( const QPolygonF & ); 
@@ -364,7 +364,7 @@ void ClipPainterPrivate::initClipRect ()
     m_bottom = (qreal)(q->device()->height()) + penHalfWidth;
 }
 
-qreal ClipPainterPrivate::_m( const QPointF & start, const QPointF & end ) const
+qreal ClipPainterPrivate::_m( const QPointF & start, const QPointF & end )
 {
     qreal  divisor = end.x() - start.x();
     if ( std::fabs( divisor ) < 0.000001 ) {
@@ -1008,7 +1008,7 @@ void ClipPainterPrivate::clipOnceCorner( QPolygonF & clippedPolyObject,
                                          QVector<QPolygonF> & clippedPolyObjects,
                                          const QPointF& corner,
                                          const QPointF& point, 
-                                         bool isClosed )
+                                         bool isClosed ) const
 {
     Q_UNUSED( clippedPolyObjects )
     Q_UNUSED( isClosed )
@@ -1027,7 +1027,7 @@ void ClipPainterPrivate::clipOnceCorner( QPolygonF & clippedPolyObject,
 void ClipPainterPrivate::clipOnceEdge( QPolygonF & clippedPolyObject,
                                        QVector<QPolygonF> & clippedPolyObjects,
                                        const QPointF& point,
-                                       bool isClosed )
+                                       bool isClosed ) const
 {
     if ( m_currentSector == 4) {
         // Appearing

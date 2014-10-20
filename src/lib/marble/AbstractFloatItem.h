@@ -14,21 +14,18 @@
 
 #include <QPointF>
 #include <QSizeF>
-#include <QString>
-#include <Qt>
-
 #include <QPen>
 #include <QFont>
-#include <QContextMenuEvent>
-#include <QHelpEvent>
-#include <QWidget>
 
 #include "RenderPlugin.h"
 #include "FrameGraphicsItem.h"
 #include "marble_export.h"
 
 
+class QContextMenuEvent;
+class QHelpEvent;
 class QMenu;
+class QWidget;
 
 namespace Marble
 {
@@ -155,7 +152,6 @@ class MARBLE_EXPORT AbstractFloatItem : public RenderPlugin, public FrameGraphic
     virtual bool eventFilter( QObject *object, QEvent *e );
     virtual void contextMenuEvent ( QWidget *w, QContextMenuEvent *e );
     virtual void toolTipEvent( QHelpEvent *e );
-    virtual void changeViewport( ViewportParams *viewport );
     QMenu* contextMenu();
 
  private:

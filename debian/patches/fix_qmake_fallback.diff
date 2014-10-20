@@ -6,10 +6,10 @@ Description: Fallback to qmake also when QT_IMPORTS_DIR is "not found".
 Last-Update: 2012-09-25
 Forwarded: no
 
-Index: marble-4.11.80/src/CMakeLists.txt
+Index: marble/src/CMakeLists.txt
 ===================================================================
---- marble-4.11.80.orig/src/CMakeLists.txt	2013-11-14 18:03:24.056943548 +0100
-+++ marble-4.11.80/src/CMakeLists.txt	2013-11-14 18:03:24.056943548 +0100
+--- marble.orig/src/CMakeLists.txt	2014-08-20 21:03:46.646897871 +0200
++++ marble/src/CMakeLists.txt	2014-08-20 21:03:46.646897871 +0200
 @@ -9,7 +9,7 @@
  
  if( QT_QTDECLARATIVE_FOUND OR Qt5Quick_FOUND )

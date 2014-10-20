@@ -64,7 +64,7 @@ class GEODATA_EXPORT GeoDataMultiGeometry : public GeoDataGeometry
     /**
      * @brief returns the position of an item in the list
      */
-    int childPosition( GeoDataGeometry *child);
+    int childPosition( const GeoDataGeometry *child ) const;
 
     /**
     * @brief add an element
@@ -89,7 +89,8 @@ class GEODATA_EXPORT GeoDataMultiGeometry : public GeoDataGeometry
     // Unserialize the Placemark from @p stream
     virtual void unpack( QDataStream& stream );
  private:
-    GeoDataMultiGeometryPrivate *p() const;
+    GeoDataMultiGeometryPrivate *p();
+    const GeoDataMultiGeometryPrivate *p() const;
 };
 
 }

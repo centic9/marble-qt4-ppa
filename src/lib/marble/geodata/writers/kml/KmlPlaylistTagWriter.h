@@ -27,10 +27,10 @@ public:
 
 private:
     void writeTourPrimitive( const GeoNode *primitive, GeoWriter& writer ) const;
-    void writeTourControl( const GeoDataTourControl* tourControl, GeoWriter& writer ) const;
-    void writeWait( const GeoDataWait* wait, GeoWriter& writer ) const;
-    void writeSoundCue( const GeoDataSoundCue *cue, GeoWriter &writer ) const;
-    QString playModeToString( GeoDataTourControl::PlayMode playMode ) const;
+    static void writeTourControl( const GeoDataTourControl* tourControl, GeoWriter& writer );
+    static void writeWait( const GeoDataWait* wait, GeoWriter& writer );
+    static void writeSoundCue( const GeoDataSoundCue *cue, GeoWriter &writer );
+    static QString playModeToString( GeoDataTourControl::PlayMode playMode );
 };
 
 }

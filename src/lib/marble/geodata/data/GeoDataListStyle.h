@@ -34,6 +34,9 @@ public:
 
     GeoDataListStyle& operator=( const GeoDataListStyle &other );
 
+    bool operator==( const GeoDataListStyle &other ) const;
+    bool operator!=( const GeoDataListStyle &other ) const;
+
     ~GeoDataListStyle();
 
     /** Provides type information for downcasting a GeoNode */
@@ -58,7 +61,7 @@ public:
 
     const GeoDataItemIcon* child( int ) const;
 
-    int childPosition( GeoDataItemIcon *child);
+    int childPosition( const GeoDataItemIcon *child ) const;
 
     void append( GeoDataItemIcon *other );
 

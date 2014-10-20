@@ -47,18 +47,18 @@ namespace Marble {
                         const QChar &symbolCode );
 
         void setDumpOutput( bool to );
-        bool dumpOutput();
+        bool dumpOutput() const;
 
         void setSeenFrom ( GeoAprsCoordinates::SeenFrom seenFrom );
         GeoAprsCoordinates::SeenFrom seenFrom();
 
         void shutDown();
-        void sleepFor(int seconds);
+        static void sleepFor(int seconds);
 
       private:
         void initMicETables();
-        qreal calculateLongitude( const QString &threeBytes,
-                                  int offset, bool isEast );
+        static qreal calculateLongitude( const QString &threeBytes,
+                                         int offset, bool isEast );
 
         AprsSource                  *m_source;
         QIODevice                   *m_socket;

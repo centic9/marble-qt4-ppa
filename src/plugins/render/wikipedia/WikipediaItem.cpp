@@ -66,11 +66,6 @@ void WikipediaItem::setName( const QString& name )
     updateToolTip();
 }
 
-QString WikipediaItem::itemType() const
-{
-    return "wikipediaItem";
-}
-     
 bool WikipediaItem::initialized() const
 {
     return true;
@@ -113,7 +108,7 @@ void WikipediaItem::paint( QPainter *painter )
     }
 }
 
-qreal WikipediaItem::longitude()
+qreal WikipediaItem::longitude() const
 {
     return coordinate().longitude();
 }
@@ -125,7 +120,7 @@ void WikipediaItem::setLongitude( qreal longitude )
     setCoordinate( updatedCoordinates );
 }
     
-qreal WikipediaItem::latitude()
+qreal WikipediaItem::latitude() const
 {
     return coordinate().latitude();
 }
@@ -137,7 +132,7 @@ void WikipediaItem::setLatitude( qreal latitude )
     setCoordinate( updatedCoordinates );
 }
 
-QUrl WikipediaItem::url()
+QUrl WikipediaItem::url() const
 {
     return m_url;
 }
@@ -147,7 +142,7 @@ void WikipediaItem::setUrl( const QUrl& url )
     m_url = url;
 }
 
-QUrl WikipediaItem::thumbnailImageUrl()
+QUrl WikipediaItem::thumbnailImageUrl() const
 {
     return m_thumbnailImageUrl;
 }
@@ -157,7 +152,7 @@ void WikipediaItem::setThumbnailImageUrl( const QUrl& thumbnailImageUrl )
     m_thumbnailImageUrl = thumbnailImageUrl;
 }
 
-QString WikipediaItem::summary()
+QString WikipediaItem::summary() const
 {
     return m_summary;
 }
@@ -181,7 +176,7 @@ void WikipediaItem::openBrowser( )
         popup->setCoordinates( coordinate(), Qt::AlignRight | Qt::AlignVCenter );
         popup->setSize( QSizeF( 500, 550 ) );
         popup->setUrl( url() );
-        popup->setVisible( true );
+        popup->popup();
     } else {
         if ( !m_browser ) {
             m_browser = new TinyWebBrowser();

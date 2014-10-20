@@ -39,8 +39,6 @@ class WikipediaItem : public AbstractDataPluginItem
 
     void setName( const QString& name );
     
-    QString itemType() const;
-     
     bool initialized() const;
     
     void addDownloadedFile( const QString& url, const QString& type );
@@ -49,23 +47,23 @@ class WikipediaItem : public AbstractDataPluginItem
                  
     bool operator<( const AbstractDataPluginItem *other ) const;
     
-    qreal longitude();
+    qreal longitude() const;
     
     void setLongitude( qreal longitude );
     
-    qreal latitude();
+    qreal latitude() const;
     
     void setLatitude( qreal latitude );
     
-    QUrl url();
+    QUrl url() const;
     
     void setUrl( const QUrl& url );
     
-    QUrl thumbnailImageUrl();
+    QUrl thumbnailImageUrl() const;
     
     void setThumbnailImageUrl( const QUrl& thumbnailImageUrl );
 
-    QString summary();
+    QString summary() const;
 
     void setSummary( const QString& summary );
     

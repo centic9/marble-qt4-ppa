@@ -242,7 +242,7 @@ int CylindricalProjectionPrivate::crossDateLine( const GeoDataCoordinates & aCoo
                                                  qreal by,
                                                  QVector<QPolygonF*> &polygons,
                                                  int mirrorCount,
-                                                 qreal repeatDistance ) const
+                                                 qreal repeatDistance )
 {
     qreal aLon = aCoord.longitude();
     qreal aSign = aLon > 0 ? 1 : -1;
@@ -379,7 +379,7 @@ bool CylindricalProjectionPrivate::lineStringToPolygon( const GeoDataLineString 
 
 void CylindricalProjectionPrivate::translatePolygons( const QVector<QPolygonF *> &polygons,
                                                       QVector<QPolygonF *> &translatedPolygons,
-                                                      qreal xOffset ) const
+                                                      qreal xOffset )
 {
     // mDebug() << "Translation: " << xOffset;
 

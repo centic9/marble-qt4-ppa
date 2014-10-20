@@ -19,16 +19,7 @@ namespace Marble
 
 class GeoDataStyleSelectorPrivate
 {
-  public:
-    const char* nodeType() const
-    {
-        return GeoDataTypes::GeoDataStyleSelectorType;
-    }
-
-    /// The style id.
-    QString  m_styleId;
 };
-
 
 GeoDataStyleSelector::GeoDataStyleSelector()
     : d( new GeoDataStyleSelectorPrivate )
@@ -52,33 +43,29 @@ GeoDataStyleSelector& GeoDataStyleSelector::operator=( const GeoDataStyleSelecto
     return *this;
 }
 
+bool GeoDataStyleSelector::operator==( const GeoDataStyleSelector &other ) const
+{
+    return GeoDataObject::equals( other );
+}
+
+bool GeoDataStyleSelector::operator!=( const GeoDataStyleSelector &other ) const
+{
+    return !this->operator==( other );
+}
+
 const char* GeoDataStyleSelector::nodeType() const
 {
-    return d->nodeType();
-}
-
-void GeoDataStyleSelector::setStyleId( const QString &value )
-{
-    d->m_styleId = value;
-}
-
-QString GeoDataStyleSelector::styleId() const
-{
-    return d->m_styleId;
+    return GeoDataTypes::GeoDataStyleSelectorType;
 }
 
 void GeoDataStyleSelector::pack( QDataStream& stream ) const
 {
     GeoDataObject::pack( stream );
-
-    stream << d->m_styleId;
 }
 
 void GeoDataStyleSelector::unpack( QDataStream& stream )
 {
     GeoDataObject::unpack( stream );
-
-    stream >> d->m_styleId;
 }
 
 }

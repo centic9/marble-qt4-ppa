@@ -25,9 +25,9 @@
 namespace Marble
 {
 
-TextEditor::TextEditor( GeoDataPlacemark *placemark ) :
-    QWidget(),
-    m_placemark( placemark )
+TextEditor::TextEditor( GeoDataPlacemark *placemark )
+    : QWidget(),
+      m_placemark( placemark )
 {
     setCursor( Qt::ArrowCursor );
 
@@ -35,9 +35,9 @@ TextEditor::TextEditor( GeoDataPlacemark *placemark ) :
     m_layout = new QVBoxLayout;
 
     /*
-     *Note: these widgets do not need to be constructed with a parent
-     *as adding them to a layout automatically sets the parent. If a
-     *parent is already set it will mess up the layouts.
+     * Note: these widgets do not need to be constructed with a parent
+     * as adding them to a layout automatically sets the parent. If a
+     * parent is already set it will mess up the layouts.
      */
     m_description = new QTextEdit;
     m_description->setText( placemark->description() );
@@ -59,7 +59,7 @@ TextEditor::TextEditor( GeoDataPlacemark *placemark ) :
 
     // setup the actions and create the buttons
     m_boldAction = new QAction( this );
-    m_boldAction->setText(tr("Bold"));
+    m_boldAction->setText( tr("Bold") );
     m_boldButton = new QToolButton;
     m_boldButton->setDefaultAction( m_boldAction );
 
@@ -90,6 +90,7 @@ TextEditor::TextEditor( GeoDataPlacemark *placemark ) :
 
 TextEditor::~TextEditor()
 {
+    // nothing to do
 }
 
 void TextEditor::updateName()
@@ -101,6 +102,7 @@ void TextEditor::updateDescription()
 {
     m_placemark->setDescription( m_description->toHtml() );
 }
+
 }
 
 #include "TextEditor.moc"

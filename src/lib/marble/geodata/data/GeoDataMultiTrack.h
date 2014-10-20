@@ -30,6 +30,9 @@ public:
 
     virtual ~GeoDataMultiTrack();
 
+    bool operator==( const GeoDataMultiTrack& other ) const;
+    bool operator!=( const GeoDataMultiTrack& other ) const;
+
     virtual const GeoDataLatLonAltBox& latLonAltBox() const;
 
     int size() const;
@@ -56,7 +59,7 @@ public:
     /**
      * @brief returns the position of an item in the list
      */
-    int childPosition( GeoDataTrack *child);
+    int childPosition( const GeoDataTrack *child ) const;
 
     /**
     * @brief add an element
@@ -81,7 +84,8 @@ public:
     // Unserialize the Placemark from @p stream
     virtual void unpack( QDataStream& stream );
  private:
-    GeoDataMultiTrackPrivate *p() const;
+    GeoDataMultiTrackPrivate *p();
+    const GeoDataMultiTrackPrivate *p() const;
 };
 
 }

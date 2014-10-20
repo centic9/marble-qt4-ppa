@@ -52,7 +52,7 @@ public:
 
     DeclarativeDataPluginPrivate( DeclarativeDataPlugin* q );
 
-    void parseChunk( DeclarativeDataPluginItem * item, GeoDataCoordinates &coordinates, const QString &key, const QVariant &value );
+    static void parseChunk( DeclarativeDataPluginItem * item, GeoDataCoordinates &coordinates, const QString &key, const QVariant &value );
 
     void addItem( DeclarativeDataPluginItem* item, const GeoDataCoordinates &coordinates );
 
@@ -356,6 +356,11 @@ void DeclarativeDataPlugin::initialize()
 bool DeclarativeDataPlugin::isInitialized() const
 {
     return d->m_isInitialized;
+}
+
+RenderState DeclarativeDataPlugin::renderState() const
+{
+    return RenderState( "Declarative Data" );
 }
 
 void DeclarativeDataPlugin::setDeclarativeModel( const QVariant &model )

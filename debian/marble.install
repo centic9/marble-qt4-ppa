@@ -1,9 +1,8 @@
 usr/bin/marble
-usr/bin/marble-mobile
 usr/lib/kde4/libmarble_part.so
+usr/lib/kde4/marblethumbnail.so
 usr/lib/kde4/plasma_applet_worldclock.so
 usr/lib/kde4/plasma_runner_marble.so
-usr/share/applications/kde4/marble-mobile.desktop
 usr/share/applications/kde4/marble.desktop
 usr/share/applications/kde4/marble_geo.desktop
 usr/share/applications/kde4/marble_gpx.desktop

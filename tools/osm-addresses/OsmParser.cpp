@@ -24,6 +24,7 @@
 #include "GeoDataFeature.h"
 #include "geodata/writer/GeoWriter.h"
 #include "geodata/data/GeoDataExtendedData.h"
+#include <geodata/handlers/kml/KmlElementDictionary.h>
 
 #include <QDebug>
 #include <QTime>
@@ -726,14 +727,14 @@ void OsmParser::writeKml( const QString &area, const QString &version, const QSt
     lineStyle.setColor( color );
     lineStyle.setWidth( 4 );
     style.setLineStyle( lineStyle );
-    style.setStyleId( color.name().replace( '#', 'f' ) );
+    style.setId( color.name().replace( '#', 'f' ) );
 
     GeoDataStyleMap styleMap;
-    styleMap.setStyleId( color.name().replace( '#', 'f' ) );
-    styleMap.insert( "normal", QString( "#" ).append( style.styleId() ) );
+    styleMap.setId( color.name().replace( '#', 'f' ) );
+    styleMap.insert( "normal", QString( "#" ).append( style.id() ) );
     document->addStyle( style );
 
-    placemark->setStyleUrl( QString( "#" ).append( styleMap.styleId() ) );
+    placemark->setStyleUrl( QString( "#" ).append( styleMap.id() ) );
 
     //placemark->setGeometry( new GeoDataLinearRing( region.region.geometry().outerBoundary() ) );
     GeoDataMultiGeometry *geometry = new GeoDataMultiGeometry;
@@ -745,7 +746,7 @@ void OsmParser::writeKml( const QString &area, const QString &version, const QSt
 //    }
 
     GeoWriter writer;
-    writer.setDocumentType( "http://earth.google.com/kml/2.2" );
+    writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
 
     QFile file( filename );
     if ( !file.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {

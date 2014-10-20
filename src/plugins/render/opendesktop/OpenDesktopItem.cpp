@@ -29,12 +29,6 @@ OpenDesktopItem::~OpenDesktopItem()
     delete m_action;
 }
  
-QString OpenDesktopItem::itemType() const
-{
-    // Our itemType:
-    return "openDesktopItem";
-}
- 
 bool OpenDesktopItem::initialized() const
 {
     return size() != QSizeF(-1, -1);
@@ -100,7 +94,7 @@ void OpenDesktopItem::openBrowser()
     popup->setCoordinates( coordinate(), Qt::AlignRight | Qt::AlignVCenter );
     popup->setUrl( profileUrl() );
     popup->setSize( QSizeF( 900, 600 ) );
-    popup->setVisible( true );
+    popup->popup();
 }
 
 QUrl OpenDesktopItem::profileUrl() const

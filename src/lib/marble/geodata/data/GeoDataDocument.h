@@ -49,6 +49,7 @@ enum DocumentRole {
 class GeoDataStyle;
 class GeoDataStyleMap;
 class GeoDataNetworkLinkControl;
+class GeoDataSchema;
 
 class GeoDataDocumentPrivate;
 
@@ -68,6 +69,9 @@ public:
     GeoDataDocument();
     GeoDataDocument( const GeoDataDocument& other );
     ~GeoDataDocument();
+
+    bool operator==( const GeoDataDocument &other ) const;
+    bool operator!=( const GeoDataDocument &other ) const;
 
     /// Provides type information for downcasting a GeoData
     virtual bool isGeoDataDocument() const { return true; }
@@ -130,7 +134,8 @@ public:
      * @brief Return a style in the style storage
      * @param styleId  the id of the style
      */
-    GeoDataStyle& style( const QString& styleId ) const;
+    GeoDataStyle& style( const QString& styleId );
+    GeoDataStyle style( const QString& styleId ) const;
 
     /**
     * @brief dump a Vector of all styles
@@ -153,12 +158,37 @@ public:
      * @brief Return a style in the style storage
      * @param styleId  the id of the style
      */
-    GeoDataStyleMap& styleMap( const QString& styleId ) const;
+    GeoDataStyleMap& styleMap( const QString& styleId );
+    GeoDataStyleMap styleMap( const QString& styleId ) const;
 
     /**
     * @brief dump a Vector of all styles
     */
     QList<GeoDataStyleMap> styleMaps() const;
+
+    /**
+     * @brief Add a schema to simplemap storage
+     * @param schema  the new schema
+     */
+    void addSchema( const GeoDataSchema& schema );
+
+    /**
+     * @brief remove a schema from schema storage
+     * @param schemaId  the of schema to be removed
+     */
+    void removeSchema( const QString& schemaId );
+
+    /**
+     * @brief Returns a schema with id = schemaId form schema storage
+     * @param schemaId  The id of schema to be returned
+     */
+    GeoDataSchema schema( const QString& schemaId ) const;
+    GeoDataSchema &schema( const QString& schemaId );
+
+    /**
+     * @brief dump a vector of all schemas
+     */
+    QList<GeoDataSchema> schemas() const;
 
     // Serialize the Placemark to @p stream
     virtual void pack( QDataStream& stream ) const;
@@ -166,7 +196,8 @@ public:
     virtual void unpack( QDataStream& stream );
 
 private:
-    GeoDataDocumentPrivate *p() const;
+    GeoDataDocumentPrivate *p();
+    const GeoDataDocumentPrivate *p() const;
 };
 
 }

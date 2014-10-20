@@ -80,6 +80,8 @@ else()
   include_directories( ${Qt5Network_INCLUDE_DIRS} )
   include_directories( ${Qt5Script_INCLUDE_DIRS} )
   include_directories( ${Qt5Test_INCLUDE_DIRS} )
+  include_directories( ${Qt5Xml_INCLUDE_DIRS} )
+  include_directories( ${Qt5Sql_INCLUDE_DIRS} )
 
   SET(CMAKE_AUTOMOC TRUE)
   SET(CMAKE_AUTOMOC_RELAXED_MODE TRUE)
@@ -385,6 +387,7 @@ endif()
 ####################################################
 # Install extra files
 install(FILES LICENSE.txt DESTINATION ${MARBLE_DATA_INSTALL_PATH})
+install(FILES marble.appdata.xml DESTINATION ${CMAKE_INSTALL_PREFIX}/share/appdata/)
 
 ####################################################
 # Install CMake module

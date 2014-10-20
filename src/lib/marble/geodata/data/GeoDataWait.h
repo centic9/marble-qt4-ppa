@@ -23,16 +23,14 @@ public:
     GeoDataWait();
     ~GeoDataWait();
 
+    bool operator==(const GeoDataWait &other) const;
+    bool operator!=(const GeoDataWait &other) const;
     const char *nodeType() const;
-
-    QString id() const;
-    void setId(const QString &id);
 
     double duration() const;
     void setDuration(double duration);
 
 private:
-    QString m_id;
     double m_duration;
 };
 

@@ -11,7 +11,9 @@
 
 #include "MapScaleFloatItem.h"
 
+#include <QContextMenuEvent>
 #include <QDebug>
+#include <QHelpEvent>
 #include <QRect>
 #include <QPixmap>
 #include <QApplication>
@@ -123,7 +125,7 @@ bool MapScaleFloatItem::isInitialized () const
     return true;
 }
 
-void MapScaleFloatItem::changeViewport( ViewportParams *viewport )
+void MapScaleFloatItem::setProjection( const ViewportParams *viewport )
 {
     int viewportWidth = viewport->width();
 
@@ -178,6 +180,8 @@ void MapScaleFloatItem::changeViewport( ViewportParams *viewport )
 
         update();
     }
+
+    AbstractFloatItem::setProjection( viewport );
 }
 
 void MapScaleFloatItem::paintContent( QPainter *painter )

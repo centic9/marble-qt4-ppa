@@ -37,7 +37,7 @@ class MARBLE_EXPORT AbstractDataPluginItem : public QObject, public BillboardGra
     explicit AbstractDataPluginItem( QObject *parent = 0 );
     virtual ~AbstractDataPluginItem();
 
-    QString target();
+    QString target() const;
     void setTarget( const QString& target );
 
     /**
@@ -77,11 +77,6 @@ class MARBLE_EXPORT AbstractDataPluginItem : public QObject, public BillboardGra
      * Returns the action of this specific item.
      */
     virtual QAction *action();
-
-    /**
-     * Returns the type of this specific item.
-     */
-    virtual QString itemType() const = 0;
 
     virtual bool initialized() const = 0;
 

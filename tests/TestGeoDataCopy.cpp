@@ -412,13 +412,13 @@ void TestGeoDataCopy::copyPlacemark()
     placemark.setGeometry(point);
     placemark.setArea(12345678.0);
     placemark.setPopulation(123456789);
-    placemark.setId(281012);
+    placemark.setId("281012");
 
     testCoordinate(placemark.coordinate(), 123.4, 2, coordString[0]);
     testCoordinate(static_cast<GeoDataPoint*>(placemark.geometry())->coordinates(), 123.4, 2, coordString[0]);
     QCOMPARE(placemark.area(), 12345678.0);
     QCOMPARE(placemark.population(), (qint64)123456789);
-    QCOMPARE(placemark.id(), 281012);
+    QCOMPARE(placemark.id(), QString("281012"));
     QCOMPARE(placemark.name(), QString::fromLatin1("Patrick Spendrin"));
 
     GeoDataPlacemark other = placemark;
@@ -427,7 +427,7 @@ void TestGeoDataCopy::copyPlacemark()
     testCoordinate(static_cast<GeoDataPoint*>(other.geometry())->coordinates(), 123.4, 2, coordString[0]);
     QCOMPARE(other.area(), 12345678.0);
     QCOMPARE(other.population(), (qint64)123456789);
-    QCOMPARE(other.id(), 281012);
+    QCOMPARE(other.id(), QString("281012"));
     QCOMPARE(other.name(), QString::fromLatin1("Patrick Spendrin"));
 
     other.setPopulation(987654321);
@@ -591,23 +591,27 @@ void TestGeoDataCopy::copyPolyStyle()
 void TestGeoDataCopy::copyStyleMap()
 {
     GeoDataStyleMap styleMap;
-    QMap<QString,QString> testMap;
     styleMap["germany"] = "gst1";
     styleMap["germany"] = "gst2";
     styleMap["germany"] = "gst3";
     styleMap["poland"] = "pst1";
     styleMap["poland"] = "pst2";
     styleMap["poland"] = "pst3";
-    testMap["germany"] = "gst1";
-    testMap["germany"] = "gst2";
-    testMap["germany"] = "gst3";
-    testMap["poland"] = "pst1";
-    testMap["poland"] = "pst2";
-    testMap["poland"] = "pst3";
     styleMap.setLastKey("poland");
 
-    QVERIFY(styleMap == testMap);
-    QVERIFY(styleMap.lastKey() == QString("poland"));
+    QVERIFY( styleMap.lastKey() == QString("poland") );
+
+    GeoDataStyleMap testMap = styleMap;
+
+    QVERIFY( styleMap == testMap );
+
+    testMap.insert("Romania", "rst1");
+    testMap.insert("Romania", "rst2");
+    testMap.insert("Romania", "rst3");
+    testMap.setLastKey("Romania");
+
+    QVERIFY( testMap.lastKey() == QString("Romania") );
+    QVERIFY( styleMap.lastKey() == QString("poland") );
 }
 
 }

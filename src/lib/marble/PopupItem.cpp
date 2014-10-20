@@ -119,6 +119,8 @@ void PopupItem::setTextColor(const QColor &color)
         QPalette palette(m_ui.titleText->palette());
         palette.setColor(QPalette::WindowText, m_textColor);
         m_ui.titleText->setPalette(palette);
+
+        requestUpdate();
     }
 }
 
@@ -131,10 +133,12 @@ void PopupItem::setBackgroundColor(const QColor &color)
         QPixmapCache::remove( "marble/webpopup/arrow2_bottomleft" );
         QPixmapCache::remove( "marble/webpopup/arrow2_topright" );
         QPixmapCache::remove( "marble/webpopup/arrow2_bottomright" );
+
+        requestUpdate();
     }
 }
 
-void PopupItem::colorize( QImage &img, const QColor &col ) const
+void PopupItem::colorize( QImage &img, const QColor &col )
 {
     if (img.depth() <= 8) return;
     int pixels = img.width()*img.height();
@@ -335,7 +339,7 @@ void PopupItem::requestUpdate()
     emit repaintNeeded();
 }
 
-void PopupItem::printContent()
+void PopupItem::printContent() const
 {
 #ifndef QT_NO_PRINTER
     QPrinter printer;

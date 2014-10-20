@@ -1,241 +1,229 @@
+//
+// This file is part of the Marble Virtual Globe.
+//
+// This program is free software licensed under the GNU LGPL. You can
+// find a copy of this license in LICENSE.txt in the top directory of
+// the source code.
+//
+// Copyright 2014 Sanjiban Bairagya <sanjiban22393@gmail.com>
+//
+
 #include "TourPlayback.h"
 
 #include <QTimer>
 #include <QList>
+#include <QSlider>
 #include <qurl.h>
+#include <QtCore/qnamespace.h>
 
 #include "MarbleDebug.h"
 #include "MarbleWidget.h"
+#include "PopupLayer.h"
 #include "GeoDataTour.h"
-#include "GeoDataTourPrimitive.h"
 #include "GeoDataFlyTo.h"
 #include "GeoDataLookAt.h"
-#include "GeoDataCamera.h"
-#include "GeoDataWait.h"
+#include "GeoDataTourControl.h"
 #include "GeoDataSoundCue.h"
+#include "GeoDataAnimatedUpdate.h"
 #include "GeoDataTypes.h"
-#include "config-phonon.h"
-
-#ifdef HAVE_PHONON
-#include <phonon/MediaObject>
-#include <phonon/AudioOutput>
-#endif
+#include "PlaybackFlyToItem.h"
+#include "PlaybackAnimatedUpdateItem.h"
+#include "PlaybackWaitItem.h"
+#include "PlaybackTourControlItem.h"
+#include "PlaybackSoundCueItem.h"
+#include "PlaybackAnimatedUpdateItem.h"
+#include "SerialTrack.h"
+#include "ParallelTrack.h"
 
 namespace Marble
 {
 
-class TimedSoundCue: public QPair<QDateTime, const GeoDataSoundCue*>
-{
-public:
-    bool operator< (const TimedSoundCue &other) const {
-        return first < other.first;
-    }
-};
-
 class TourPlaybackPrivate
 {
 public:
-    TourPlaybackPrivate(TourPlayback *q) :
-        m_tour(&GeoDataTour::null),
-        m_currentPrimitive(-1),
-        m_pause(false),
-        q_ptr(q)
-    {}
+    TourPlaybackPrivate();
+    ~TourPlaybackPrivate();
 
-    const GeoDataTour  *m_tour;
-    QList<TimedSoundCue> m_cues;
-    int m_currentPrimitive;
+    const GeoDataTour *m_tour;
     bool m_pause;
-#ifdef HAVE_PHONON
-    QList<Phonon::MediaObject*> m_mediaList;
-#endif
-
-protected:
-    TourPlayback *q_ptr;
-
-public:
-    void processNextPrimitive();
-    void bounceToCurrentPrimitive();
-    void playSoundCue();
-    void resumePlaying();
-    void stopPlaying();
-
-private:
-    Q_DECLARE_PUBLIC(TourPlayback)
+    SerialTrack m_mainTrack;
+    QList<ParallelTrack*> m_parallelTracks;
+    GeoDataFlyTo m_mapCenter;
+    MarbleWidget *m_widget;
 };
+
+TourPlaybackPrivate::TourPlaybackPrivate() :
+    m_tour( &GeoDataTour::null ),
+    m_pause( false ),
+    m_mainTrack()
+{
+    // do nothing
+}
+
+TourPlaybackPrivate::~TourPlaybackPrivate()
+{
+    qDeleteAll(m_parallelTracks);
+}
 
 TourPlayback::TourPlayback(QObject *parent) :
     QObject(parent),
-    d_ptr(new TourPlaybackPrivate(this))
+    d(new TourPlaybackPrivate())
 {
-#ifdef HAVE_PHONON
-    connect( this, SIGNAL( finished() ), this, SLOT( stopPlaying() ) );
-#endif
+    connect( &d->m_mainTrack, SIGNAL( centerOn( GeoDataCoordinates ) ), this, SIGNAL( centerOn( GeoDataCoordinates ) ) );
+    connect( &d->m_mainTrack, SIGNAL( progressChanged( double ) ), this, SIGNAL( progressChanged( double ) ) );
+    connect( &d->m_mainTrack, SIGNAL( finished() ), this, SLOT( stopTour() ) );
 }
 
 TourPlayback::~TourPlayback()
 {
-    delete d_ptr;
+    delete d;
+}
+
+void TourPlayback::stopTour()
+{
+    foreach( ParallelTrack* track, d->m_parallelTracks ){
+        track->stop();
+        track->setPaused( false );
+    }
+}
+
+void TourPlayback::showBalloon( GeoDataPlacemark* placemark )
+{
+    GeoDataPoint* point = static_cast<GeoDataPoint*>( placemark->geometry() );
+    d->m_widget->popupLayer()->setCoordinates( point->coordinates(), Qt::AlignRight | Qt::AlignVCenter );
+    d->m_widget->popupLayer()->setContent( placemark->description() );
+    d->m_widget->popupLayer()->setVisible( true );
+    d->m_widget->popupLayer()->setSize( QSizeF( 480, 500 ) );
+}
+
+void TourPlayback::hideBalloon()
+{
+    d->m_widget->popupLayer()->setVisible( false );
 }
 
 bool TourPlayback::isPlaying() const
 {
-    Q_D(const TourPlayback);
     return !d->m_pause;
+}
+
+void TourPlayback::setMarbleWidget(MarbleWidget* widget)
+{
+    d->m_widget = widget;
 }
 
 void TourPlayback::setTour(const GeoDataTour *tour)
 {
-    Q_D(TourPlayback);
+    d->m_mainTrack.clear();
+    qDeleteAll( d->m_parallelTracks );
+    d->m_parallelTracks.clear();
     if (tour) {
         d->m_tour = tour;
     }
     else {
         d->m_tour = &GeoDataTour::null;
     }
+    double delay = 0;
+    for( int i = 0; i < d->m_tour->playlist()->size(); i++){
+        const GeoDataTourPrimitive* primitive = d->m_tour->playlist()->primitive( i );
+        if( primitive->nodeType() == GeoDataTypes::GeoDataFlyToType ){
+            const GeoDataFlyTo *flyTo = dynamic_cast<const GeoDataFlyTo*>(primitive);
+            d->m_mainTrack.append( new PlaybackFlyToItem( flyTo ) );
+            delay += flyTo->duration();
+        }
+        else if( primitive->nodeType() == GeoDataTypes::GeoDataWaitType ){
+            const GeoDataWait *wait = dynamic_cast<const GeoDataWait*>(primitive);
+
+            d->m_mainTrack.append( new PlaybackWaitItem( wait ) );
+            delay += wait->duration();
+        }
+        else if( primitive->nodeType() == GeoDataTypes::GeoDataTourControlType ){
+            const GeoDataTourControl *tourControl = dynamic_cast<const GeoDataTourControl*>(primitive);
+
+            d->m_mainTrack.append( new PlaybackTourControlItem( tourControl ) );
+        }
+        else if( primitive->nodeType() == GeoDataTypes::GeoDataSoundCueType ){
+            const GeoDataSoundCue *soundCue = dynamic_cast<const GeoDataSoundCue*>(primitive);
+            PlaybackSoundCueItem *item = new PlaybackSoundCueItem( soundCue );
+            ParallelTrack *track = new ParallelTrack( item );
+            track->setDelayBeforeTrackStarts( delay );
+            d->m_parallelTracks.append( track );
+        }
+        else if( primitive->nodeType() == GeoDataTypes::GeoDataAnimatedUpdateType ){
+            const GeoDataAnimatedUpdate *animatedUpdate = dynamic_cast<const GeoDataAnimatedUpdate*>(primitive);
+            PlaybackAnimatedUpdateItem *item = new PlaybackAnimatedUpdateItem( animatedUpdate );
+            ParallelTrack *track = new ParallelTrack( item );
+            track->setDelayBeforeTrackStarts( delay );
+            d->m_parallelTracks.append( track );
+            connect( track, SIGNAL( balloonHidden()), this, SLOT( hideBalloon() ) );
+            connect( track, SIGNAL( balloonShown( GeoDataPlacemark* ) ), this, SLOT( showBalloon( GeoDataPlacemark* ) ) );
+        }
+    }
+    Q_ASSERT( d->m_widget );
+    GeoDataLookAt* lookat = new GeoDataLookAt( d->m_widget->lookAt() );
+    lookat->setAltitude( lookat->range() );
+    d->m_mapCenter.setView( lookat );
+    PlaybackFlyToItem* mapCenterItem = new PlaybackFlyToItem( &d->m_mapCenter );
+    PlaybackFlyToItem* before = mapCenterItem;
+    for ( int i=0; i<d->m_mainTrack.size(); ++i ) {
+        PlaybackFlyToItem* item = qobject_cast<PlaybackFlyToItem*>( d->m_mainTrack.at(i) );
+        if ( item ) {
+            item->setBefore( before );
+            before = item;
+        }
+    }
+    PlaybackFlyToItem* next = 0;
+    for ( int i=d->m_mainTrack.size()-1; i>=0; --i ) {
+        PlaybackFlyToItem* item = qobject_cast<PlaybackFlyToItem*>( d->m_mainTrack.at(i) );
+        if ( item ) {
+            item->setNext( next );
+            next = item;
+        }
+    }
 }
 
 void TourPlayback::play()
 {
-    Q_D(TourPlayback);
-    d->m_cues.clear();
     d->m_pause = false;
-    d->resumePlaying();
-    d->processNextPrimitive();
+    GeoDataLookAt* lookat = new GeoDataLookAt( d->m_widget->lookAt() );
+    lookat->setAltitude( lookat->range() );
+    d->m_mapCenter.setView( lookat );
+    d->m_mainTrack.play();
+    foreach( ParallelTrack* track, d->m_parallelTracks) {
+        track->play();
+    }
 }
 
 void TourPlayback::pause()
 {
-    Q_D(TourPlayback);
     d->m_pause = true;
-    emit paused();
+    d->m_mainTrack.pause();
+    foreach( ParallelTrack* track, d->m_parallelTracks) {
+        track->pause();
+    }
 }
 
 void TourPlayback::stop()
 {
-    Q_D(TourPlayback);
-    d->m_currentPrimitive = -1;
     d->m_pause = true;
-    emit stopped();
+    d->m_mainTrack.stop();
+    foreach( ParallelTrack* track, d->m_parallelTracks) {
+        track->stop();
+    }
+    hideBalloon();
 }
 
-void TourPlaybackPrivate::processNextPrimitive()
+void TourPlayback::seek( double value )
 {
-    Q_Q(TourPlayback);
-
-    if (m_pause)
-        return;
-
-    m_currentPrimitive++;
-    if (m_currentPrimitive >= m_tour->playlist()->size()) {
-        emit q->finished();
-        m_currentPrimitive = -1;
-        m_cues.clear();
-        return;
-    }
-
-    const GeoDataTourPrimitive *item =
-            m_tour->playlist()->primitive(m_currentPrimitive);
-
-    const GeoDataFlyTo *flyTo = dynamic_cast<const GeoDataFlyTo*>(item);
-    if (flyTo) {
-        QTimer::singleShot(flyTo->duration()*1000, q, SLOT(bounceToCurrentPrimitive()));
-        return;
-    }
-
-    const GeoDataWait *wait = dynamic_cast<const GeoDataWait*>(item);
-    if (wait) {
-        QTimer::singleShot(wait->duration()*1000, q, SLOT(processNextPrimitive()));
-        return;
-    }
-
-    const GeoDataSoundCue *cue = dynamic_cast<const GeoDataSoundCue*>(item);
-    if (cue) {
-        TimedSoundCue timed;
-        timed.first = QDateTime::currentDateTime().addMSecs(cue->delayedStart()*1000);
-        timed.second = cue;
-
-        QList<TimedSoundCue>::iterator iter = m_cues.begin();
-        for (; iter != m_cues.end() && *iter < timed; ++iter) {}
-        m_cues.insert(iter, timed);
-
-        QTimer::singleShot(cue->delayedStart()*1000, q, SLOT(playSoundCue()));
-        processNextPrimitive();
+    double const offset = qBound( 0.0, value, d->m_mainTrack.duration() );
+    d->m_mainTrack.seek( offset );
+    foreach( ParallelTrack* track, d->m_parallelTracks ){
+        track->seek( offset );
     }
 }
 
-void TourPlaybackPrivate::bounceToCurrentPrimitive()
+double TourPlayback::duration() const
 {
-    const GeoDataTourPrimitive *item =
-            m_tour->playlist()->primitive(m_currentPrimitive);
-
-    const GeoDataFlyTo *flyTo = dynamic_cast<const GeoDataFlyTo*>(item);
-    if (flyTo) {
-        if (flyTo->view() &&
-            flyTo->view()->nodeType() == GeoDataTypes::GeoDataLookAtType) {
-            const GeoDataLookAt *lookAt = static_cast<const GeoDataLookAt*>(flyTo->view());
-            if (lookAt) {
-                GeoDataCoordinates coord = lookAt->coordinates();
-                Q_Q(TourPlayback);
-                emit q->centerOn(coord);
-            }
-        } else if (flyTo->view() &&
-                   flyTo->view()->nodeType() == GeoDataTypes::GeoDataCameraType) {
-            const GeoDataCamera *camera = static_cast<const GeoDataCamera*>(flyTo->view());
-            if (camera) {
-                GeoDataCoordinates coord = camera->coordinates();
-                Q_Q(TourPlayback);
-                emit q->centerOn(coord);
-            }
-        }
-    }
-    processNextPrimitive();
-}
-
-void TourPlaybackPrivate::playSoundCue()
-{
-    if (m_cues.isEmpty())
-        return;
-
-    const GeoDataSoundCue *cue = m_cues.first().second;
-    m_cues.removeFirst();
-
-    if (cue) {
-#ifdef HAVE_PHONON
-        Q_Q(TourPlayback);
-        Phonon::MediaObject *mediaObject = new Phonon::MediaObject( q );
-        Phonon::createPath( mediaObject, new Phonon::AudioOutput( Phonon::MusicCategory, q ) );
-        mediaObject->setCurrentSource( QUrl( cue->href() ) );
-        mediaObject->play();
-        QObject::connect( q, SIGNAL( paused() ), mediaObject, SLOT( pause() ) );
-        m_mediaList.append( mediaObject );
-#endif
-    }
-}
-
-void TourPlaybackPrivate::stopPlaying()
-{
-#ifdef HAVE_PHONON
-    QList<Phonon::MediaObject*>::iterator iter = m_mediaList.begin();
-    QList<Phonon::MediaObject*>::iterator end = m_mediaList.end();
-    for (; iter != end; ++ iter) {
-        (*iter)->stop();
-    }
-    m_mediaList.clear();
-#endif // HAVE_PHONON
-}
-
-void TourPlaybackPrivate::resumePlaying()
-{
-#ifdef HAVE_PHONON
-    QList<Phonon::MediaObject*>::iterator iter = m_mediaList.begin();
-    QList<Phonon::MediaObject*>::iterator end = m_mediaList.end();
-    for (; iter != end; ++iter) {
-        if ( (*iter)->state() == Phonon::PausedState ) {
-            (*iter)->play();
-        }
-    }
-#endif // HAVE_PHONON
+    return d->m_mainTrack.duration();
 }
 
 } // namespace Marble

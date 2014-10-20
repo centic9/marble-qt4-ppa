@@ -151,7 +151,12 @@ void BookmarkManager::removeBookmark( GeoDataPlacemark *bookmark )
     updateBookmarkFile();
 }
 
-GeoDataDocument * BookmarkManager::document() const
+GeoDataDocument * BookmarkManager::document()
+{
+    return d->m_bookmarkDocument;
+}
+
+const GeoDataDocument * BookmarkManager::document() const
 {
     return d->m_bookmarkDocument;
 }
@@ -230,7 +235,7 @@ bool BookmarkManager::updateBookmarkFile()
 
     if ( ! d->m_bookmarkFileRelativePath.isNull() ) {
         GeoWriter writer;
-        writer.setDocumentType( "http://earth.google.com/kml/2.2" );
+        writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
 
         QFile file( absoluteLocalFilePath );
 

@@ -61,6 +61,17 @@ GeoDataPoint::~GeoDataPoint()
 {
 }
 
+bool GeoDataPoint::operator==( const GeoDataPoint &other ) const
+{
+    return equals(other) &&
+           coordinates() == other.coordinates();
+}
+
+bool GeoDataPoint::operator!=( const GeoDataPoint &other ) const
+{
+    return !this->operator==(other);
+}
+
 void GeoDataPoint::setCoordinates( const GeoDataCoordinates &coordinates )
 {
     p()->m_coordinates = coordinates;
@@ -72,7 +83,12 @@ const GeoDataCoordinates &GeoDataPoint::coordinates() const
     return p()->m_coordinates;
 }
 
-GeoDataPointPrivate* GeoDataPoint::p() const
+GeoDataPointPrivate* GeoDataPoint::p()
+{
+    return static_cast<GeoDataPointPrivate*>(GeoDataGeometry::d);
+}
+
+const GeoDataPointPrivate* GeoDataPoint::p() const
 {
     return static_cast<GeoDataPointPrivate*>(GeoDataGeometry::d);
 }

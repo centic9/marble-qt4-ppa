@@ -14,13 +14,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerLink(
         GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataLinkType,
-                                     kml::kmlTag_nameSpace22 ),
+                                     kml::kmlTag_nameSpaceOgc22 ),
         new KmlLinkTagWriter );
 
 bool KmlLinkTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -28,6 +29,7 @@ bool KmlLinkTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataLink *link = static_cast<const GeoDataLink*>( node );
 
     writer.writeStartElement( kml::kmlTag_Link );
+    KmlObjectTagWriter::writeIdentifiers( writer, link );
 
     writer.writeElement( kml::kmlTag_href, link->href() );
 
@@ -62,7 +64,7 @@ QString KmlLinkTagWriter::refreshModeToString( GeoDataLink::RefreshMode refreshM
     }
 }
 
-QString KmlLinkTagWriter::viewRefreshModeToString( GeoDataLink::ViewRefreshMode viewRefreshMode) const
+QString KmlLinkTagWriter::viewRefreshModeToString( GeoDataLink::ViewRefreshMode viewRefreshMode)
 {
     switch (viewRefreshMode)
     {

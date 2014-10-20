@@ -86,6 +86,15 @@ class GEODATA_EXPORT GeoDataLinearRing : public GeoDataLineString
 */
     virtual ~GeoDataLinearRing();
 
+
+/*!
+    \brief Returns true/false depending on whether this and other are/are not equal.
+*/
+
+    bool operator==( const GeoDataLinearRing &other ) const;
+    bool operator!=( const GeoDataLinearRing &other ) const;
+
+
 /*!
     \brief Returns whether a LinearRing is a closed polygon.
 
@@ -114,6 +123,12 @@ class GEODATA_EXPORT GeoDataLinearRing : public GeoDataLineString
     \return <code>true</code> if the coordinates lie within the polygon, false otherwise.
 */
     virtual bool contains( const GeoDataCoordinates &coordinates ) const;
+
+/*!
+ * \brief Returns whether the orientaion of ring is coloskwise or not
+ * \return Return value is true if ring is clockwise orientated
+ */
+    virtual bool isClockwise() const;
 };
 
 }

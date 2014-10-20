@@ -43,8 +43,8 @@ INCLUDE(geodata/CMakeLists.txt)
 INCLUDE(graphicsview/CMakeLists.txt)
 INCLUDE(layers/CMakeLists.txt)
 
-set(GENERIC_LIB_VERSION "0.18.3")
-set(GENERIC_LIB_SOVERSION "18")
+set(GENERIC_LIB_VERSION "0.19.2")
+set(GENERIC_LIB_SOVERSION "19")
 
 if (QTONLY)
   # ce: don't know why this is needed here - on win32 'O2' is activated by default in release mode
@@ -68,10 +68,15 @@ endif (QTONLY)
 # link_directories (${QT_LIBRARY_DIR})
 ########### next target ###############
 
+if( NOT QT4_FOUND )
+    set(marblequick_SRCS MarbleQuickItem.cpp)
+endif()
+
 set(marblewidget_SRCS
     ${geodata_SRCS}
     ${graphicsview_SRCS}
     ${layers_SRCS}
+    ${marblequick_SRCS}
     blendings/Blending.cpp
     blendings/BlendingAlgorithms.cpp
     blendings/BlendingFactory.cpp
@@ -80,6 +85,7 @@ set(marblewidget_SRCS
     DownloadRegionDialog.cpp
     LatLonBoxWidget.cpp
     MarbleWidget.cpp
+    MarbleAbstractPresenter.cpp
     MarbleWebView.cpp
     MarbleModel.cpp
     MarbleMap.cpp
@@ -90,10 +96,19 @@ set(marblewidget_SRCS
     TourWidget.cpp
     TourPlayback.cpp
     LegendWidget.cpp
+    PlaybackItem.cpp
+    PlaybackAnimatedUpdateItem.cpp
+    PlaybackFlyToItem.cpp
+    PlaybackSoundCueItem.cpp
+    PlaybackTourControlItem.cpp
+    PlaybackWaitItem.cpp
+    SerialTrack.cpp
+    ParallelTrack.cpp
     CurrentLocationWidget.cpp
     MarbleNavigator.cpp
     MarbleLegendBrowser.cpp
     MarbleAboutDialog.cpp
+    MarbleInputHandler.cpp
     MarbleWidgetInputHandler.cpp
     MarbleWidgetPopupMenu.cpp
     MarblePlacemarkModel.cpp
@@ -175,6 +190,7 @@ set(marblewidget_SRCS
     PluginInterface.cpp
     DialogConfigurationInterface.cpp
     LayerInterface.cpp
+    RenderState.cpp
     RenderPlugin.cpp
     RenderPluginInterface.cpp
     PositionProviderPlugin.cpp
@@ -389,11 +405,13 @@ endif(WIN32 AND QTONLY)
 
 ########### install files ###############
 
-if (APPLE AND QTONLY)
-  # do nothing because we don't put .h files in the bundle
-else (APPLE AND QTONLY)
-  install( FILES
+if( NOT QT4_FOUND )
+    set(marblequick_HDRS MarbleQuickItem.h)
+endif()
+
+install( FILES
     ${graphicsview_HDRS}
+    ${marblequick_HDRS}
     AutoNavigation.h
     BookmarkManager.h
     DownloadRegion.h
@@ -415,6 +433,7 @@ else (APPLE AND QTONLY)
     AbstractFloatItem.h
     MapThemeManager.h
     MarbleAboutDialog.h
+    MarbleInputHandler.h
     MarbleWidgetInputHandler.h
     MarbleWidgetPopupMenu.h
     TileId.h
@@ -425,6 +444,7 @@ else (APPLE AND QTONLY)
     global.h
     MarbleColors.h
     MarbleGlobal.h
+    MarbleLocale.h
     MarbleDebug.h
     MarbleDirs.h
     GeoPainter.h
@@ -504,6 +524,7 @@ else (APPLE AND QTONLY)
     RoutingRunnerPlugin.h
     ParseRunnerPlugin.h
     LayerInterface.h
+    RenderState.h
     PluginAboutDialog.h
     marble_export.h
     Planet.h
@@ -529,6 +550,6 @@ else (APPLE AND QTONLY)
 
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/marble
 )
-endif (APPLE AND QTONLY)
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config-phonon.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/config-phonon.h)

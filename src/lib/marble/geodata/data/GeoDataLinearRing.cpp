@@ -32,6 +32,17 @@ GeoDataLinearRing::~GeoDataLinearRing()
 {
 }
 
+bool GeoDataLinearRing::operator==( const GeoDataLinearRing &other ) const
+{
+    return isClosed() == other.isClosed() &&
+           GeoDataLineString::operator==( other );
+}
+
+bool GeoDataLinearRing::operator!=( const GeoDataLinearRing &other ) const
+{
+    return !this->operator==(other);
+}
+
 bool GeoDataLinearRing::isClosed() const
 {
     return true;
@@ -70,6 +81,18 @@ bool GeoDataLinearRing::contains( const GeoDataCoordinates &coordinates ) const
     }
 
     return inside;
+}
+
+bool GeoDataLinearRing::isClockwise() const
+{
+    int n = size();
+    qreal area = 0;
+    for ( int i = 1; i < n - 1; ++i ){
+        area += ( at( i ).longitude() - at( i - 1 ).longitude() ) * ( at( i ).latitude() + at( i - 1 ).latitude() );
+    }
+    area += ( at( 0 ).longitude() - at( n - 2 ).longitude() ) * ( at ( 0 ).latitude() + at( n - 2 ).latitude() );
+
+    return area > 0;
 }
 
 }

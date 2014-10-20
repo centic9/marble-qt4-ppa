@@ -24,6 +24,7 @@
 #include "MarbleDebug.h"
 
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagHandler.h"
 #include "GeoDataContainer.h"
 #include "GeoDataFolder.h"
 #include "GeoDataPlacemark.h"
@@ -41,10 +42,12 @@ GeoNode* KmlPlacemarkTagHandler::parse( GeoParser& parser ) const
     Q_ASSERT( parser.isStartElement() && parser.isValidElement( kmlTag_Placemark ) );
 
     GeoDataPlacemark *placemark = new GeoDataPlacemark;
+    KmlObjectTagHandler::parseIdentifiers( parser, placemark );
 
     GeoStackItem parentItem = parser.parentElement();
 
-    if( parentItem.represents( kmlTag_Folder ) || parentItem.represents( kmlTag_Document ) ) {
+    if( parentItem.represents( kmlTag_Folder ) || parentItem.represents( kmlTag_Document ) ||
+        parentItem.represents( kmlTag_Change ) || parentItem.represents( kmlTag_Create ) || parentItem.represents( kmlTag_Delete ) ){
         parentItem.nodeAs<GeoDataContainer>()->append( placemark );
         return placemark;
     } else if ( parentItem.qualifiedName().first == kmlTag_kml ) {

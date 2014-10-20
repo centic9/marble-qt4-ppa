@@ -26,6 +26,7 @@
 #include "geodata/data/GeoDataData.h"
 #include "geodata/data/GeoDataExtendedData.h"
 #include "geodata/writer/GeoWriter.h"
+#include "geodata/handlers/kml/KmlElementDictionary.h"
 
 using namespace Marble;
 
@@ -100,15 +101,15 @@ void parseBoundingBox( const QFileInfo &file, const QString &name,
     lineStyle.setColor( color );
     lineStyle.setWidth( 4 );
     style.setLineStyle(lineStyle);
-    style.setStyleId("border");
+    style.setId("border");
 
     GeoDataStyleMap styleMap;
-    styleMap.setStyleId("map-border");
-    styleMap.insert("normal", QString("#").append(style.styleId()));
+    styleMap.setId("map-border");
+    styleMap.insert("normal", QString("#").append(style.id()));
     document->addStyleMap(styleMap);
     document->addStyle(style);
 
-    placemark->setStyleUrl(QString("#").append(styleMap.styleId()));
+    placemark->setStyleUrl(QString("#").append(styleMap.id()));
 
     placemark->setName( name );
     if ( !version.isEmpty() ) {
@@ -130,7 +131,7 @@ void parseBoundingBox( const QFileInfo &file, const QString &name,
 int save( GeoDataDocument* document, const QFileInfo &filename )
 {
     GeoWriter writer;
-    writer.setDocumentType( "http://earth.google.com/kml/2.2" );
+    writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
 
     QFile file( filename.absoluteFilePath() );
     if ( !file.open( QIODevice::WriteOnly | QIODevice::Truncate ) )

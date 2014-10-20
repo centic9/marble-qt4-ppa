@@ -35,8 +35,21 @@ GeoDataLookAt::GeoDataLookAt( const GeoDataLookAt& other ) :
 
 GeoDataLookAt& GeoDataLookAt::operator=( const GeoDataLookAt &other )                                   
 {
+    GeoDataAbstractView::operator=( other );
     qAtomicAssign( d, other.d );
     return *this;
+}
+
+bool GeoDataLookAt::operator==(const GeoDataLookAt &other) const
+{
+    return equals(other) &&
+           d->m_coordinates == other.d->m_coordinates &&
+           d->m_range == other.d->m_range;
+}
+
+bool GeoDataLookAt::operator!=(const GeoDataLookAt &other) const
+{
+    return !this->operator==( other );
 }
 
 GeoDataLookAt::~GeoDataLookAt()

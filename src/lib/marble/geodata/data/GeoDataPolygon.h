@@ -100,6 +100,13 @@ class GEODATA_EXPORT GeoDataPolygon : public GeoDataGeometry
 
 
 /*!
+    \brief Returns true/false depending on whether this and other are/are not equal.
+*/
+    bool operator==( const GeoDataPolygon &other ) const;
+    bool operator!=( const GeoDataPolygon &other ) const;
+
+
+/*!
     \brief Returns whether a Polygon is a closed polygon.
 
     \return <code>true</code> for a Polygon.
@@ -210,9 +217,9 @@ class GEODATA_EXPORT GeoDataPolygon : public GeoDataGeometry
 */
     virtual void unpack( QDataStream& stream );
 
-    
- protected:
-    GeoDataPolygonPrivate *p() const;
+ private:
+    GeoDataPolygonPrivate *p();
+    const GeoDataPolygonPrivate *p() const;
 };
 
 class GEODATA_EXPORT GeoDataOuterBoundary : public GeoDataPolygon

@@ -1,71 +1,379 @@
-Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?view=markup&pathrev=174
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: marble
 Source: ftp.kde.org
 Comment: This package was developed for Ubuntu by the Kubuntu Developers and
  modified to be included in Debian. See below the copyright holders for debian/*
  files.
 
 Files: *
-Copyright: 2010-2011 Dennis Nienhüser <earthwings@gentoo.org>
-          2008-2009 Patrick Spendrin  <ps_ml@gmx.de>
-          2007-2008 Inge Wallin  <ingwa@kde.org>
-          2004-2010 Torsten Rahn <tackat@kde.org>
-          2007 Murad Tagirov <tmurad@gmail.com>
-          2008 Pino Toscano <pino@kde.org>
-          2010 Scott A. Crosby. <scott@sacrosby.com>
-          2010-2011 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
-          2009-2010 Bastian Holst <bastianholst@gmx.de>
-          2010 Harshit Jain <hjain.itbhu@gmail.com>
-          2007 Tim Sutton   <tim@linfiniti.com>
-          2010-2011 Utku Aydın <utkuaydin34@gmail.com>
-          2009-2010 Gaurav Gupta <1989.gaurav@googlemail.com>
-          2007, 2008 Nikolas Zimmermann <zimmermann@kde.org>
-          2008-2010 Jens-Michael Hoffmann <jensmh@gmx.de>
-          2009-2010 Thibaut GRIDEL <tgridel@free.fr>
-          2007 Tobias Koenig <tokoe@kde.org>
-          2007, 2009 Andrew Manson <g.real.ate@gmail.com>
-          2010 Niko Sams <niko.sams@gmail.com>
-          2007-2009 David Roberts <dvdr18@gmail.com>
-          2008-2009 Henry de Valence <hdevalence@gmail.com>
-          2008 Claudiu Covaci <claudiu.covaci@gmail.com>
-          2009 Eckhart Wörner <ewoerner@kde.org>
-          2008 Shashank Singh <shashank.personal@gmail.com>
-          2010 Wes Hardaker <hardaker@users.sourceforge.net>
-          2008-2011 Simon Edwards <simon@simonzone.com>
-          2007-2008 Carlos Licea <carlos.licea@kdemail.net>
-          2009 Stephen Kelly <steveire@gmail.com>
-          2007 Thomas Zander <zander@kde.org>
-          2010 Cezar Mocan <mocancezar@gmail.com>
-          2010 Siddharth Srivastava <akssps011@gmail.com>
-          2010-2011 Daniel Marth    <danielmarth@gmx.at>
-          2008 Simon Hausmann  <hausmann@kde.org>
-          2010 Klarälvdalens Datakonsult AB
-          2007 Christian Ehrlicher <ch.ehrlicher@gmx.de>
-          2010 Matias Kallio <matias.kallio@gmail.com>
+Copyright: 2013, Adrian Draghici <draghici.adrian.b@gmail.com>
+           2012-2013, Ander Pijoan <ander.pijoan@deusto.es>
+           2009-2012, Anders Lund <anders@alweb.dk>
+           2007-2009, Andrew Manson <g.real.ate@gmail.com>
+           2012, Anton Chernov <chernov.anton.mail@gmail.com>
+           2009-2011, Bastian Holst <bastianholst@gmx.de>
+           2010-2013, Bernhard Beschow <bbeschow@cs.tu-berlin.de>
+           2007-2008, Carlos Licea <carlos.licea@kdemail.net>
+           2010-2012, Cezar Mocan <mocancezar@gmail.com>
+           2007, Christian Ehrlicher <ch.ehrlicher@gmx.de>
+           2008, Claudiu Covaci <claudiu.covaci@gmail.com>
+           2014, Cruceru Calin-Cristian <crucerucalincristian@gmail.com>
+           2010-2011, Daniel Marth <danielmarth@gmx.at>
+           2007-2009, David Roberts <dvdr18@gmail.com>
+           2008-2013, Dennis Nienhüser <earthwings@gentoo.org>
+           2009, Eckhart Wörner <ewoerner@kde.org>
+           2011-2012, Florian Eßer <f.esser@rwth-aachen.de>
+           2011, Friedrich W. H. Kossebau <kossebau@kde.org>
+           2009-2010, Gaurav Gupta <1989.gaurav@googlemail.com>
+           2004-2013, Gerhard HOLTKAMP
+           2011, Guillaume Martres <smarter@ubuntu.com>
+           2010, Harshit Jain <hjain.itbhu@gmail.com>
+           2008-2009, Henry de Valence <hdevalence@gmail.com>
+           2012-2013, Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
+           2007-2008, Inge Wallin <ingwa@kde.org>
+           2011, Javier Becerra <javier@auva.es>
+           2009, Jens-Michael Hoffmann <jensmh@gmx.de>
+           2008-2011, Jens-Michael Hoffmann <jmho@c-xx.com>
+           2010 Klarälvdalens Datakonsult AB
+           2011, Konrad Enzensberger <e.konrad@mpegcode.com>
+           2011, Konstantin Oblaukhov <oblaukhov.konstantin@gmail.com>
+           2012, Kovalevskyy Illya <illya.kovalevskyy@gmail.com>
+           2013-2014, Levente Kurusa <levex@linux.com>
+           2012, LOTES TM LLC <lotes.sis@gmail.com>
+           2013, Marek Hakala <hakala.marek@gmail.com>
+           2010, Matias Kallio <matias.kallio@gmail.com>
+           2012-2013, Mayank Madan <maddiemadan@gmail.com>
+           2011, Michael Henning <mikehenning@eclipse.net>
+           2013, Mihail Ivchenko <ematirov@gmail.com>
+           2012-2013, Mohammed Nafees <nafees.technocool@gmail.com>
+           2007, Murad Tagirov <tmurad@gmail.com>
+           2007-2008, Nikolas Zimmermann <zimmermann@kde.org>
+           2010-2011, Niko Sams <niko.sams@gmail.com>
+           2008-2009, Patrick Spendrin <ps_ml@gmx.de>
+           2008, Pino Toscano <pino@kde.org>
+           2012, Ralf Habacker <ralf.habacker@freenet.de>
+           2012-2013, Rene Kuettner <rene@bitkanal.net>
+           2013-2014, Sanjiban Bairagya <sanjiban22393@gmail.com>
+           2010 Scott A. Crosby. <scott@sacrosby.com>
+           2008, Shashan Singh <shashank.personal@gmail.com>
+           2012, Shou Ya <shouyalovelyx@gmail.com>
+           2010, Siddharth Srivastava <akssps011@gmail.com>
+           2008-2011 Simon Edwards <simon@simonzone.com>
+           2008, Simon Hausmann <hausmann@kde.org>
+           2009 Stephen Kelly <steveire@gmail.com>
+           2009-2013, Thibaut Gridel <tgridel@free.fr>
+           2007, Thomas Zander <zander@kde.org>
+           2007, Tim Sutton <tim@linfiniti.com>
+           2007, Tobias Koenig <tokoe@kde.org>
+           2004-2012, Torsten Rahn <rahn@kde.org>
+           2010-2013, Utku Aydın <utkuaydin34@gmail.com>
+           2011, Valery Kharitonov <kharvd@gmail.com>
+           2010, Wes Hardaker <marble@ws6z.com>
+           2013, Yazeed Zoabi <yazeedz.zoabi@gmail.com>
 License: LGPL-2.1+
+
+Files: examples/python/simple_marble.py
+       src/lib/marble/MarbleAboutDialog.cpp
+       src/lib/marble/MarbleControlBox.cpp
+       src/lib/marble/MathHelper.cpp
+       src/lib/marble/MathHelper.h
+       src/lib/marble/StackedTileLoader.cpp
+       src/lib/marble/StackedTileLoader.h
+       src/lib/marble/TileLoaderHelper.cpp
+       src/lib/marble/TileLoaderHelper.h
+       src/lib/marble/geodata/data/GeoDataDocument.cpp
+       src/lib/marble/geodata/data/GeoDataDocument.h
+       src/lib/marble/geodata/data/GeoDataFolder.cpp
+       src/lib/marble/geodata/data/GeoDataFolder.h
+       src/lib/marble/geodata/handlers/dgml/DgmlAttributeDictionary.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlAttributeDictionary.h
+       src/lib/marble/geodata/handlers/dgml/DgmlAuxillaryDictionary.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlAuxillaryDictionary.h
+       src/lib/marble/geodata/handlers/dgml/DgmlAvailableTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlAvailableTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlBrushTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlBrushTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlDescriptionTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlDescriptionTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlDiscreteTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlDiscreteTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlDocumentTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlDocumentTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlDownloadUrlTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlDownloadUrlTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlElementDictionary.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlElementDictionary.h
+       src/lib/marble/geodata/handlers/dgml/DgmlFilterTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlFilterTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlGeodataTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlGeodataTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlGroupTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlGroupTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlHeadTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlHeadTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlHeadingTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlHeadingTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlIconTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlIconTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlInstallMapTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlInstallMapTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlItemTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlItemTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlLayerTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlLayerTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlLegendTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlLegendTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlMapTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlMapTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlMaximumTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlMaximumTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlMinimumTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlMinimumTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlNameTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlNameTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlPaletteTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlPaletteTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlPenTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlPenTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlProjectionTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlProjectionTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlPropertyTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlPropertyTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlSectionTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlSectionTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlSettingsTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlSettingsTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlSourceDirTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlSourceDirTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlSourceFileTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlSourceFileTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlStorageLayoutTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlStorageLayoutTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlTargetTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlTargetTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlTextTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlTextTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlTextureTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlTextureTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlThemeTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlThemeTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlValueTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlValueTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlVectorTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlVectorTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlVisibleTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlVisibleTagHandler.h
+       src/lib/marble/geodata/handlers/dgml/DgmlZoomTagHandler.cpp
+       src/lib/marble/geodata/handlers/dgml/DgmlZoomTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlAltitudeModeTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlAltitudeModeTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlAreaTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlAreaTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlColorModeTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlColorModeTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlColorTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlColorTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlCoordinatesTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlCoordinatesTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlCountryNameCodeTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlCountryNameCodeTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlCountrycodeTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlCountrycodeTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlDescriptionTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlDescriptionTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlDocumentTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlDocumentTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlElementDictionary.cpp
+       src/lib/marble/geodata/handlers/kml/KmlElementDictionary.h
+       src/lib/marble/geodata/handlers/kml/KmlExtrudeTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlExtrudeTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlFillTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlFillTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlFolderTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlFolderTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlHeadingTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlHeadingTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlHotSpotTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlHotSpotTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlHrefTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlHrefTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlIconStyleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlIconStyleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlIconTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlIconTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlInnerBoundaryIsTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlInnerBoundaryIsTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlKeyTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlKeyTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlLabelStyleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlLabelStyleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlLineStringTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlLineStringTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlLineStyleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlLineStyleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlLinearRingTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlLinearRingTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlMarblePlacemarkTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlMarblePlacemarkTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlMultiGeometryTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlMultiGeometryTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlNameTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlNameTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlOpenTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlOpenTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlOuterBoundaryIsTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlOuterBoundaryIsTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlOutlineTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlOutlineTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPairTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPairTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPlacemarkTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPlacemarkTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPointTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPointTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPolyStyleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPolyStyleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPolygonTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPolygonTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlPopTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlPopTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlRoleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlRoleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlSchemaTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlSchemaTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlSimpleFieldTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlSimpleFieldTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlStyleMapTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlStyleMapTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlStyleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlStyleTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlStyleUrlTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlStyleUrlTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlTessellateTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlTessellateTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlVisibilityTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlVisibilityTagHandler.h
+       src/lib/marble/geodata/handlers/kml/KmlWidthTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/KmlWidthTagHandler.h
+       src/lib/marble/geodata/handlers/kml/Kml_scaleTagHandler.cpp
+       src/lib/marble/geodata/handlers/kml/Kml_scaleTagHandler.h
+       src/lib/marble/geodata/parser/GeoDataParser.cpp
+       src/lib/marble/geodata/parser/GeoDataParser.h
+       src/lib/marble/geodata/parser/GeoDataTypes.cpp
+       src/lib/marble/geodata/parser/GeoDataTypes.h
+       src/lib/marble/geodata/parser/GeoDocument.cpp
+       src/lib/marble/geodata/parser/GeoDocument.h
+       src/lib/marble/geodata/parser/GeoParser.cpp
+       src/lib/marble/geodata/parser/GeoParser.h
+       src/lib/marble/geodata/parser/GeoSceneParser.cpp
+       src/lib/marble/geodata/parser/GeoSceneParser.h
+       src/lib/marble/geodata/parser/GeoTagHandler.cpp
+       src/lib/marble/geodata/parser/GeoTagHandler.h
+       src/lib/marble/geodata/scene/GeoSceneAbstractDataset.cpp
+       src/lib/marble/geodata/scene/GeoSceneAbstractDataset.h
+       src/lib/marble/geodata/scene/GeoSceneDocument.cpp
+       src/lib/marble/geodata/scene/GeoSceneDocument.h
+       src/lib/marble/geodata/scene/GeoSceneFilter.cpp
+       src/lib/marble/geodata/scene/GeoSceneFilter.h
+       src/lib/marble/geodata/scene/GeoSceneGroup.cpp
+       src/lib/marble/geodata/scene/GeoSceneGroup.h
+       src/lib/marble/geodata/scene/GeoSceneHead.cpp
+       src/lib/marble/geodata/scene/GeoSceneHead.h
+       src/lib/marble/geodata/scene/GeoSceneIcon.cpp
+       src/lib/marble/geodata/scene/GeoSceneIcon.h
+       src/lib/marble/geodata/scene/GeoSceneItem.cpp
+       src/lib/marble/geodata/scene/GeoSceneItem.h
+       src/lib/marble/geodata/scene/GeoSceneLayer.cpp
+       src/lib/marble/geodata/scene/GeoSceneLayer.h
+       src/lib/marble/geodata/scene/GeoSceneLegend.cpp
+       src/lib/marble/geodata/scene/GeoSceneLegend.h
+       src/lib/marble/geodata/scene/GeoSceneMap.cpp
+       src/lib/marble/geodata/scene/GeoSceneMap.h
+       src/lib/marble/geodata/scene/GeoScenePalette.cpp
+       src/lib/marble/geodata/scene/GeoScenePalette.h
+       src/lib/marble/geodata/scene/GeoSceneProperty.cpp
+       src/lib/marble/geodata/scene/GeoSceneProperty.h
+       src/lib/marble/geodata/scene/GeoSceneSection.cpp
+       src/lib/marble/geodata/scene/GeoSceneSection.h
+       src/lib/marble/geodata/scene/GeoSceneSettings.cpp
+       src/lib/marble/geodata/scene/GeoSceneSettings.h
+       src/lib/marble/geodata/scene/GeoSceneVector.cpp
+       src/lib/marble/geodata/scene/GeoSceneVector.h
+       src/lib/marble/geodata/scene/GeoSceneZoom.cpp
+       src/lib/marble/geodata/scene/GeoSceneZoom.h
+       src/lib/marble/kbihash_p.h
+       src/lib/marble/kdescendantsproxymodel.cpp
+       src/lib/marble/kdescendantsproxymodel.h
+       src/plugins/runner/gpx/handlers/GPXElementDictionary.cpp
+       src/plugins/runner/gpx/handlers/GPXElementDictionary.h
+       src/plugins/runner/gpx/handlers/GPXgpxTagHandler.cpp
+       src/plugins/runner/gpx/handlers/GPXgpxTagHandler.h
+       tools/add_kml/add_kml_tag.py
+Copyright: 2009-2010, Bastian Holst <bastianholst@gmx.de>
+           2010-2012, Bernhard Beschow <bbeschow@cs.tu-berlin.de>
+           2008, Henry de Valence <hdevalence@gmail.com>
+           2007, Inge Wallin <ingwa@kde.org>
+           2008-2010, Jens-Michael Hoffmann <jensmh@gmx.de>
+           2010, Klarälvdalens Datakonsult AB
+           2007, Murad Tagirov <tmurad@gmail.com>
+           2007-2008, Nikolas Zimmermann <zimmermann@kde.org>
+           2008-2009, Patrick Spendrin <ps_ml@gmx.de>
+           2008, Simon Edwards <simon@simonzone.com>
+           2009, Stephen Kelly <steveire@gmail.com>
+           2007, Thomas Zander <zander@kde.org>
+           2004-2008, Torsten Rahn <rahn@kde.org>
+License: LGPL-2+
+ This library is free software you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ You should have received a copy of the GNU Library General Public License
+ aint with this library see the file COPYING.LIB.  If not, write to
+ the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+ .
+ On Debian systems, the full text of the GNU Library General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/LGPL-2'.
 
 Files: src/plugins/runner/monav/signals.h tools/osm-addresses/pbf/PbfParser.*
 Copyright: 2010  Christian Vetter veaac.fdirct@gmail.com
            2011  Dennis Nienhüser <earthwings@gentoo.org>
 License: GPL-3+
 
-Files: FindPhonon.cmake FindQtLocation.cmake FindQtMobility.cmake src/kde4uic_qtonly.cmake
-Copyright: 2008, Matthias Kretz <kretz@kde.org>
+Files: src/lib/marble/kineticmodel.cpp
+       src/lib/marble/kineticmodel.h
+       tools/mapreproject/Thread.cpp
+       tools/mapreproject/Thread.h
+       cmake/modules/FindPhonon.cmake
+       cmake/modules/FindQtLocation.cmake
+       cmake/modules/FindQtMobility.cmake
+       src/kde4uic_qtonly.cmake
+Copyright: 2006, Alexander Neundorf, <neundorf@kde.org>
+           2010, Ariya Hidayat <ariya.hidayat@gmail.com>
            2011, Daniel Marth, <danielmarth@gmx.at>
-           2006, Alexander Neundorf, <neundorf@kde.org>
+           2008, Matthias Kretz <kretz@kde.org>
+           2010, Nokia Corporation and/or its subsidiary(-ies)
 License: BSD-3-clause
 
 Files: debian/*
-Copyright: Copyright (C) 2011 Kubuntu Developers <kubuntu-devel@lists.launchpad.net>
+Copyright: 2011 Kubuntu Developers <kubuntu-devel@lists.launchpad.net>
 License: LGPL-2.1+
+
+Files: doc/* docs/*
+Copyright: 2005-2007 Torsten Rahn
+           2010 Dennis Nienhüser
+License: GFDL-1.2
 
 Files: docs/bindings/python/html/common/kde-default.css
 Copyright: 2000 Frederik Fouvry
 License: GPL-2+
-
-Files: doc/*
-Copyright: 2005-2007 Torsten Rahn
-           2010 Dennis Nienhüser
-License: GFDL-1.2
 
 Files: marble.nsi
 Copyright: 2004-2005 Technicat, LLC
@@ -116,7 +424,7 @@ License: BSD-3-clause
  2. Redistributions in binary form must reproduce the copyright
  notice, this list of conditions and the following disclaimer in the
  documentation and/or other materials provided with the distribution.
- 3. The name of the author may not be used to endorse or promote products 
+ 3. The name of the author may not be used to endorse or promote products
  derived from this software without specific prior written permission.
  .
  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -145,7 +453,7 @@ License: GPL-2+
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  .
- On Debian systems, the full text of the GNU General Public License 
+ On Debian systems, the full text of the GNU General Public License
  version 2 can be found in the file
  `/usr/share/common-licenses/GPL-2'.
 
@@ -163,7 +471,7 @@ License: GPL-3+
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  .
- On Debian systems, the full text of the GNU General Public License 
+ On Debian systems, the full text of the GNU General Public License
  version 3 can be found in the file
  `/usr/share/common-licenses/GPL-3'.
 

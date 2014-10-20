@@ -14,6 +14,7 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 #include <QDateTime>
 
@@ -21,7 +22,7 @@ namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerTimeStamp( GeoTagWriter::QualifiedName(GeoDataTypes::GeoDataTimeStampType,
-                                                                            kml::kmlTag_nameSpace22),
+                                                                            kml::kmlTag_nameSpaceOgc22),
                                                new KmlTimeStampTagWriter() );
 
 
@@ -33,6 +34,7 @@ bool KmlTimeStampTagWriter::write( const GeoNode *node,
     if( timestamp->when().isValid() )
     {
         writer.writeStartElement( kml::kmlTag_TimeStamp );
+        KmlObjectTagWriter::writeIdentifiers( writer, timestamp );
 
         writer.writeStartElement( kml::kmlTag_when);
         writer.writeCharacters( toString( *timestamp ) );

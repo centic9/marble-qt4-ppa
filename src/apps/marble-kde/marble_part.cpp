@@ -99,6 +99,7 @@
 #include "MapThemeDownloadDialog.h"
 #include "cloudsync/BookmarkSyncManager.h"
 #include "MovieCaptureDialog.h"
+#include "cloudsync/RouteSyncManager.h"
 
 // Marble non-library classes
 #include "ControlView.h"
@@ -1242,7 +1243,7 @@ void MarblePart::migrateNewstuffConfigFiles() const
     }
 }
 
-void MarblePart::repairNode( QDomNode node, const QString &child ) const
+void MarblePart::repairNode( QDomNode node, const QString &child )
 {
     int const size = node.namedItem( child ).toElement().text().size();
     if ( size > 1024 ) {
@@ -1252,10 +1253,10 @@ void MarblePart::repairNode( QDomNode node, const QString &child ) const
     }
 }
 
-void MarblePart::updateCloudSyncStatus(const QString& status, CloudSyncManager::Status status_type )
+void MarblePart::updateCloudSyncStatus(const QString& status )
 {
     m_ui_cloudSyncSettings.cloudSyncStatus->setText(status);
-    switch (status_type){
+    switch (m_controlView->cloudSyncManager()->status()){
         case CloudSyncManager::Success:
             m_ui_cloudSyncSettings.cloudSyncStatus->setStyleSheet("QLabel { color : green; }");
             break;
@@ -1501,6 +1502,8 @@ void MarblePart::editSettings()
     #endif
 
     ui_viewSettings.kcfg_graphicsSystem->setItemText( NativeGraphics, nativeString );
+    ui_viewSettings.label_labelLocalization->hide();
+    ui_viewSettings.kcfg_labelLocalization->hide();
 
     // navigation page
     Ui_MarbleNavigationSettingsWidget  ui_navigationSettings;
@@ -1510,6 +1513,8 @@ void MarblePart::editSettings()
     ui_navigationSettings.setupUi( w_navigationSettings );
     m_configDialog->addPage( w_navigationSettings, i18n( "Navigation" ),
                              "transform-move" );
+    ui_navigationSettings.kcfg_dragLocation->hide();
+    ui_navigationSettings.label_dragLocation->hide();
 
     // cache page
     Ui_MarbleCacheSettingsWidget  ui_cacheSettings;
@@ -1545,8 +1550,8 @@ void MarblePart::editSettings()
     connect( m_ui_cloudSyncSettings.testLoginButton, SIGNAL(clicked()),
              this, SLOT(updateCloudSyncCredentials()) );
 
-    connect( m_controlView->cloudSyncManager(), SIGNAL(statusChanged(QString, CloudSyncManager::Status)),
-             this, SLOT(updateCloudSyncStatus(QString, CloudSyncManager::Status)));
+    connect( m_controlView->cloudSyncManager(), SIGNAL(statusChanged(QString)),
+             this, SLOT(updateCloudSyncStatus(QString)));
 
     // routing page
     RoutingProfilesWidget *w_routingSettings = new RoutingProfilesWidget( m_controlView->marbleModel() );

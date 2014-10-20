@@ -50,21 +50,21 @@ class CylindricalProjectionPrivate : public AbstractProjectionPrivate
                                int mirrorCount = 0,
                                qreal repeatDistance = 0 ) const;
 
-    int crossDateLine( const GeoDataCoordinates & aCoord,
-                       const GeoDataCoordinates & bCoord,
-                       qreal bx,
-                       qreal by,
-                       QVector<QPolygonF*> &polygons,
-                       int mirrorCount = 0,
-                       qreal repeatDistance = 0 ) const;
+    static int crossDateLine( const GeoDataCoordinates & aCoord,
+                              const GeoDataCoordinates & bCoord,
+                              qreal bx,
+                              qreal by,
+                              QVector<QPolygonF*> &polygons,
+                              int mirrorCount = 0,
+                              qreal repeatDistance = 0 );
 
     bool lineStringToPolygon( const GeoDataLineString &lineString,
                               const ViewportParams *viewport,
                               QVector<QPolygonF*> &polygons ) const;
 
-    void translatePolygons( const QVector<QPolygonF *> &polygons,
-                            QVector<QPolygonF *> &translatedPolygons,
-                            qreal xOffset ) const;
+    static void translatePolygons( const QVector<QPolygonF *> &polygons,
+                                   QVector<QPolygonF *> &translatedPolygons,
+                                   qreal xOffset );
 
     void repeatPolygons( const ViewportParams *viewport,
                          QVector<QPolygonF *> &polygons ) const;

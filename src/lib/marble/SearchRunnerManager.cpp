@@ -47,7 +47,7 @@ public:
     Private( SearchRunnerManager *parent, const MarbleModel *marbleModel );
 
     template<typename T>
-    QList<T*> plugins( const QList<T*> &plugins );
+    QList<T*> plugins( const QList<T*> &plugins ) const;
 
     void addSearchResult( const QVector<GeoDataPlacemark *> &result );
     void cleanupSearchTask( SearchTask *task );
@@ -56,7 +56,7 @@ public:
     const MarbleModel *const m_marbleModel;
     const PluginManager* m_pluginManager;
     QString m_lastSearchTerm;
-    GeoDataLatLonAltBox m_lastPreferredBox;
+    GeoDataLatLonBox m_lastPreferredBox;
     QMutex m_modelMutex;
     MarblePlacemarkModel m_model;
     QList<SearchTask *> m_searchTasks;
@@ -74,7 +74,7 @@ SearchRunnerManager::Private::Private( SearchRunnerManager *parent, const Marble
 }
 
 template<typename T>
-QList<T*> SearchRunnerManager::Private::plugins( const QList<T*> &plugins )
+QList<T*> SearchRunnerManager::Private::plugins( const QList<T*> &plugins ) const
 {
     QList<T*> result;
     foreach( T* plugin, plugins ) {
@@ -154,7 +154,7 @@ SearchRunnerManager::~SearchRunnerManager()
     delete d;
 }
 
-void SearchRunnerManager::findPlacemarks( const QString &searchTerm, const GeoDataLatLonAltBox &preferred )
+void SearchRunnerManager::findPlacemarks( const QString &searchTerm, const GeoDataLatLonBox &preferred )
 {
     if ( searchTerm == d->m_lastSearchTerm && preferred == d->m_lastPreferredBox ) {
       emit searchResultChanged( &d->m_model );
@@ -165,6 +165,7 @@ void SearchRunnerManager::findPlacemarks( const QString &searchTerm, const GeoDa
     }
 
     d->m_lastSearchTerm = searchTerm;
+    d->m_lastPreferredBox = preferred;
 
     d->m_searchTasks.clear();
 
@@ -198,7 +199,7 @@ void SearchRunnerManager::findPlacemarks( const QString &searchTerm, const GeoDa
     }
 }
 
-QVector<GeoDataPlacemark *> SearchRunnerManager::searchPlacemarks( const QString &searchTerm, const GeoDataLatLonAltBox &preferred, int timeout )
+QVector<GeoDataPlacemark *> SearchRunnerManager::searchPlacemarks( const QString &searchTerm, const GeoDataLatLonBox &preferred, int timeout )
 {
     QEventLoop localEventLoop;
     QTimer watchdog;

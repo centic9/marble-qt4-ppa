@@ -160,10 +160,16 @@ maps/earth/schagen1689/legend/schagen_orig.png
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/schagen1689/legend)
 
 install (FILES
+maps/earth/political/political-preview.png
+maps/earth/political/political.dgml
+DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/political)
+
+install (FILES
 maps/moon/clementine/clementine.jpg
 maps/moon/clementine/clementine-preview.png
 maps/moon/clementine/legend.html 
 maps/moon/clementine/clementine.dgml
+maps/moon/clementine/tour.kml
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/moon/clementine)
 
 FILE (GLOB_RECURSE DGML_FILES maps/*.dgml)
