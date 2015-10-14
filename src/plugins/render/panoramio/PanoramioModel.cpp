@@ -11,11 +11,12 @@
 
 // Self
 #include "PanoramioModel.h"
-#include "jsonparser.h"
+#include "PanoramioItem.h"
+#include "PanoramioParser.h"
 
 // Marble
 #include "GeoDataLatLonAltBox.h"
-#include "PanoramioWidget.h"
+#include "MarbleModel.h"
 
 // Qt
 #include <QUrl>
@@ -23,13 +24,23 @@
 
 using namespace Marble;
 
-PanoramioModel::PanoramioModel( const MarbleModel *marbleModel, QObject *parent )
-    : AbstractDataPluginModel( "panoramio", marbleModel, parent )
+PanoramioModel::PanoramioModel( const MarbleModel *marbleModel, QObject *parent ) :
+    AbstractDataPluginModel( "panoramio", marbleModel, parent ),
+    m_marbleWidget( 0 )
 {
+}
+
+void PanoramioModel::setMarbleWidget( MarbleWidget *widget )
+{
+    m_marbleWidget = widget;
 }
 
 void PanoramioModel::getAdditionalItems( const GeoDataLatLonAltBox &box, qint32 number )
 {
+    if ( marbleModel()->planetId() != "earth" ) {
+        return;
+    }
+
     // FIXME: Download a list of constant number, because the parser doesn't support
     // loading a file of an unknown length.
     QUrl jsonUrl( "http://www.panoramio.com/map/get_panoramas.php?from="
@@ -49,11 +60,11 @@ void PanoramioModel::getAdditionalItems( const GeoDataLatLonAltBox &box, qint32 
 
 void PanoramioModel::parseFile( const QByteArray &file )
 {
-    jsonParser panoramioJsonParser;
+    PanoramioParser panoramioJsonParser;
     QList<panoramioDataStructure> list
         = panoramioJsonParser.parseAllObjects( file,
                                                numberOfImagesPerFetch );
-    
+
     QList<panoramioDataStructure>::iterator it;
     for ( it = list.begin(); it != list.end(); ++it ) {
         // Setting the meta information of the current image
@@ -66,28 +77,18 @@ void PanoramioModel::parseFile( const QByteArray &file )
             continue;
         }
         
-        PanoramioWidget *widget = new PanoramioWidget( this );
-        widget->setTarget( "earth" );
-        widget->setCoordinate( coordinates );
-        widget->setId( QString::number( (*it).photo_id ) );
-        widget->setUploadDate( (*it).upload_date );
-        
-        // We need to download the file from Panoramio if it doesn't exist already
-        if ( !fileExists( widget->id(), standardImageSize ) ) {
-            downloadItem( QUrl( (*it).photo_file_url ),
-                                standardImageSize,
-                                widget );
-        }
-        else {
-            // If the file does exist, we can simply load it to our widget.
-            QString filename = generateFilepath( widget->id(),
-                                                 standardImageSize );
-            widget->addDownloadedFile( filename,
-                                       standardImageSize );
-        }
+        PanoramioItem *item = new PanoramioItem( m_marbleWidget, this );
+        item->setCoordinate( coordinates );
+        item->setId( QString::number( (*it).photo_id ) );
+        item->setPhotoUrl( (*it).photo_url );
+        item->setUploadDate( (*it).upload_date );
 
-        addItemToList( widget );
+        downloadItem( QUrl( (*it).photo_file_url ),
+                            standardImageSize,
+                            item );
+
+        addItemToList( item );
     }
 }
 
-#include "PanoramioModel.moc"
+#include "moc_PanoramioModel.cpp"

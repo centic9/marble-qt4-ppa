@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "YoursRunner.h"
@@ -162,4 +162,4 @@ qreal YoursRunner::distance( const GeoDataDocument* document )
 
 } // namespace Marble
 
-#include "YoursRunner.moc"
+#include "moc_YoursRunner.cpp"

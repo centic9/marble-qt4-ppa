@@ -63,8 +63,11 @@
 #include "HttpDownloadManager.h"
 #include "BookmarkManager.h"
 #include "NewBookmarkFolderDialog.h"
+#include "GeoSceneDocument.h"
+#include "GeoSceneHead.h"
 #include "GeoDataCoordinates.h"
 #include "GeoDataDocument.h"
+#include "GeoDataFolder.h"
 #include "GeoDataPlacemark.h"
 #include "GeoUriParser.h"
 #include "routing/RoutingManager.h"
@@ -152,6 +155,7 @@ MainWindow::MainWindow(const QString& marbleDataPath, const QVariantMap& cmdLine
         m_aboutQtAction( 0 ),
         m_lockFloatItemsAction( 0 ),
         m_handbookAction( 0 ),
+        m_forumAction( 0 ),
 
         // Status Bar
         m_positionLabel( 0 ),
@@ -174,7 +178,7 @@ MainWindow::MainWindow(const QString& marbleDataPath, const QVariantMap& cmdLine
         MarbleDirs::setMarbleDataPath( selectedPath );
 
 #ifdef Q_OS_WIN
-	DataMigration* migration = new DataMigration(this);
+	QPointer<DataMigration> migration = new DataMigration(this);
 	migration->exec();
 #endif
 
@@ -209,6 +213,8 @@ MainWindow::MainWindow(const QString& marbleDataPath, const QVariantMap& cmdLine
 
     connect( m_controlView->marbleWidget(), SIGNAL(themeChanged(QString)),
              this, SLOT(updateMapEditButtonVisibility(QString)) );
+    connect(m_controlView->marbleModel(), SIGNAL(themeChanged(QString)),
+            this, SLOT(updateApplicationTitle(QString)));
     connect( m_controlView, SIGNAL(showMapWizard()), this, SLOT(showMapWizard()) );
     connect( m_controlView, SIGNAL(mapThemeDeleted()), this, SLOT(fallBackToDefaultTheme()) );
 
@@ -249,6 +255,11 @@ void MainWindow::initObject(const QVariantMap& cmdLineSettings)
 
     foreach ( const QString &path, m_commandlineFilePaths ) {
         m_controlView->marbleModel()->addGeoDataFile( path );
+    }
+
+    if ( cmdLineSettings.contains( "tour" ) ) {
+        QString const tour = cmdLineSettings.value( "tour" ).toString();
+        m_controlView->openTour( tour );
     }
     m_commandlineFilePaths.clear();
 }
@@ -306,7 +317,7 @@ void MainWindow::createActions()
      connect(m_recordMovieAction, SIGNAL(triggered()),
              this, SLOT(showMovieCaptureDialog()));
 
-     m_stopRecordingAction = new QAction( tr("&Stop recording"), this );
+     m_stopRecordingAction = new QAction( tr("&Stop Recording"), this );
      m_stopRecordingAction->setStatusTip( tr("Stop recording a movie of the globe") );
      m_stopRecordingAction->setShortcut(QKeySequence( "Ctrl+Shift+S" ));
      m_stopRecordingAction->setEnabled( false );
@@ -370,6 +381,10 @@ void MainWindow::createActions()
      m_whatsThisAction->setStatusTip(tr("Show a detailed explanation of the action."));
      connect(m_whatsThisAction, SIGNAL(triggered()), this, SLOT(enterWhatsThis()));
 
+     m_forumAction = new QAction( tr("&Community Forum"), this);
+     m_forumAction->setStatusTip(tr("Visit Marble's Community Forum"));
+     connect(m_forumAction, SIGNAL(triggered()), this, SLOT(openForum()));
+
      m_aboutMarbleAction = new QAction( QIcon(":/icons/marble.png"), tr("&About Marble Virtual Globe"), this);
      m_aboutMarbleAction->setStatusTip(tr("Show the application's About Box"));
      connect(m_aboutMarbleAction, SIGNAL(triggered()), this, SLOT(aboutMarble()));
@@ -410,76 +425,16 @@ void MainWindow::createActions()
               this, SLOT(showZoomLevel(bool)) );
 
      // View size actions
-     m_viewSizeActsGroup = new QActionGroup( this );
-
-     QAction *actDefault = new QAction( tr( "Default (Resizable)" ), this );
-     actDefault->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actDefault);
-
-     QAction *actSeparator = new QAction(this);
-     actSeparator->setSeparator(true);
-     m_viewSizeActsGroup->addAction(actSeparator);
-
-     QAction *actNtsc = new QAction( tr( "NTSC (720x486)" ), this );
-     actNtsc->setData( QSize( 720, 486 ) );
-     actNtsc->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actNtsc);
-
-     QAction *actPal = new QAction( tr( "PAL (720x576)" ), this );
-     actPal->setData( QSize( 720, 576 ) );
-     actPal->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actPal);
-
-     QAction *actNtsc16x9 = new QAction( tr( "NTSC 16:9 (864x486)" ), this );
-     actNtsc16x9->setData( QSize( 864, 486 ) );
-     actNtsc16x9->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actNtsc16x9);
-
-     QAction *actPal16x9 = new QAction( tr( "PAL 16:9 (1024x576)" ), this );
-     actPal16x9->setData( QSize( 1024, 576 ) );
-     actPal16x9->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actPal16x9);
-
-     QAction *actDvd = new QAction( tr( "DVD (852x480p)" ), this );
-     actDvd->setData( QSize( 852, 480 ) );
-     actDvd->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actDvd);
-
-     QAction *actHd = new QAction( tr( "HD (1280x720p)" ), this );
-     actHd->setData( QSize( 1280, 720 ) );
-     actHd->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actHd);
-
-     QAction *actFullhd = new QAction( tr( "Full HD (1920x1080p)" ), this );
-     actFullhd->setData( QSize( 1920, 1080 ) );
-     actFullhd->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actFullhd);
-
-     QAction *actDc = new QAction( tr( "Digital Cinema (2048x1536)" ), this );
-     actDc->setData( QSize( 2048, 1536 ) );
-     actDc->setCheckable(true);
-     m_viewSizeActsGroup->addAction(actDc);
-
-     /**
-      * FIXME: Needs testing, worked with errors.
-     QAction *act4kuhd = new QAction( tr( "4K UHD (3840x2160)" ), this );
-     act4kuhd->setData( QSize( 3840, 2160 ) );
-     act4kuhd->setCheckable(true);
-     m_viewSizeActsGroup->addAction(act4kuhd);
-
-     QAction *act4k = new QAction( tr( "4K (4096x3072)" ), this );
-     act4k->setData( QSize( 4096, 3072 ) );
-     act4k->setCheckable(true);
-     m_viewSizeActsGroup->addAction(act4k);
-     */
-
+     m_viewSizeActsGroup = ControlView::createViewSizeActionGroup( this );
      connect( m_viewSizeActsGroup, SIGNAL(triggered(QAction*)), this, SLOT(changeViewSize(QAction*)) );
-
-     actDefault->setChecked( true );
 }
 
 void MainWindow::createMenus( const QList<QAction*> &panelActions )
 {
+#ifdef Q_OS_WIN
+        m_downloadAction.setEnabled( false );
+#endif
+
         m_fileMenu = menuBar()->addMenu(tr("&File"));
         m_fileMenu->addAction(m_openAction);
         m_fileMenu->addAction(m_downloadAction);
@@ -529,6 +484,7 @@ void MainWindow::createMenus( const QList<QAction*> &panelActions )
 
         m_helpMenu = menuBar()->addMenu(tr("&Help"));
         m_helpMenu->addAction(m_handbookAction);
+        m_helpMenu->addAction(m_forumAction);
         m_helpMenu->addSeparator();
         m_helpMenu->addAction(m_whatsThisAction);
         m_helpMenu->addSeparator();
@@ -733,7 +689,7 @@ void MainWindow::createPluginMenus()
 
         // menus
         const QList<QActionGroup*> *tmp_actionGroups = (*i)->actionGroups();
-        if( (*i)->enabled() && tmp_actionGroups ) {
+        if( (*i)->enabled() && tmp_actionGroups && (*i)->nameId() != "annotation" ) {
            foreach( QActionGroup *ag, *tmp_actionGroups ) {
                if( !ag->actions().isEmpty() ) {
                    m_pluginMenus.append( m_viewMenu->addSeparator() );
@@ -948,6 +904,14 @@ void MainWindow::handbook()
     qDebug() << "URL not opened";
 }
 
+void MainWindow::openForum()
+{
+    QUrl forumLocation("https://forum.kde.org/viewforum.php?f=217");
+    if( !QDesktopServices::openUrl( forumLocation ) ) {
+        mDebug() << "Failed to open URL " << forumLocation.toString();
+    }
+}
+
 void MainWindow::showPosition( const QString& position )
 {
     m_position = position;
@@ -1036,8 +1000,9 @@ void MainWindow::setupStatusBar()
 
     m_positionLabel = new QLabel( );
     m_positionLabel->setIndent( 5 );
+    // UTM syntax is used in the template string, as it is longer than the lon/lat one
     QString templatePositionString =
-        QString( "%1 000\xb0 00\' 00\"_, 000\xb0 00\' 00\"_" ).arg(POSITION_STRING);
+        QString( "%1 00Z 000000.00 m E, 00000000.00 m N_" ).arg(POSITION_STRING);
     int maxPositionWidth = fontMetrics().boundingRect(templatePositionString).width()
                             + 2 * m_positionLabel->margin() + 2 * m_positionLabel->indent();
     m_positionLabel->setFixedWidth( maxPositionWidth );
@@ -1118,10 +1083,18 @@ void MainWindow::removeProgressItem(){
     m_downloadProgressBar->setUpdatesEnabled( true );
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent( QCloseEvent *event )
 {
     writeSettings();
-    event->accept();
+
+    QCloseEvent newEvent;
+    QCoreApplication::sendEvent( m_controlView, &newEvent );
+
+    if ( newEvent.isAccepted() ) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
 }
 
 QString MainWindow::readMarbleDataPath()
@@ -1308,7 +1281,6 @@ void MainWindow::readSettings(const QVariantMap& overrideSettings)
         foreach( const PositionProviderPlugin* plugin, pluginManager->positionProviderPlugins() ) {
             if ( plugin->nameId() == positionProvider ) {
                 PositionProviderPlugin* instance = plugin->newInstance();
-                instance->setMarbleModel( m_controlView->marbleModel() );
                 tracking->setPositionProviderPlugin( instance );
                 break;
             }
@@ -1436,7 +1408,7 @@ void MainWindow::writeSettings()
      QString positionProvider;
      PositionTracking* tracking = m_controlView->marbleModel()->positionTracking();
      tracking->writeSettings();
-     if ( tracking && tracking->positionProviderPlugin() ) {
+     if ( tracking->positionProviderPlugin() ) {
          positionProvider = tracking->positionProviderPlugin()->nameId();
      }
      settings.setValue( "activePositionTrackingPlugin", positionProvider );
@@ -1600,6 +1572,14 @@ void MainWindow::changeRecordingState()
     m_stopRecordingAction->setEnabled( !m_stopRecordingAction->isEnabled() );
 }
 
+void MainWindow::updateApplicationTitle(const QString&)
+{
+    GeoSceneDocument *theme = m_controlView->marbleModel()->mapTheme();
+    if (theme) {
+        setWindowTitle(tr("Marble Virtual Globe") + " - " + theme->head()->name());
+    }
+}
+
 void MainWindow::showMapWizard()
 {
     QPointer<MapWizard> mapWizard = new MapWizard();
@@ -1656,4 +1636,4 @@ void MainWindow::changeViewSize( QAction* action )
     }
 }
 
-#include "QtMainWindow.moc"
+#include "moc_QtMainWindow.cpp"

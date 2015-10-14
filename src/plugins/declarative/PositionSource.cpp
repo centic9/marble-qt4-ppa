@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2011      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
@@ -93,7 +93,6 @@ void PositionSource::start()
     foreach( const Marble::PositionProviderPlugin *plugin, pluginManager->positionProviderPlugins() ) {
         if ( m_source.isEmpty() || plugin->nameId() == m_source ) {
             Marble::PositionProviderPlugin* instance = plugin->newInstance();
-            instance->setMarbleModel( m_marbleWidget->model() );
             Marble::PositionTracking *tracking = m_marbleWidget->model()->positionTracking();
             tracking->setPositionProviderPlugin( instance );
             break;
@@ -157,4 +156,4 @@ void PositionSource::updatePosition()
     }
 }
 
-#include "PositionSource.moc"
+#include "moc_PositionSource.cpp"

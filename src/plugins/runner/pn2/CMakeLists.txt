@@ -1,11 +1,10 @@
 PROJECT( Pn2Plugin )
 
 INCLUDE_DIRECTORIES(
- ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/runner/pn2
  ${CMAKE_BINARY_DIR}/src/plugins/runner/pn2
  ${QT_INCLUDE_DIR}
 )
-if( QT4_FOUND )
+if( QT4BUILD )
   INCLUDE(${QT_USE_FILE})
 endif()
 

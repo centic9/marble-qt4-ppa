@@ -1,5 +1,6 @@
 # marble-qt
 ./usr/bin/marble-qt
+./usr/share/applications/marble-qt.desktop
 # marble-touch
 ./usr/bin/marble-touch
 # extra license files

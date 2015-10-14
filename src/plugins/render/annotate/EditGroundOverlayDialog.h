@@ -30,13 +30,14 @@ public:
 private slots:
     void updateGroundOverlay();
     void setGroundOverlayUpdated();
+    void checkFields();
 
 signals:
     void groundOverlayUpdated( GeoDataGroundOverlay* );
 
 private:
     class Private;
-    Private *d;
+    Private * const d;
 };
 
 }

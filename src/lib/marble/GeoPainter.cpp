@@ -25,6 +25,7 @@
 
 #include "MarbleGlobal.h"
 #include "ViewportParams.h"
+#include "AbstractProjection.h"
 
 // #define MARBLE_DEBUG
 
@@ -165,10 +166,12 @@ GeoDataLinearRing GeoPainterPrivate::createLinearRingFromGeoRect( const GeoDataC
 
 bool GeoPainterPrivate::doClip( const ViewportParams *viewport )
 {
-    if ( viewport->projection() != Spherical )
+    if ( !viewport->currentProjection()->isClippedToSphere() )
         return true;
 
-    return ( viewport->radius() > viewport->width() / 2 || viewport->radius() > viewport->height() / 2 );
+    const qint64  radius = viewport->radius() * viewport->currentProjection()->clippingRadius();
+
+    return ( radius > viewport->width() / 2 || radius > viewport->height() / 2 );
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -262,7 +265,10 @@ QRegion GeoPainter::regionFromPoint ( const GeoDataPoint & point,
 
 
 void GeoPainter::drawText ( const GeoDataCoordinates & position,
-                            const QString & text )
+                            const QString & text,
+                            int xOffset, int yOffset,
+                            int width, int height,
+                            const QTextOption & option )
 {
     // Of course in theory we could have the "isGeoProjected" parameter used
     // for drawText as well. However this would require us to convert all
@@ -280,7 +286,13 @@ void GeoPainter::drawText ( const GeoDataCoordinates & position,
     if ( visible ) {
         // Draw all the x-repeat-instances of the point on the screen
         for( int it = 0; it < pointRepeatNum; ++it ) {
-            QPainter::drawText( d->m_x[it], y, text );
+            if (width == 0 && height == 0) {
+                QPainter::drawText( d->m_x[it] + xOffset, y + yOffset,  text );
+            }
+            else {
+                QRectF boundingRect(d->m_x[it] + xOffset, y + yOffset, width, height);
+                QPainter::drawText( boundingRect, text, option );
+            }
         }
     }
 }

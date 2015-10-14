@@ -20,6 +20,7 @@
 #include "AbstractProjection.h"
 #include "GeoDataStyle.h"
 #include "GeoPainter.h"
+#include "GeoDataPlacemark.h"
 #include "ViewportParams.h"
 #include "VisiblePlacemark.h"
 
@@ -110,7 +111,7 @@ QString PlacemarkLayer::runtimeTrace() const
     return m_layout.runtimeTrace();
 }
 
-QVector<const GeoDataPlacemark *> PlacemarkLayer::whichPlacemarkAt( const QPoint &pos )
+QVector<const GeoDataFeature *> PlacemarkLayer::whichPlacemarkAt( const QPoint &pos )
 {
     return m_layout.whichPlacemarkAt( pos );
 }
@@ -192,5 +193,5 @@ bool PlacemarkLayer::testXBug()
     return true;
 }
 
-#include "PlacemarkLayer.moc"
+#include "moc_PlacemarkLayer.cpp"
 

@@ -34,12 +34,14 @@ public:
     void clear();
     int size() const;
     PlaybackItem* at( int i );
+    double currentPosition();
 
 Q_SIGNALS:
     void centerOn( const GeoDataCoordinates &coordinates );
     void progressChanged( double );
     void finished();
     void paused();
+    void itemFinished( int index );
 
 public Q_SLOTS:
     void handleFinishedItem();
@@ -50,7 +52,6 @@ public Q_SLOTS:
 private:
     QList<PlaybackItem*> m_items;
     int m_currentIndex;
-    double m_duration;
     double m_finishedPosition;
     double m_currentPosition;
     bool m_paused;

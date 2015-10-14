@@ -27,10 +27,6 @@
 #include <QSizePolicy>
 #include <QRegion>
 
-#ifdef MARBLE_DBUS
-#include <QDBusConnection>
-#endif
-
 // Marble
 #include "layers/FogLayer.h"
 #include "layers/FpsLayer.h"
@@ -57,6 +53,10 @@
 #include "GeoSceneVectorTile.h"
 #include "GeoSceneZoom.h"
 #include "GeoDataDocument.h"
+#include "GeoDataPlacemark.h"
+#include "GeoDataFeature.h"
+#include "GeoDataStyle.h"
+#include "GeoDataStyleMap.h"
 #include "LayerManager.h"
 #include "MapThemeManager.h"
 #include "MarbleDebug.h"
@@ -190,6 +190,18 @@ MarbleMapPrivate::MarbleMapPrivate( MarbleMap *parent, MarbleModel *model ) :
     QObject::connect( &m_geometryLayer, SIGNAL(repaintNeeded()),
                       parent, SIGNAL(repaintNeeded()));
 
+    /**
+     * Slot handleHighlight finds all placemarks
+     * that contain the clicked point.
+     * The placemarks under the clicked position may
+     * have their styleUrl set to a style map which
+     * doesn't specify any highlight styleId. Such
+     * placemarks will be fletered out in GeoGraphicsScene
+     * and will not be highlighted.
+     */
+    QObject::connect( parent, SIGNAL(highlightedPlacemarksChanged(qreal,qreal,GeoDataCoordinates::Unit)),
+                      &m_geometryLayer, SLOT(handleHighlight(qreal,qreal,GeoDataCoordinates::Unit)) );
+
     QObject::connect( &m_textureLayer, SIGNAL(tileLevelChanged(int)),
                       parent, SIGNAL(tileLevelChanged(int)) );
     QObject::connect( &m_textureLayer, SIGNAL(repaintNeeded()),
@@ -244,24 +256,12 @@ void MarbleMapPrivate::updateProperty( const QString &name, bool show )
 MarbleMap::MarbleMap()
     : d( new MarbleMapPrivate( this, new MarbleModel( this ) ) )
 {
-#ifdef MARBLE_DBUS
-    QDBusConnection::sessionBus().registerObject( "/MarbleMap", this,
-                                                  QDBusConnection::ExportAllSlots
-                                                  | QDBusConnection::ExportAllSignals
-                                                  | QDBusConnection::ExportAllProperties );
-#endif
+    // nothing to do
 }
 
 MarbleMap::MarbleMap(MarbleModel *model)
     : d( new MarbleMapPrivate( this, model ) )
 {
-#ifdef MARBLE_DBUS
-    QDBusConnection::sessionBus().registerObject( "/MarbleMap", this,
-                                                  QDBusConnection::ExportAllSlots
-                                                  | QDBusConnection::ExportAllSignals
-                                                  | QDBusConnection::ExportAllProperties );
-#endif
-
     d->m_modelIsOwned = false;
 }
 
@@ -435,9 +435,9 @@ int  MarbleMap::maximumZoom() const
     return 2100;
 }
 
-QVector<const GeoDataPlacemark*> MarbleMap::whichFeatureAt( const QPoint& curpos ) const
+QVector<const GeoDataFeature*> MarbleMap::whichFeatureAt( const QPoint& curpos ) const
 {
-    return d->m_placemarkLayer.whichPlacemarkAt( curpos );
+    return d->m_placemarkLayer.whichPlacemarkAt( curpos ) + d->m_geometryLayer.whichFeatureAt( curpos, viewport() );
 }
 
 void MarbleMap::reload()
@@ -1254,6 +1254,16 @@ RenderState MarbleMap::renderState() const
     return d->m_layerManager.renderState();
 }
 
+QString MarbleMap::addTextureLayer(GeoSceneTextureTile *texture)
+{
+    return textureLayer()->addTextureLayer(texture);
+}
+
+void  MarbleMap::removeTextureLayer(const QString &key)
+{
+    textureLayer()->removeTextureLayer(key);
+}
+
 // this method will only temporarily "pollute" the MarbleModel class
 TextureLayer *MarbleMap::textureLayer() const
 {
@@ -1262,4 +1272,4 @@ TextureLayer *MarbleMap::textureLayer() const
 
 }
 
-#include "MarbleMap.moc"
+#include "moc_MarbleMap.cpp"

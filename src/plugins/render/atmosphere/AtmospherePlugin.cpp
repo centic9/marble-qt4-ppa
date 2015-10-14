@@ -138,7 +138,7 @@ bool AtmospherePlugin::render( GeoPainter *painter,
         return true;
 
     // Only draw an atmosphere if projection is spherical
-    if ( viewParams->projection() != Spherical )
+    if ( viewParams->projection() != Spherical && viewParams->projection() != VerticalPerspective )
         return true;
 
     // No use to draw atmosphere if it's not visible in the area.
@@ -191,4 +191,4 @@ void AtmospherePlugin::repaintPixmap(const ViewportParams *viewParams)
 
 Q_EXPORT_PLUGIN2( AtmospherePlugin, Marble::AtmospherePlugin )
 
-#include "AtmospherePlugin.moc"
+#include "moc_AtmospherePlugin.cpp"

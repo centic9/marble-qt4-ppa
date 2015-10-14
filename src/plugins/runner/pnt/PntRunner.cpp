@@ -19,6 +19,7 @@
 #include <qmath.h>
 #include <QFile>
 #include <QFileInfo>
+#include <QDataStream>
 
 namespace Marble
 {
@@ -207,4 +208,4 @@ void PntRunner::parseFile( const QString &fileName, DocumentRole role = UnknownD
 
 }
 
-#include "PntRunner.moc"
+#include "moc_PntRunner.cpp"

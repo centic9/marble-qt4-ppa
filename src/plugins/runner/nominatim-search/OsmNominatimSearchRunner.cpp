@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "OsmNominatimSearchRunner.h"
@@ -15,7 +15,7 @@
 #include "GeoDataDocument.h"
 #include "GeoDataPlacemark.h"
 #include "GeoDataExtendedData.h"
-#include "TinyWebBrowser.h"
+#include "HttpDownloadManager.h"
 
 #include <QString>
 #include <QVector>
@@ -61,7 +61,7 @@ void OsmNominatimRunner::search( const QString &searchTerm, const GeoDataLatLonB
 
     }
     m_request.setUrl(QUrl(url));
-    m_request.setRawHeader("User-Agent", TinyWebBrowser::userAgent("Browser", "OsmNominatimRunner") );
+    m_request.setRawHeader("User-Agent", HttpDownloadManager::userAgent("Browser", "OsmNominatimRunner") );
 
     QEventLoop eventLoop;
 
@@ -188,4 +188,4 @@ void OsmNominatimRunner::handleResult( QNetworkReply* reply )
 
 } // namespace Marble
 
-#include "OsmNominatimSearchRunner.moc"
+#include "moc_OsmNominatimSearchRunner.cpp"

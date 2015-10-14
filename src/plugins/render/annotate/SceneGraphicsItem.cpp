@@ -5,37 +5,66 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2009      Andrew Manson <g.real.ate@gmail.com>
+// Copyright 2009      Andrew Manson  <g.real.ate@gmail.com>
 // Copyright 2013      Thibaut Gridel <tgridel@free.fr>
+// Copyright 2014      Calin Cruceru  <crucerucalincristian@gmail.com>
 //
 
+// Self
 #include "SceneGraphicsItem.h"
+
+// Marble
 #include "GeoDataPlacemark.h"
 
 
 namespace Marble
 {
 
-SceneGraphicsItem::SceneGraphicsItem( GeoDataPlacemark *placemark )
-    : GeoGraphicsItem( placemark ),
-      m_placemark( placemark )
+SceneGraphicsItem::SceneGraphicsItem( GeoDataPlacemark *placemark ) :
+    GeoGraphicsItem( placemark ),
+    m_state( Editing ),
+    m_hasFocus( false ),
+    m_request( NoRequest ),
+    m_placemark( placemark )
 {
-
+    // nothing to do
 }
 
 SceneGraphicsItem::~SceneGraphicsItem()
 {
-
+    // nothing to do
 }
 
-QList<QRegion> SceneGraphicsItem::regions() const
+SceneGraphicsItem::ActionState SceneGraphicsItem::state() const
 {
-    return m_regions;
+    return m_state;
 }
 
-void SceneGraphicsItem::setRegions( const QList<QRegion> &regions )
+void SceneGraphicsItem::setState( ActionState state )
 {
-    m_regions = regions;
+    ActionState previousState = m_state;
+    m_state = state;
+    dealWithStateChange( previousState );
+}
+
+bool SceneGraphicsItem::hasFocus() const
+{
+    return m_hasFocus;
+}
+
+void SceneGraphicsItem::setFocus( bool enabled )
+{
+    m_hasFocus = enabled;
+}
+
+SceneGraphicsItem::MarbleWidgetRequest SceneGraphicsItem::request() const
+{
+    return m_request;
+}
+
+void SceneGraphicsItem::setRequest( MarbleWidgetRequest request )
+{
+    m_request = request;
 }
 
 const GeoDataPlacemark *SceneGraphicsItem::placemark() const
@@ -50,13 +79,11 @@ GeoDataPlacemark *SceneGraphicsItem::placemark()
 
 bool SceneGraphicsItem::sceneEvent( QEvent *event )
 {
-    if( event->type() == QEvent::MouseButtonPress ) {
+    if ( event->type() == QEvent::MouseButtonPress ) {
         return mousePressEvent( static_cast<QMouseEvent*>( event ) );
-    }
-    if( event->type() == QEvent::MouseMove ) {
+    } else if ( event->type() == QEvent::MouseMove ) {
         return mouseMoveEvent( static_cast<QMouseEvent*>( event ) );
-    }
-    if( event->type() == QEvent::MouseButtonRelease ) {
+    } else if ( event->type() == QEvent::MouseButtonRelease ) {
         return mouseReleaseEvent( static_cast<QMouseEvent*>( event ) );
     }
 

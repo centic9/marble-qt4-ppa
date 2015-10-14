@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MapQuestRunner.h"
@@ -15,7 +15,7 @@
 #include "GeoDataDocument.h"
 #include "GeoDataPlacemark.h"
 #include "GeoDataExtendedData.h"
-#include "TinyWebBrowser.h"
+#include "HttpDownloadManager.h"
 #include "routing/Maneuver.h"
 #include "routing/RouteRequest.h"
 
@@ -120,7 +120,7 @@ void MapQuestRunner::retrieveRoute( const RouteRequest *route )
     qurl.addEncodedQueryItem( "key", settings.value( "appKey" ).toByteArray() );
 #endif
     m_request.setUrl( qurl );
-    m_request.setRawHeader( "User-Agent", TinyWebBrowser::userAgent( "Browser", "MapQuestRunner" ) );
+    m_request.setRawHeader( "User-Agent", HttpDownloadManager::userAgent( "Browser", "MapQuestRunner" ) );
 
     QEventLoop eventLoop;
 
@@ -307,4 +307,4 @@ GeoDataDocument* MapQuestRunner::parse( const QByteArray &content ) const
 
 } // namespace Marble
 
-#include "MapQuestRunner.moc"
+#include "moc_MapQuestRunner.cpp"

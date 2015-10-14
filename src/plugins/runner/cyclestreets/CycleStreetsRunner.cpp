@@ -13,7 +13,8 @@
 #include "MarbleDebug.h"
 #include "GeoDataDocument.h"
 #include "GeoDataExtendedData.h"
-#include "TinyWebBrowser.h"
+#include "GeoDataPlacemark.h"
+#include "HttpDownloadManager.h"
 #include "routing/Maneuver.h"
 #include "routing/RouteRequest.h"
 
@@ -99,7 +100,7 @@ void CycleStreetsRunner::retrieveRoute( const RouteRequest *route )
 #endif
 
     m_request.setUrl( url );
-    m_request.setRawHeader( "User-Agent", TinyWebBrowser::userAgent( "Browser", "CycleStreetsRunner" ) );
+    m_request.setRawHeader( "User-Agent", HttpDownloadManager::userAgent( "Browser", "CycleStreetsRunner" ) );
 
     QEventLoop eventLoop;
 
@@ -252,4 +253,4 @@ void CycleStreetsRunner::handleError( QNetworkReply::NetworkError error )
 
 } // namespace Marble
 
-#include "CycleStreetsRunner.moc"
+#include "moc_CycleStreetsRunner.cpp"

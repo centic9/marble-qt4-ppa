@@ -31,6 +31,7 @@ class QMainWindow;
 class QDockWidget;
 class QMenu;
 class QPrinter;
+class QActionGroup;
 
 namespace Marble
 {
@@ -104,6 +105,8 @@ class ControlView : public QWidget
      */
     void openGeoUri( const QString& geoUriString );
 
+    static QActionGroup* createViewSizeActionGroup( QObject* parent );
+
  public slots:
     void printMapScreenShot( QPointer<QPrintDialog> dialog );
     void printPreview();
@@ -121,15 +124,22 @@ class ControlView : public QWidget
 
     void handleTourLinkClicked( const QString &path );
 
+    void openTour( const QString &filename );
+
 signals:
     void showMapWizard();
     void showUploadDialog();
     void mapThemeDeleted();
 
+protected:
+    void closeEvent( QCloseEvent *event );
+
 private Q_SLOTS:
     void showSearch();
     // Bookmark sync slots
     void showConflictDialog( MergeItem *item );
+    void updateAnnotationDockVisibility();
+    void updateAnnotationDock();
     
  private:
     /**
@@ -147,6 +157,7 @@ private Q_SLOTS:
     void printRouteSummary( QTextDocument &document, QString &text );
     void printDrivingInstructions( QTextDocument &document, QString &text );
     static void printDrivingInstructionsAdvice( QTextDocument &document, QString &text );
+    static void addViewSizeAction( QActionGroup* actionGroup, const QString &nameTemplate, int width, int height );
 
     MapThemeManager   *const m_mapThemeManager;
     MarbleWidget      *m_marbleWidget;
@@ -160,6 +171,8 @@ private Q_SLOTS:
     QList<bool>      m_panelVisibility;
     bool             m_isPanelVisible;
     TourWidget      *m_tourWidget;
+    QDockWidget     *m_annotationDock;
+    RenderPlugin    *m_annotationPlugin;
 };
 
 }

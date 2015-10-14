@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "OpenRouteServiceRunner.h"
@@ -79,7 +79,7 @@ void OpenRouteServiceRunner::retrieveRoute( const RouteRequest *route )
 
     // Please refrain from making this URI public. To use it outside the scope
     // of marble you need permission from the openrouteservice.org team.
-    QUrl url = QUrl( "http://openls.geog.uni-heidelberg.de/osm/eu/routing" );
+    QUrl url = QUrl( "http://openls.geog.uni-heidelberg.de/osm/routing" );
     m_request = QNetworkRequest( url );
     m_request.setHeader( QNetworkRequest::ContentTypeHeader, "application/xml" );
     m_requestData = request.toLatin1();
@@ -252,8 +252,7 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
     QDomNodeList summary = root.elementsByTagName( "xls:RouteSummary" );
     if ( summary.size() > 0 ) {
         QDomNodeList timeNodeList = summary.item( 0 ).toElement().elementsByTagName( "xls:TotalTime" );
-        QDomNodeList distance = summary.item( 0 ).toElement().elementsByTagName( "xls:TotalDistance" );
-        if ( timeNodeList.size() == 1 && distance.size() == 1 ) {
+        if ( timeNodeList.size() == 1 ) {
             QRegExp regexp = QRegExp( "^P(?:(\\d+)D)?T(?:(\\d+)H)?(?:(\\d+)M)?(\\d+)S" );
             if ( regexp.indexIn( timeNodeList.item( 0 ).toElement().text() ) == 0 ) {
                 QStringList matches = regexp.capturedTexts();
@@ -276,17 +275,6 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
                 }
 
                 time = QTime( hours, minutes, seconds, 0 );
-                qreal totalDistance = distance.item( 0 ).attributes().namedItem( "value" ).nodeValue().toDouble();
-                QString unit = distance.item( 0 ).attributes().namedItem( "uom" ).nodeValue();
-                if ( unit == "M" ) {
-                    totalDistance *= METER2KM;
-                }
-                else if ( unit != "KM" ) {
-                    mDebug() << "Cannot parse distance unit " << unit << ", treated as km.";
-                }
-
-                QString description = "";
-                routePlacemark->setDescription( description );
             }
         }
     }
@@ -380,7 +368,7 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
 
 RoutingInstruction::TurnType OpenRouteServiceRunner::parseTurnType( const QString &text, QString *road )
 {
-    QRegExp syntax( "^(Go|Drive) (half left|left|sharp left|straight forward|half right|right|sharp right)( on )?(.*)?$", Qt::CaseSensitive, QRegExp::RegExp2 );
+    QRegExp syntax( "^(Go|Drive|Turn) (half left|left|sharp left|straight forward|half right|right|sharp right)( on )?(.*)?$", Qt::CaseSensitive, QRegExp::RegExp2 );
     QString instruction;
     if ( syntax.indexIn( text ) == 0 ) {
         if ( syntax.captureCount() > 1 ) {
@@ -416,4 +404,4 @@ RoutingInstruction::TurnType OpenRouteServiceRunner::parseTurnType( const QStrin
 
 } // namespace Marble
 
-#include "OpenRouteServiceRunner.moc"
+#include "moc_OpenRouteServiceRunner.cpp"

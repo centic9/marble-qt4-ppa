@@ -7,13 +7,14 @@ INCLUDE_DIRECTORIES(
  ${CMAKE_SOURCE_DIR}/src/lib/marble/layers
  ${QT_INCLUDE_DIR}
 )
-if( QT4_FOUND )
+if( QT4BUILD )
   INCLUDE(${QT_USE_FILE})
 endif()
 
 set( annotate_UI
   EditGroundOverlayDialog.ui
   EditPolygonDialog.ui
+  EditPolylineDialog.ui
 )
 
 set( annotate_SRCS
@@ -21,15 +22,19 @@ set( annotate_SRCS
   AreaAnnotation.cpp
   EditGroundOverlayDialog.cpp
   EditPolygonDialog.cpp
-  GeoWidgetBubble.cpp
+  NodeItemDelegate.cpp
+  EditPolylineDialog.cpp
   GroundOverlayFrame.cpp
+  MergingPolygonNodesAnimation.cpp
+  MergingPolylineNodesAnimation.cpp
   PlacemarkTextAnnotation.cpp
+  PolylineAnnotation.cpp
+  PolylineNode.cpp
   SceneGraphicsItem.cpp
   SceneGraphicsTypes.cpp
-  TextEditor.cpp
+  NodeModel.cpp
 )
 
 qt_wrap_ui(annotate_SRCS ${annotate_UI})
-marble_qt4_automoc(${annotate_SRCS})
 
 marble_add_plugin( AnnotatePlugin ${annotate_SRCS} )

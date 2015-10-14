@@ -1,7 +1,7 @@
 #############################################################
 
-ADD_DEFINITIONS(-DTEST_DATA_DIR="\\"${TEST_DATA_DIR}\\"")
-ADD_DEFINITIONS(-DMARBLE_SRC_DIR="\\"${CMAKE_SOURCE_DIR}\\"")
+ADD_DEFINITIONS(-DTEST_DATA_DIR="${TEST_DATA_DIR}")
+ADD_DEFINITIONS(-DMARBLE_SRC_DIR="${CMAKE_SOURCE_DIR}")
 
 #############################################################
 # libraries
@@ -24,21 +24,12 @@ set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
 #############################################################
 # includes
 
-if (NOT QTONLY)
-  include_directories(
-    ${KDE4_INCLUDES}
-  )
-endif ()
-
 #############################################################
 # Make the current test source directory available in #define TESTSRCDIR
 # use this for accessing TESTSRCDIR/data
 #############################################################
 
-add_definitions( -DTESTSRCDIR=\\"${CMAKE_CURRENT_SOURCE_DIR}\\" )
-if (NOT QTONLY)
-  add_definitions( -DQT_GUI_LIB )
-endif ()
+add_definitions( -DTESTSRCDIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 
 #############################################################
 
@@ -66,9 +57,10 @@ endif( CMAKE_COMMAND AND CMAKE_CTEST_COMMAND )
 # Drop in New Tests
 ############################
 marble_add_test( MarbleWidgetSpeedTest )
-add_definitions( -DDGML_PATH="\\\"${CMAKE_CURRENT_SOURCE_DIR}/../data/maps/earth\\\"" )
+add_definitions( -DDGML_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../data/maps/earth" )
 marble_add_test( TestGeoSceneWriter )
 
+marble_add_test( LocaleTest )               # Check MarbleLocale functionality
 marble_add_test( QuaternionTest )           # Check Quaternion arithmetic
 marble_add_test( TileIdTest )               # Check TileId arithmetic
 marble_add_test( ViewportParamsTest )
@@ -78,6 +70,8 @@ marble_add_test( BookmarkManagerTest )
 marble_add_test( PlacemarkPositionProviderPluginTest )
 marble_add_test( PositionTrackingTest )
 marble_add_test( MercatorProjectionTest )   # Check Screen coordinates
+marble_add_test( GnomonicProjectionTest )
+marble_add_test( StereographicProjectionTest )
 marble_add_test( MarbleMapTest )            # Check map theme and centering
 marble_add_test( MarbleWidgetTest )         # Check map theme, mouse move, repaint and multiple widgets
 marble_add_test( MapViewWidgetTest )        # Check mapview signals
@@ -91,6 +85,8 @@ marble_add_test( AbstractDataPluginModelTest )
 marble_add_test( AbstractDataPluginTest )
 marble_add_test( AbstractFloatItemTest )
 marble_add_test( RenderPluginModelTest )
+marble_add_test( GeoDataTreeModelTest )
+marble_add_test( RouteRequestTest )
 
 ## GeoData Classes tests
 marble_add_test( TestCamera )
@@ -111,10 +107,12 @@ marble_add_test( TestModel )
 marble_add_test( TestTimeStamp )
 marble_add_test( TestTimeSpan )
 marble_add_test( TestEquality )
+marble_add_test( TestFeatureDetach )
+marble_add_test( TestGeometryDetach )
 
 qt_add_resources(TestGeoDataCopy_SRCS TestGeoDataCopy.qrc) # Check copy operations on CoW classes
 marble_add_test( TestGeoDataCopy ${TestGeoDataCopy_SRCS} )
 
-add_definitions( -DCITIES_PATH="\\\"${CMAKE_CURRENT_SOURCE_DIR}/../data/placemarks/cityplacemarks.kml\\\"" )
+add_definitions( -DCITIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../data/placemarks/cityplacemarks.kml" )
 marble_add_test( TestGeoDataWriter )            # Check parsing, writing, reloading and comparing kml files
 marble_add_test( TestGeoDataPack )              # Check pack and unpack to file

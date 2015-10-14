@@ -12,14 +12,15 @@
 #include "VisiblePlacemark.h"
 
 #include "MarbleDebug.h"
+#include "RemoteIconLoader.h"
 
+#include "GeoDataPlacemark.h"
 #include "GeoDataStyle.h"
 #include "PlacemarkLayer.h"
 
 #include <QApplication>
 #include <QPainter>
 #include <QPalette>
-#include <QPixmap>
 
 using namespace Marble;
 
@@ -27,7 +28,13 @@ VisiblePlacemark::VisiblePlacemark( const GeoDataPlacemark *placemark )
     : m_placemark( placemark ),
       m_selected( false )
 {
+    const GeoDataStyle *style = m_placemark->style();
+    const RemoteIconLoader *remoteLoader = style->iconStyle().remoteIconLoader();
+    QObject::connect( remoteLoader, SIGNAL(iconReady()),
+                     this, SLOT(setSymbolPixmap()) );
+
     drawLabelPixmap();
+    setSymbolPixmap();
 }
 
 const GeoDataPlacemark* VisiblePlacemark::placemark() const
@@ -36,14 +43,8 @@ const GeoDataPlacemark* VisiblePlacemark::placemark() const
 }
 
 const QPixmap& VisiblePlacemark::symbolPixmap() const
-{    
-    const GeoDataStyle* style = m_placemark->style();
-    if ( style ) {
-        m_symbolPixmap = QPixmap::fromImage( style->iconStyle().icon() );
-    } else {
-        mDebug() << "Style pointer null";
-    }
-    return  m_symbolPixmap;
+{
+    return m_symbolPixmap;
 }
 
 bool VisiblePlacemark::selected() const
@@ -64,7 +65,7 @@ const QPoint& VisiblePlacemark::symbolPosition() const
 
 const QPointF VisiblePlacemark::hotSpot() const
 {
-    const QSize iconSize = m_placemark->style()->iconStyle().icon().size();
+    const QSize iconSize = m_placemark->style()->iconStyle().scaledIcon().size();
 
     GeoDataHotSpot::Units xunits;
     GeoDataHotSpot::Units yunits;
@@ -107,6 +108,19 @@ const QPixmap& VisiblePlacemark::labelPixmap() const
     return m_labelPixmap;
 }
 
+void VisiblePlacemark::setSymbolPixmap()
+{
+    const GeoDataStyle *style = m_placemark->style();
+    if ( style ) {
+
+        m_symbolPixmap = QPixmap::fromImage( style->iconStyle().scaledIcon() );
+        emit updateNeeded();
+    }
+    else {
+        mDebug() << "Style pointer is Null";
+    }
+}
+
 const QRectF& VisiblePlacemark::labelRect() const
 {
     return m_labelRect;
@@ -127,7 +141,7 @@ void VisiblePlacemark::drawLabelPixmap()
         return;
     }
 
-    QFont  labelFont  = style->labelStyle().font();
+    QFont  labelFont  = style->labelStyle().scaledFont();
     QColor labelColor = style->labelStyle().color();
 
     LabelStyle labelStyle = Normal;
@@ -219,3 +233,4 @@ void VisiblePlacemark::drawLabelText(QPainter &labelPainter, const QString &text
     }
 }
 
+#include "moc_VisiblePlacemark.cpp"

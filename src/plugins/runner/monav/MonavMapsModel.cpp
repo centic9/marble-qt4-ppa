@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MonavMapsModel.h"
@@ -25,7 +25,7 @@ void MonavMapsModel::deleteMapFiles( int row )
     }
 }
 
-void MonavMapsModel::setInstallableVersions( const QMap<QString, QString> remoteMaps )
+void MonavMapsModel::setInstallableVersions( const QMap<QString, QString> &remoteMaps )
 {
     m_remoteMaps = remoteMaps;
     beginResetModel();
@@ -121,4 +121,4 @@ QString MonavMapsModel::payload( int index ) const
 
 }
 
-#include "MonavMapsModel.moc"
+#include "moc_MonavMapsModel.cpp"

@@ -186,7 +186,7 @@ void QtMobilityPositionProviderPlugin::update()
             newStatus = PositionProviderStatusAvailable;
         }
         else {
-            newStatus = PositionProviderStatusUnavailable;
+            newStatus = PositionProviderStatusError;
         }
     }
 
@@ -204,4 +204,4 @@ void QtMobilityPositionProviderPlugin::update()
 
 Q_EXPORT_PLUGIN2( Marble::QtMobilityPositionProviderPlugin, Marble::QtMobilityPositionProviderPlugin )
 
-#include "QtMobilityPositionProviderPlugin.moc"
+#include "moc_QtMobilityPositionProviderPlugin.cpp"

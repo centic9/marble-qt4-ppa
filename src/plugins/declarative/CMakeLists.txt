@@ -5,7 +5,7 @@ INCLUDE_DIRECTORIES(
  ${CMAKE_CURRENT_BINARY_DIR}
  ${QT_INCLUDE_DIR}
 )
-if( QT4_FOUND)
+if( QT4BUILD)
   INCLUDE( ${QT_USE_FILE} )
 else()
   INCLUDE_DIRECTORIES(
@@ -39,7 +39,6 @@ CloudSync.cpp
 )
 
 marble_add_project_resources(qmldir)
-marble_qt4_automoc(${marbleplugin_SRCS})
 
 marble_add_declarative_plugin( MarbleDeclarativePlugin . ${marbleplugin_SRCS})
 target_link_libraries( MarbleDeclarativePlugin ${QT_QTDECLARATIVE_LIBRARY} ${QT_QTWEBKIT_LIBRARY} )

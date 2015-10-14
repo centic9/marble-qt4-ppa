@@ -32,8 +32,7 @@ public:
      */
     Planet();
 
-    ///Constructs a planet with @p id, filling orbital elements
-    explicit Planet( const QString& id );
+    MARBLE_DEPRECATED( explicit Planet( const QString& id ) ); // please use PlanetFactory::construct(id) instead
 
     ///Copy Constructor
     Planet( const Planet& other );
@@ -96,8 +95,8 @@ public:
 
     Planet& operator=( const Planet& rhs );
 
-    static QString name( const QString& id );
-    static QStringList planetList();
+    MARBLE_DEPRECATED( static QString name( const QString& id ) ); // please use PlanetFactory::localizedName(id) instead
+    MARBLE_DEPRECATED( static QStringList planetList() );  // please use PlanetFactory::planetList() instead
 
     bool hasAtmosphere() const;
     void setHasAtmosphere( bool enabled );

@@ -1,6 +1,6 @@
 usr/include/marble/
-usr/lib/kde4/plugins/designer/LatLonEditPlugin.so
-usr/lib/kde4/plugins/designer/MarbleNavigatorPlugin.so
-usr/lib/kde4/plugins/designer/MarbleWidgetPlugin.so
-usr/lib/libmarblewidget.so
-usr/share/kde4/apps/cmake/modules/FindMarble.cmake
+usr/lib/*/libmarblewidget-qt5.so
+usr/lib/*/plugins/designer/libLatLonEditPlugin.so
+usr/lib/*/plugins/designer/libMarbleNavigatorPlugin.so
+usr/lib/*/plugins/designer/libMarbleWidgetPlugin.so
+usr/share/marble/cmake/FindMarble.cmake

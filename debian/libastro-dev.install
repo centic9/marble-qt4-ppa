@@ -5,4 +5,4 @@ usr/include/astro/attlib.h
 usr/include/astro/eclsolar.h
 usr/include/astro/planetarySats.h
 usr/include/astro/solarsystem.h
-usr/lib/libastro.so
+usr/lib/*/libastro.so

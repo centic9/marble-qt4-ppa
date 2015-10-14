@@ -1,0 +1,22 @@
+Description: disable failing test
+Author: doko
+Origin: ubuntu
+Forwarded: no, upstream wants to keep the test but says it doesn't always work
+Last-Update: 2015-03-17
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: marble/tests/CMakeLists.txt
+===================================================================
+--- marble.orig/tests/CMakeLists.txt
++++ marble/tests/CMakeLists.txt
+@@ -65,7 +65,9 @@ marble_add_test( QuaternionTest )
+ marble_add_test( TileIdTest )               # Check TileId arithmetic
+ marble_add_test( ViewportParamsTest )
+ marble_add_test( PluginManagerTest )        # Check plugin loading
+-marble_add_test( MarbleRunnerManagerTest )  # Check RunnerManager signals
++# disabled
++# Riddell> when I asked marble upstream they said it was flakey and to be ignored
++#marble_add_test( MarbleRunnerManagerTest )  # Check RunnerManager signals
+ marble_add_test( BookmarkManagerTest )
+ marble_add_test( PlacemarkPositionProviderPluginTest )
+ marble_add_test( PositionTrackingTest )

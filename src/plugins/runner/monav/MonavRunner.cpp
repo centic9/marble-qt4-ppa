@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MonavRunner.h"
@@ -19,6 +19,7 @@
 #include "GeoDataDocument.h"
 #include "GeoDataData.h"
 #include "GeoDataExtendedData.h"
+#include "GeoDataPlacemark.h"
 
 #include <QProcess>
 #include <QTime>
@@ -270,4 +271,4 @@ void MonavRunner::reverseGeocoding( const GeoDataCoordinates &coordinates )
 
 } // namespace Marble
 
-#include "MonavRunner.moc"
+#include "moc_MonavRunner.cpp"

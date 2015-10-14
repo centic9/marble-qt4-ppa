@@ -17,11 +17,8 @@ class PositionProviderPluginPrivate
 {
 public:
     PositionProviderPluginPrivate()
-        : m_marbleModel( 0 )
     {
     }
-
-    const MarbleModel *m_marbleModel;
 };
 
 PositionProviderPlugin::PositionProviderPlugin()
@@ -34,16 +31,6 @@ PositionProviderPlugin::~PositionProviderPlugin()
     delete d;
 }
 
-const MarbleModel* PositionProviderPlugin::marbleModel() const
-{
-    return d->m_marbleModel;
 }
 
-void PositionProviderPlugin::setMarbleModel( const MarbleModel* marbleModel )
-{
-    d->m_marbleModel = marbleModel;
-}
-
-}
-
-#include "PositionProviderPlugin.moc"
+#include "moc_PositionProviderPlugin.cpp"

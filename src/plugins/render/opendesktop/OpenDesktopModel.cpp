@@ -91,7 +91,6 @@ void OpenDesktopModel::parseFile( const QByteArray& file )
                 item->setMarbleWidget(m_marbleWidget);
                 item->setId( personid );
                 item->setCoordinate( coor );
-                item->setTarget( "earth" );
                 item->setFullName( QString( "%1 %2" ).arg( firstName ).arg( lastName ) );
                 item->setLocation( QString( "%1, %2" ).arg( city ).arg( country ) );
                 item->setRole( !role.isEmpty() ? role : QString( "nothing" ) );
@@ -104,4 +103,4 @@ void OpenDesktopModel::parseFile( const QByteArray& file )
     }
 }
  
-#include "OpenDesktopModel.moc"
+#include "moc_OpenDesktopModel.cpp"

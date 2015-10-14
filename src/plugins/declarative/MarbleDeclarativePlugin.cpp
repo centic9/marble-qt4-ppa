@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MarbleDeclarativePlugin.h"
@@ -86,6 +86,6 @@ void MarbleDeclarativePlugin::initializeEngine( QQmlEngine *engine, const char *
     }
 }
 
-#include "MarbleDeclarativePlugin.moc"
+#include "moc_MarbleDeclarativePlugin.cpp"
 
 Q_EXPORT_PLUGIN2( MarbleDeclarativePlugin, MarbleDeclarativePlugin )

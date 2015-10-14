@@ -1,9 +1,16 @@
 #include "RouteItemDelegate.h"
 
 #include <QPainter>
+
+#ifdef MARBLE_NO_WEBKIT
+#include <QWidget>
+#else
 #include <QWebView>
+#endif
+
 #include <QApplication>
 #include <QAbstractTextDocumentLayout>
+#include <QPainter>
 
 namespace Marble {
 
@@ -286,4 +293,4 @@ QRect RouteItemDelegate::position( Element element, const QStyleOptionViewItem& 
 
 }
 
-#include "RouteItemDelegate.moc"
+#include "moc_RouteItemDelegate.cpp"

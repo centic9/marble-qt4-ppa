@@ -42,6 +42,7 @@
 #include "DownloadRegion.h"
 #include "GeoSceneDocument.h"
 #include "GeoSceneMap.h"
+#include "Route.h"
 
 namespace Marble
 {
@@ -508,4 +509,4 @@ void DownloadRegionDialog::setOffsetUnit()
 
 }
 
-#include "DownloadRegionDialog.moc"
+#include "moc_DownloadRegionDialog.cpp"

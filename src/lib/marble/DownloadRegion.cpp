@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012 Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "DownloadRegion.h"
@@ -252,4 +252,4 @@ QVector<TileCoordsPyramid> DownloadRegion::fromPath( const TextureLayer *texture
 
 }
 
-#include "DownloadRegion.moc"
+#include "moc_DownloadRegion.cpp"

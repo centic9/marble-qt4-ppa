@@ -141,8 +141,7 @@ class WeatherItemPrivate
         if ( !m_forecastWeather.isEmpty() ) {
             toolTip += '\n';
 
-            QDate minDate = QDate::currentDate();
-            minDate.addDays( -1 );
+            QDate const minDate = QDate::currentDate();
             foreach( const WeatherData& data, m_forecastWeather ) {
                 QDate date = data.dataDate();
                 if( date >= minDate
@@ -436,16 +435,16 @@ void WeatherItem::addForecastWeather( const QList<WeatherData>& forecasts )
     }
 
     // Remove old items
-    QDate minDate = QDate::currentDate();
-    minDate.addDays( -1 );
+    QDate const minDate = QDate::currentDate();
 
     QMap<QDate, WeatherData>::iterator it = d->m_forecastWeather.begin();
 
     while( it != d->m_forecastWeather.end() ) {
         if ( it.key() < minDate ) {
-            d->m_forecastWeather.remove( it.key() );
+            it = d->m_forecastWeather.erase( it );
+        } else {
+            ++it;
         }
-        ++it;
     }
 
     d->updateToolTip();
@@ -503,7 +502,14 @@ QString WeatherItem::createFromTemplate(const QString &templateHtml)
     QString html = templateHtml;
     QLocale locale = QLocale::system();
     html.replace("%city_name%", stationName());
-    html.replace("%weather_situation%", "file://"+d->m_currentWeather.iconSource());
+
+    if (!d->m_currentWeather.iconSource().isEmpty()) {
+        html.replace("%weather_situation%",
+                     "<img src=\"file://"+d->m_currentWeather.iconSource()+"\" />");
+    } else {
+        html.remove("%weather_situation%");
+    }
+
     html.replace("%current_temp%", d->temperatureString());
     html.replace("%current_condition%", d->m_currentWeather.conditionString());
     html.replace("%wind_direction%", d->m_currentWeather.windDirectionString());
@@ -572,4 +578,4 @@ double WeatherItem::temperature() const
 
 } // namespace Marble
 
-#include "WeatherItem.moc"
+#include "moc_WeatherItem.cpp"

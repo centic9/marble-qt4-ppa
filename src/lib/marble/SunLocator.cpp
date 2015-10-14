@@ -79,7 +79,7 @@ void SunLocator::updatePosition()
                 dateTime.time().hour(), dateTime.time().minute(),
                 (double)dateTime.time().second());
     QString const pname = planetId.at(0).toUpper() + planetId.right(planetId.size() - 1);
-    QByteArray const name = pname.toLatin1();
+    QByteArray name = pname.toLatin1();
     sys.setCentralBody( name.data() );
 
     double ra = 0.0;
@@ -222,4 +222,4 @@ qreal SunLocator::getLat() const
 
 }
 
-#include "SunLocator.moc"
+#include "moc_SunLocator.cpp"

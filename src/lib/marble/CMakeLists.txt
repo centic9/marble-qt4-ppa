@@ -1,9 +1,5 @@
 PROJECT(marblewidget)
 
-if (QTONLY)
-   cmake_minimum_required(VERSION 2.4.0)
-endif (QTONLY)
-
 macro_optional_find_package(Phonon)
 marble_set_package_properties( Phonon PROPERTIES DESCRIPTION "cross-platform multimedia framework that enables the use of audio and video content" )
 marble_set_package_properties( Phonon PROPERTIES URL "http://qt.digia.com/" )
@@ -24,58 +20,47 @@ INCLUDE_DIRECTORIES(
  ${CMAKE_CURRENT_SOURCE_DIR}/geodata/parser
  ${CMAKE_CURRENT_SOURCE_DIR}/graphicsview
  ${CMAKE_CURRENT_SOURCE_DIR}/layers
+ ${CMAKE_CURRENT_SOURCE_DIR}/osm
  ${CMAKE_CURRENT_SOURCE_DIR}/cloudsync
  ${CMAKE_SOURCE_DIR}/src/lib/astro
  ${QT_INCLUDE_DIR}
 )
 
-if( QT4_FOUND )
+if( QT4BUILD )
   INCLUDE(${QT_USE_FILE})
 else()
 INCLUDE_DIRECTORIES(
  ${Qt5WebKitWidgets_INCLUDE_DIRS}
  ${Qt5Xml_INCLUDE_DIRS}
  ${Qt5Concurrent_INCLUDE_DIRS}
+ ${Qt5Quick_INCLUDE_DIRS}
 )
 endif()
 
 INCLUDE(geodata/CMakeLists.txt)
 INCLUDE(graphicsview/CMakeLists.txt)
 INCLUDE(layers/CMakeLists.txt)
+INCLUDE(osm/CMakeLists.txt)
 
-set(GENERIC_LIB_VERSION "0.19.2")
-set(GENERIC_LIB_SOVERSION "19")
-
-if (QTONLY)
-  # ce: don't know why this is needed here - on win32 'O2' is activated by default in release mode
-  if(NOT WIN32)
-    add_definitions (${QT_DEFINITIONS} -O3)
-  endif(NOT WIN32)
-
-  include_directories(
-    ${QT_INCLUDE_DIR}
-  )
-else (QTONLY)
-  if(NOT WIN32)
-    add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS} -O3)
-  endif(NOT WIN32)
-
-  include_directories(
-    ${KDE4_INCLUDES}
-  )
-endif (QTONLY)
+set(GENERIC_LIB_VERSION "0.21.80")
+set(GENERIC_LIB_SOVERSION "22")
 
 # link_directories (${QT_LIBRARY_DIR})
 ########### next target ###############
 
-if( NOT QT4_FOUND )
+if( QT5BUILD )
     set(marblequick_SRCS MarbleQuickItem.cpp)
+endif()
+
+if(MARBLE_NO_WEBKIT)
+add_definitions(-DMARBLE_NO_WEBKIT)
 endif()
 
 set(marblewidget_SRCS
     ${geodata_SRCS}
     ${graphicsview_SRCS}
     ${layers_SRCS}
+    ${osm_SRCS}
     ${marblequick_SRCS}
     blendings/Blending.cpp
     blendings/BlendingAlgorithms.cpp
@@ -86,14 +71,22 @@ set(marblewidget_SRCS
     LatLonBoxWidget.cpp
     MarbleWidget.cpp
     MarbleAbstractPresenter.cpp
-    MarbleWebView.cpp
     MarbleModel.cpp
     MarbleMap.cpp
     MarbleControlBox.cpp
+    MarbleColors.cpp
     NavigationWidget.cpp
     MapViewWidget.cpp
+    CelestialSortFilterProxyModel.cpp
     FileViewWidget.cpp
     TourWidget.cpp
+    FlyToEditWidget.cpp
+    TourControlEditWidget.cpp
+    WaitEditWidget.cpp
+    SoundCueEditWidget.cpp
+    RemoveItemEditWidget.cpp
+    TourItemDelegate.cpp
+    MapViewItemDelegate.cpp
     TourPlayback.cpp
     LegendWidget.cpp
     PlaybackItem.cpp
@@ -103,7 +96,8 @@ set(marblewidget_SRCS
     PlaybackTourControlItem.cpp
     PlaybackWaitItem.cpp
     SerialTrack.cpp
-    ParallelTrack.cpp
+    SoundTrack.cpp
+    AnimatedUpdateTrack.cpp
     CurrentLocationWidget.cpp
     MarbleNavigator.cpp
     MarbleLegendBrowser.cpp
@@ -130,6 +124,7 @@ set(marblewidget_SRCS
     GeoPainter.cpp
     HttpDownloadManager.cpp
     HttpJob.cpp
+    RemoteIconLoader.cpp
     LayerManager.cpp
     PluginManager.cpp
     TimeControlWidget.cpp
@@ -146,12 +141,19 @@ set(marblewidget_SRCS
     ViewParams.cpp
     projections/AbstractProjection.cpp
     projections/CylindricalProjection.cpp
+    projections/AzimuthalProjection.cpp
     projections/SphericalProjection.cpp
     projections/EquirectProjection.cpp
     projections/MercatorProjection.cpp
+    projections/GnomonicProjection.cpp
+    projections/StereographicProjection.cpp
+    projections/LambertAzimuthalProjection.cpp
+    projections/AzimuthalEquidistantProjection.cpp
+    projections/VerticalPerspectiveProjection.cpp
     VisiblePlacemark.cpp
     PlacemarkLayout.cpp
     Planet.cpp
+    PlanetFactory.cpp
     Quaternion.cpp
     TextureColorizer.cpp
     TextureMapperInterface.cpp
@@ -160,6 +162,7 @@ set(marblewidget_SRCS
     EquirectScanlineTextureMapper.cpp
     MercatorScanlineTextureMapper.cpp
     TileScalingTextureMapper.cpp
+    GenericScanlineTextureMapper.cpp
     VectorTileModel.cpp
     DiscCache.cpp
     ServerLayout.cpp
@@ -172,7 +175,6 @@ set(marblewidget_SRCS
     StackedTileLoader.cpp
     TileLoaderHelper.cpp
     TileCreator.cpp
-    TinyWebBrowser.cpp
     #jsonparser.cpp
     FileLoader.cpp
     FileManager.cpp
@@ -181,6 +183,10 @@ set(marblewidget_SRCS
     ImageF.cpp
     MovieCapture.cpp
     MovieCaptureDialog.cpp
+    TourCaptureDialog.cpp
+    EditPlacemarkDialog.cpp
+    AddLinkDialog.cpp
+    FormattedTextWidget.cpp
 
     AbstractDataPlugin.cpp
     AbstractDataPluginModel.cpp
@@ -195,6 +201,8 @@ set(marblewidget_SRCS
     RenderPluginInterface.cpp
     PositionProviderPlugin.cpp
     PositionProviderPluginInterface.cpp
+    PlacemarkPositionProviderPlugin.cpp
+    RouteSimulationPositionProviderPlugin.cpp
     MarblePluginSettingsWidget.cpp
     RenderPluginModel.cpp
     PluginAboutDialog.cpp
@@ -208,6 +216,7 @@ set(marblewidget_SRCS
     MathHelper.cpp
 
     LatLonEdit.cpp
+    PlacemarkEditHeader.cpp
 
     MapThemeSortFilterProxyModel.cpp
 
@@ -283,10 +292,28 @@ set(marblewidget_SRCS
     cloudsync/ConflictDialog.cpp
 )
 
+
+if (MARBLE_NO_WEBKIT)
+    LIST(APPEND marblewidget_SRCS
+        NullMarbleWebView.cpp
+        NullTinyWebBrowser.cpp
+        )
+else()
+    LIST(APPEND marblewidget_SRCS
+        MarbleWebView.cpp
+        TinyWebBrowser.cpp
+        )
+endif()
+
+if (NOT QT_NO_DBUS)
+    LIST(APPEND marblewidget_SRCS
+        MarbleDBusInterface.cpp
+        )
+endif()
+
 set (marblewidget_UI
     LatLonBoxWidget.ui
     NavigationWidget.ui
-    LegendWidget.ui
     MapViewWidget.ui
     CurrentLocationWidget.ui
     FileViewWidget.ui
@@ -303,6 +330,7 @@ set (marblewidget_UI
     MarbleAboutDialog.ui
     SunControlWidget.ui
     LatLonEdit.ui
+    PlacemarkEditHeader.ui
     routing/RoutingWidget.ui
     DataMigrationWidget.ui
     EditBookmarkDialog.ui
@@ -315,26 +343,40 @@ set (marblewidget_UI
     routing/RoutingProfileSettingsDialog.ui
     MapWizard.ui
     MapThemeDownloadDialog.ui
-    WebPopupWidget.ui
     cloudsync/CloudRoutesDialog.ui
     MarbleCloudSyncSettingsWidget.ui
     MovieCaptureDialog.ui
+    TourCaptureDialog.ui
+    EditPlacemarkDialog.ui
+    AddLinkDialog.ui
+    FormattedTextWidget.ui
+    ElevationWidget.ui
 )
+if (MARBLE_NO_WEBKIT)
+    LIST(APPEND marblewidget_UI
+        NullLegendWidget.ui
+        NullWebPopupWidget.ui
+        )
+else()
+    LIST(APPEND marblewidget_UI
+        LegendWidget.ui
+        WebPopupWidget.ui
+        )
+endif()
 
 # FIXME: cleaner approach of src/lib/marblwidget/MarbleControlBox.* vs. marble.qrc
 qt_add_resources(marblewidget_SRCS libmarble.qrc ../../apps/marble-ui/marble.qrc)
 
 qt_wrap_ui(marblewidget_SRCS ${marblewidget_UI})
-marble_qt4_automoc(${marblewidget_SRCS})
 
-ADD_LIBRARY(marblewidget SHARED ${marblewidget_SRCS} ${SOURCES_UI_HDRS})
+ADD_LIBRARY(${MARBLEWIDGET} SHARED ${marblewidget_SRCS} ${SOURCES_UI_HDRS})
 
 # link with libastro
-TARGET_LINK_LIBRARIES (marblewidget astro)
+TARGET_LINK_LIBRARIES (${MARBLEWIDGET} astro)
 
 # link with release version of Qt libs
-if( QT4_FOUND )
-  TARGET_LINK_LIBRARIES (marblewidget
+if( QT4BUILD )
+  TARGET_LINK_LIBRARIES (${MARBLEWIDGET}
     ${QT_QTCORE_LIBRARY}
     ${QT_QTDBUS_LIBRARY}
     ${QT_QTGUI_LIBRARY}
@@ -347,86 +389,104 @@ if( QT4_FOUND )
     ${QT_QTDECLARATIVE_LIBRARY}
   )
 else()
-  TARGET_LINK_LIBRARIES (marblewidget
+  TARGET_LINK_LIBRARIES (${MARBLEWIDGET}
     ${Qt5Core_LIBRARIES}
     ${Qt5Xml_LIBRARIES}
     ${Qt5Widgets_LIBRARIES}
+    ${Qt5Gui_LIBRARIES}
     ${Qt5WebKitWidgets_LIBRARIES}
     ${Qt5Svg_LIBRARIES}
     ${Qt5Script_LIBRARIES}
+    ${Qt5Quick_LIBRARIES}
+    ${Qt5OpenGL_LIBRARIES}
+    ${Qt5PrintSupport_LIBRARIES}
+    ${Qt5DBus_LIBRARIES}
     )
 endif()
 
 if( PHONON_FOUND AND NOT QT5BUILD )
   INCLUDE_DIRECTORIES( ${PHONON_INCLUDES} )
-  TARGET_LINK_LIBRARIES(marblewidget ${PHONON_LIBS} )
+  TARGET_LINK_LIBRARIES(${MARBLEWIDGET} ${PHONON_LIBS} )
   set (HAVE_PHONON TRUE)
 endif( PHONON_FOUND AND NOT QT5BUILD )
 
 if (APPLE)
   #defined in top level makefile
-  TARGET_LINK_LIBRARIES(marblewidget ${MAC_EXTRA_LIBS} )
+  TARGET_LINK_LIBRARIES(${MARBLEWIDGET} ${MAC_EXTRA_LIBS} )
 endif (APPLE)
 
 if (CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  TARGET_LINK_LIBRARIES(marblewidget m)
+  TARGET_LINK_LIBRARIES(${MARBLEWIDGET} m)
 endif (CMAKE_SYSTEM_NAME MATCHES "SunOS")
 
 if(WIN32)
-  TARGET_LINK_LIBRARIES(marblewidget ws2_32 imm32 winmm)
+  TARGET_LINK_LIBRARIES(${MARBLEWIDGET} ws2_32 imm32 winmm)
 endif(WIN32)
 
 
-set_target_properties(marblewidget  PROPERTIES
+set_target_properties(${MARBLEWIDGET}  PROPERTIES
                                     VERSION ${GENERIC_LIB_VERSION}
                                     SOVERSION ${GENERIC_LIB_SOVERSION}
                                     COMPILE_FLAGS "-DKML_LAZY_IMP")
 # needed for marble_export.h
-set_target_properties(marblewidget PROPERTIES
+set_target_properties(${MARBLEWIDGET} PROPERTIES
   DEFINE_SYMBOL MAKE_MARBLE_LIB
 )
 
 # choose the correct target install library path
-if(WIN32 AND QTONLY)
-  install(TARGETS marblewidget RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
-else(WIN32 AND QTONLY)
-  if(APPLE AND QTONLY)
-    install (TARGETS marblewidget LIBRARY DESTINATION
-      ${CMAKE_INSTALL_PREFIX}/Marble.app/Contents/MacOS/lib)
+if(WIN32)
+  install(TARGETS ${MARBLEWIDGET} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+elseif(APPLE)
+  install(TARGETS ${MARBLEWIDGET} LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Marble.app/Contents/MacOS/lib)
+else()
+  install(TARGETS ${MARBLEWIDGET} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
-  else(APPLE AND QTONLY)
-    if(QTONLY)
-      install(TARGETS marblewidget LIBRARY DESTINATION ${EXEC_INSTALL_PREFIX}/lib${LIB_SUFFIX})
-    else(QTONLY)
-        install(TARGETS marblewidget  ${INSTALL_TARGETS_DEFAULT_ARGS})
-    endif(QTONLY)
-  endif(APPLE AND QTONLY)
-endif(WIN32 AND QTONLY)
 
 ########### install files ###############
 
-if( NOT QT4_FOUND )
+if( QT5BUILD )
     set(marblequick_HDRS MarbleQuickItem.h)
+endif()
+
+if (MARBLE_NO_WEBKIT)
+    set(marble_WebKit
+        NullMarbleWebView.h
+        NullTinyWebBrowser.h
+        )
+else()
+    set(marble_WebKit
+        MarbleWebView.h
+        TinyWebBrowser.h
+        )
 endif()
 
 install( FILES
     ${graphicsview_HDRS}
     ${marblequick_HDRS}
+    ${marble_WebKit}
     AutoNavigation.h
     BookmarkManager.h
     DownloadRegion.h
     DownloadRegionDialog.h
     LatLonBoxWidget.h
     MarbleWidget.h
-    MarbleWebView.h
     MarbleMap.h
     MarbleModel.h
     MarbleControlBox.h
     NavigationWidget.h
     MapViewWidget.h
+    CelestialSortFilterProxyModel.h
     LegendWidget.h
     FileViewWidget.h
     TourWidget.h
+    FlyToEditWidget.h
+    TourControlEditWidget.h
+    WaitEditWidget.h
+    SoundCueEditWidget.h
+    RemoveItemEditWidget.h
+    TourItemDelegate.h
+    MapViewItemDelegate.h
     TourPlayback.h
     CurrentLocationWidget.h
     MarbleNavigator.h
@@ -439,7 +499,6 @@ install( FILES
     TileId.h
     TileCoordsPyramid.h
     TileLevelRangeWidget.h
-    TinyWebBrowser.h
     QtMarbleConfigDialog.h
     global.h
     MarbleColors.h
@@ -448,6 +507,7 @@ install( FILES
     MarbleDebug.h
     MarbleDirs.h
     GeoPainter.h
+    HttpDownloadManager.h
     TileCreatorDialog.h
     ViewportParams.h
     projections/AbstractProjection.h
@@ -528,6 +588,10 @@ install( FILES
     PluginAboutDialog.h
     marble_export.h
     Planet.h
+    PlanetFactory.h
+    EditPlacemarkDialog.h
+    AddLinkDialog.h
+    FormattedTextWidget.h
 
     AbstractDataPlugin.h
     AbstractDataPluginModel.h
@@ -535,6 +599,7 @@ install( FILES
     AbstractWorkerThread.h
 
     LatLonEdit.h
+    PlacemarkEditHeader.h
     MapWizard.h
     MapThemeDownloadDialog.h
     ElevationModel.h

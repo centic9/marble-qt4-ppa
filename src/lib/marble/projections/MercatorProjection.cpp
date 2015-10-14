@@ -35,15 +35,30 @@ MercatorProjection::~MercatorProjection()
 {
 }
 
+QString MercatorProjection::name() const
+{
+    return QObject::tr( "Mercator" );
+}
+
+QString MercatorProjection::description() const
+{
+    return QObject::tr( "<p><b>Mercator Projection</b></p><p>Applications: popular standard map projection for navigation.</p>" );
+}
+
+QIcon MercatorProjection::icon() const
+{
+    return QIcon(":/icons/map-mercator.png");
+}
+
 qreal MercatorProjection::maxValidLat() const
 {
-    // This is the max value where atanh( sin( lat ) ) is defined.
+    // This is the max value where gd( lat ) is defined.
     return +85.05113 * DEG2RAD;
 }
 
 qreal MercatorProjection::minValidLat() const
 {
-    // This is the min value where atanh( sin( lat ) ) is defined.
+    // This is the min value where gd( lat ) is defined.
     return -85.05113 * DEG2RAD;
 }
 
@@ -188,8 +203,8 @@ bool MercatorProjection::geoCoordinates( const int x, const int y,
         const int yTop          = halfImageHeight - 2 * radius + yCenterOffset;
         const int yBottom       = yTop + 4 * radius;
         if ( y >= yTop && y < yBottom ) {
-            lat = atan( sinh( ( ( halfImageHeight + yCenterOffset ) - y)
-                              * pixel2Rad ) );
+            lat = gd( ( ( halfImageHeight + yCenterOffset ) - y)
+                              * pixel2Rad );
 
             if ( unit == GeoDataCoordinates::Degree ) {
                 lat *= RAD2DEG;

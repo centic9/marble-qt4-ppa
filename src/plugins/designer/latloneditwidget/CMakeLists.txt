@@ -6,13 +6,13 @@ INCLUDE_DIRECTORIES(
  ${QT_INCLUDE_DIR}
  ${QT_QTDESIGNER_INCLUDE_DIR}
 )
-IF(QT4_FOUND)
+IF(QT4BUILD)
   INCLUDE( ${QT_USE_FILE} )
 ELSE()
   INCLUDE_DIRECTORIES(${Qt5Designer_INCLUDE_DIRS})
 ENDIF()
 
-#target_link_libraries( marblewidget )
+#target_link_libraries( ${MARBLEWIDGET} )
 
 set( latloneditplugin_SRCS LatLonEditPlugin.cpp )
 

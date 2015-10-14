@@ -14,7 +14,7 @@
 #define MARBLE_MAINWINDOW_H
  
 
-#include <KDE/KXmlGuiWindow>
+#include <KXmlGui/KXmlGuiWindow>
 
 class QActionGroup;
 class QAction;
@@ -41,6 +41,9 @@ class MainWindow : public KXmlGuiWindow
  public slots:
     void setMapTitle();
     void changeViewSize( QAction* );
+
+ protected:
+    void closeEvent( QCloseEvent *event );
 
  private:
     QSize m_savedSize;

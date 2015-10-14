@@ -66,7 +66,7 @@ QString FoursquarePlugin::copyrightYears() const
 QList<PluginAuthor> FoursquarePlugin::pluginAuthors() const
 {
     return QList<PluginAuthor>()
-            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" )
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "nienhueser@kde.org" )
             << PluginAuthor( QString::fromUtf8( "Utku Aydın" ), "utkuaydin34@gmail.com" );
 }
 
@@ -98,5 +98,5 @@ bool FoursquarePlugin::storeAccessToken(const QString& tokenUrl)
 }
 
 Q_EXPORT_PLUGIN2(FoursquarePlugin, Marble::FoursquarePlugin)
-#include "FoursquarePlugin.moc"
+#include "moc_FoursquarePlugin.cpp"
 

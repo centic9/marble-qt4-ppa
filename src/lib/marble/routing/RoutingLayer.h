@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_ROUTINGLAYER_H
@@ -13,7 +13,6 @@
 
 #include "GeoDataCoordinates.h"
 #include "LayerInterface.h"
-#include "RoutingManager.h"
 
 #include <QModelIndex>
 #include <QRect>
@@ -114,7 +113,7 @@ private Q_SLOTS:
     /**
       * Paint a dashed route when downloading a new route, a solid one otherwise.
       */
-    void updateRouteState( RoutingManager::State state );
+    void updateRouteState();
 
     /**
       * The viewport has changed, recalculate positions accordingly

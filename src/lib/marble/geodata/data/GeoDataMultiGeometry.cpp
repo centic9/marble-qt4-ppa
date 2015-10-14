@@ -19,6 +19,8 @@
 
 #include "MarbleDebug.h"
 
+#include <QDataStream>
+
 
 namespace Marble
 {
@@ -158,6 +160,7 @@ QVector<GeoDataGeometry*>::ConstIterator GeoDataMultiGeometry::constEnd() const
  */
 GeoDataGeometry* GeoDataMultiGeometry::child( int i )
 {
+    detach();
     return p()->m_vector.at( i );
 }
 

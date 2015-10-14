@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "DeclarativeMapThemeManager.h"
@@ -25,7 +25,7 @@ MapThemeImageProvider::MapThemeImageProvider() :
 
 QPixmap MapThemeImageProvider::requestPixmap( const QString &id, QSize *size, const QSize &requestedSize )
 {
-    QSize const resultSize = requestedSize.isValid() ? resultSize : QSize( 128, 128 );
+    QSize const resultSize = requestedSize.isValid() ? requestedSize : QSize( 128, 128 );
     if ( size ) {
         *size = resultSize;
     }
@@ -54,4 +54,4 @@ QStringList MapThemeManager::mapThemeIds() const
     return m_mapThemeManager.mapThemeIds();
 }
 
-#include "DeclarativeMapThemeManager.moc"
+#include "moc_DeclarativeMapThemeManager.cpp"

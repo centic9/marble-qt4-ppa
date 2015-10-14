@@ -6,7 +6,7 @@
 // the source code.
 //
 // Copyright 2008 Henry de Valence <hdevalence@gmail.com>
-// Copyright 2010 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010 Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2010-2013 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 // Copyright 2011 Thibaut Gridel <tgridel@free.fr>
 
@@ -139,7 +139,7 @@ void RoutingRunnerManager::retrieveRoute( const RouteRequest *request )
             continue;
         }
 
-        RoutingTask* task = new RoutingTask( plugin->newRunner(), this, d->m_marbleModel, request );
+        RoutingTask* task = new RoutingTask( plugin->newRunner(), this, request );
         connect( task, SIGNAL(finished(RoutingTask*)), this, SLOT(cleanupRoutingTask(RoutingTask*)) );
         mDebug() << "route task" << plugin->nameId() << " " << (quintptr)task;
         d->m_routingTasks << task;
@@ -172,4 +172,4 @@ QVector<GeoDataDocument*> RoutingRunnerManager::searchRoute( const RouteRequest 
 
 }
 
-#include "RoutingRunnerManager.moc"
+#include "moc_RoutingRunnerManager.cpp"

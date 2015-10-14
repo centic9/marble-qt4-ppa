@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_ROUTINGWIDGET_H
@@ -127,9 +127,6 @@ private Q_SLOTS:
     /** Update the route request with the given profile */
     void setRoutingProfile( int index );
 
-    /** Determine route retrieval failures and inform the user */
-    void indicateRoutingFailure( GeoDataDocument* route );
-
     /** Change selected routing profile to the one set in the shared request */
     void updateActiveRoutingProfile();
 
@@ -140,6 +137,16 @@ private Q_SLOTS:
     void openCloudRoute( const QString &identifier );
 
     void updateUploadProgress( qint64 sent, qint64 total );
+
+    void centerOn( const GeoDataCoordinates &coordinates );
+
+    void seekTourToStart();
+
+    void initializeTour();
+
+    void clearTour();
+
+    void toggleRoutePlay();
 
 protected:
     bool eventFilter( QObject *o, QEvent *e );

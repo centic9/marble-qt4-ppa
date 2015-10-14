@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2010      Niko Sams <niko.sams@gmail.com>
 //
 
@@ -18,6 +18,7 @@
 #include "routing/instructions/InstructionTransformation.h"
 #include "GeoDataDocument.h"
 #include "GeoDataExtendedData.h"
+#include "GeoDataPlacemark.h"
 
 #include <QProcess>
 #include <QMap>
@@ -25,7 +26,6 @@
 #include <MarbleMap.h>
 #include <MarbleModel.h>
 #include <routing/RoutingManager.h>
-#include <routing/RoutingModel.h>
 #include <routing/RoutingProfilesModel.h>
 
 namespace Marble
@@ -268,4 +268,4 @@ void RoutinoRunner::retrieveRoute( const RouteRequest *route )
 
 } // namespace Marble
 
-#include "RoutinoRunner.moc"
+#include "moc_RoutinoRunner.cpp"

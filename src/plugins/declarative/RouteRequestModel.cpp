@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "RouteRequestModel.h"
@@ -132,4 +132,4 @@ void RouteRequestModel::setPosition ( int index, qreal longitude, qreal latitude
     }
 }
 
-#include "RouteRequestModel.moc"
+#include "moc_RouteRequestModel.cpp"

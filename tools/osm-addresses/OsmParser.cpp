@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "OsmParser.h"
@@ -766,4 +766,4 @@ Coordinate::Coordinate(float lon_, float lat_) : lon(lon_), lat(lat_)
 
 }
 
-#include "OsmParser.moc"
+#include "moc_OsmParser.cpp"

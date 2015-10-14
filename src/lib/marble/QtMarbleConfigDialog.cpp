@@ -131,7 +131,7 @@ QtMarbleConfigDialog::QtMarbleConfigDialog(MarbleWidget *marbleWidget, CloudSync
     #ifdef Q_WS_X11
     nativeString = tr( "Native (X11)" );
     #endif
-    #ifdef Q_WS_MAC
+    #ifdef Q_OS_MAC
     nativeString = tr( "Native (Mac OS X Core Graphics)" );
     #endif
 
@@ -713,4 +713,4 @@ QString QtMarbleConfigDialog::owncloudPassword() const
 
 }
 
-#include "QtMarbleConfigDialog.moc"
+#include "moc_QtMarbleConfigDialog.cpp"

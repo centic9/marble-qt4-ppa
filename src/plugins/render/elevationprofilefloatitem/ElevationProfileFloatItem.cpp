@@ -7,9 +7,27 @@
 //
 // Copyright 2011-2012 Florian Eßer <f.esser@rwth-aachen.de>
 // Copyright 2012      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
+// Copyright 2013      Roman Karlstetter <roman.karlstetter@googlemail.com>
 //
 
 #include "ElevationProfileFloatItem.h"
+
+#include "ElevationProfileContextMenu.h"
+#include "ui_ElevationProfileConfigWidget.h"
+
+#include "MarbleLocale.h"
+#include "MarbleModel.h"
+#include "MarbleWidget.h"
+#include "GeoDataPlacemark.h"
+#include "GeoDataTreeModel.h"
+#include "ViewportParams.h"
+#include "MarbleDirs.h"
+#include "ElevationModel.h"
+#include "MarbleGraphicsGridLayout.h"
+#include "MarbleMath.h"
+#include "MarbleDebug.h"
+#include "routing/RoutingManager.h"
+#include "routing/RoutingModel.h"
 
 #include <QContextMenuEvent>
 #include <QRect>
@@ -18,25 +36,14 @@
 #include <QMenu>
 #include <QMouseEvent>
 
-#include "ui_ElevationProfileConfigWidget.h"
-#include "MarbleLocale.h"
-#include "MarbleModel.h"
-#include "MarbleWidget.h"
-#include "GeoDataPlacemark.h"
-#include "GeoDataTreeModel.h"
-#include "ViewportParams.h"
-#include "routing/RoutingModel.h"
-#include "routing/RoutingManager.h"
-#include "MarbleDirs.h"
-#include "ElevationModel.h"
-#include "MarbleGraphicsGridLayout.h"
-#include "MarbleMath.h"
-
 namespace Marble
 {
 
 ElevationProfileFloatItem::ElevationProfileFloatItem( const MarbleModel *marbleModel )
         : AbstractFloatItem( marbleModel, QPointF( 220, 10.5 ), QSizeF( 0.0, 50.0 ) ),
+        m_activeDataSource(0),
+        m_routeDataSource( marbleModel ? marbleModel->routingManager()->routingModel() : 0, marbleModel ? marbleModel->elevationModel() : 0, this ),
+        m_trackDataSource( marbleModel ? marbleModel->treeModel() : 0, this ),
         m_configDialog( 0 ),
         ui_configWidget( 0 ),
         m_leftGraphMargin( 0 ),
@@ -50,8 +57,6 @@ ElevationProfileFloatItem::ElevationProfileFloatItem( const MarbleModel *marbleM
         m_isInitialized( false ),
         m_contextMenu( 0 ),
         m_marbleWidget( 0 ),
-        m_routingModel( 0 ),
-        m_routeAvailable( false ),
         m_firstVisiblePoint( 0 ),
         m_lastVisiblePoint( 0 ),
         m_zoomToViewport( false )
@@ -62,7 +67,7 @@ ElevationProfileFloatItem::ElevationProfileFloatItem( const MarbleModel *marbleM
         setPosition( QPointF( 10.5, 10.5 ) );
     }
     bool const highRes = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::HighResolution;
-    m_eleGraphHeight = highRes ? 100 : 50;
+    m_eleGraphHeight = highRes ? 100 : 50; /// TODO make configurable
 
     setPadding( 1 );
 
@@ -72,6 +77,10 @@ ElevationProfileFloatItem::ElevationProfileFloatItem( const MarbleModel *marbleM
     m_markerPlacemark->setName( "Elevation Marker" );
     m_markerPlacemark->setVisible( false );
     m_markerDocument.append( m_markerPlacemark );
+
+    m_contextMenu = new ElevationProfileContextMenu(this);
+    connect( &m_trackDataSource, SIGNAL(sourceCountChanged()), m_contextMenu, SLOT(updateContextMenuEntries()) );
+    connect( &m_routeDataSource, SIGNAL(sourceCountChanged()), m_contextMenu, SLOT(updateContextMenuEntries()) );
 }
 
 ElevationProfileFloatItem::~ElevationProfileFloatItem()
@@ -105,7 +114,7 @@ QString ElevationProfileFloatItem::nameId() const
 
 QString ElevationProfileFloatItem::version() const
 {
-    return "1.2";
+    return "1.2"; // TODO: increase to 1.3 ?
 }
 
 QString ElevationProfileFloatItem::description() const
@@ -115,14 +124,15 @@ QString ElevationProfileFloatItem::description() const
 
 QString ElevationProfileFloatItem::copyrightYears() const
 {
-    return "2011, 2012";
+    return "2011, 2012, 2013";
 }
 
 QList<PluginAuthor> ElevationProfileFloatItem::pluginAuthors() const
 {
     return QList<PluginAuthor>()
             << PluginAuthor( QString::fromUtf8 ( "Florian Eßer" ), "f.esser@rwth-aachen.de" )
-            << PluginAuthor( "Bernhard Beschow", "bbeschow@cs.tu-berlin.de" );
+            << PluginAuthor( "Bernhard Beschow", "bbeschow@cs.tu-berlin.de" )
+            << PluginAuthor( "Roman Karlstetter", "roman.karlstetter@googlemail.com" );
 }
 
 QIcon ElevationProfileFloatItem::icon () const
@@ -132,16 +142,13 @@ QIcon ElevationProfileFloatItem::icon () const
 
 void ElevationProfileFloatItem::initialize ()
 {
-    connect( marbleModel()->elevationModel(), SIGNAL(updateAvailable()), SLOT(updateData()) );
-
-    m_routingModel = marbleModel()->routingManager()->routingModel();
-    connect( m_routingModel, SIGNAL(currentRouteChanged()), this, SLOT(updateData()) );
+    connect( marbleModel()->elevationModel(), SIGNAL(updateAvailable()), &m_routeDataSource, SLOT(requestUpdate()) );
+    connect( marbleModel()->routingManager()->routingModel(), SIGNAL(currentRouteChanged()), &m_routeDataSource, SLOT(requestUpdate()) );
+    connect( this, SIGNAL(dataUpdated()), SLOT(forceRepaint()) );
+    switchDataSource(&m_routeDataSource);
 
     m_fontHeight = QFontMetricsF( font() ).ascent() + 1;
-    m_leftGraphMargin = QFontMetricsF( font() ).width( "0000 m" ); // TODO make this dynamic according to actual need
-    connect( this, SIGNAL(dataUpdated()), SLOT(forceRepaint()) );
-
-    updateData();
+    m_leftGraphMargin = QFontMetricsF( font() ).width( "0000 m" ); /// TODO make this dynamic according to actual need
 
     m_isInitialized = true;
 }
@@ -177,13 +184,17 @@ void ElevationProfileFloatItem::setProjection( const ViewportParams *viewport )
 
 void ElevationProfileFloatItem::paintContent( QPainter *painter )
 {
+    // do not try to draw if not initialized
+    if(!isInitialized()) {
+        return;
+    }
     painter->save();
     painter->setRenderHint( QPainter::Antialiasing, true );
     painter->setFont( font() );
 
-    if ( ! ( m_routeAvailable && m_isInitialized && m_eleData.size() > 0 ) ) {
+    if ( ! ( m_activeDataSource->isDataAvailable() && m_eleData.size() > 0 ) ) {
         painter->setPen( QColor( Qt::black ) );
-        QString text = tr( "Create a route to view its elevation profile." );
+        QString text = tr( "Create a route or load a track from file to view its elevation profile." );
         painter->drawText( contentRect().toRect(), Qt::TextWordWrap | Qt::AlignCenter, text );
         painter->restore();
         return;
@@ -380,7 +391,7 @@ void ElevationProfileFloatItem::paintContent( QPainter *painter )
     painter->restore();
 }
 
-QDialog *ElevationProfileFloatItem::configDialog() //FIXME TODO Make a config dialog?
+QDialog *ElevationProfileFloatItem::configDialog() //FIXME TODO Make a config dialog? /// TODO what is this comment?
 {
     if ( !m_configDialog ) {
         // Initializing configuration dialog
@@ -400,24 +411,8 @@ QDialog *ElevationProfileFloatItem::configDialog() //FIXME TODO Make a config di
 
 void ElevationProfileFloatItem::contextMenuEvent( QWidget *w, QContextMenuEvent *e )
 {
-    if ( !m_contextMenu ) {
-        m_contextMenu = contextMenu();
-
-        foreach( QAction *action, m_contextMenu->actions() ) {
-            if ( action->text() == tr( "&Configure..." ) ) {
-                m_contextMenu->removeAction( action );
-                break;
-            }
-        }
-
-        QAction *toggleAction = m_contextMenu->addAction( tr("&Zoom to viewport"), this,
-                                SLOT(toggleZoomToViewport()) );
-        toggleAction->setCheckable( true );
-        toggleAction->setChecked( m_zoomToViewport );
-    }
-
     Q_ASSERT( m_contextMenu );
-    m_contextMenu->exec( w->mapToGlobal( e->pos() ) );
+    m_contextMenu->getMenu()->exec( w->mapToGlobal( e->pos() ) );
 }
 
 bool ElevationProfileFloatItem::eventFilter( QObject *object, QEvent *e )
@@ -509,29 +504,22 @@ bool ElevationProfileFloatItem::eventFilter( QObject *object, QEvent *e )
     return AbstractFloatItem::eventFilter(object,e);
 }
 
-void ElevationProfileFloatItem::updateData()
+void ElevationProfileFloatItem::handleDataUpdate(const GeoDataLineString &points, QList<QPointF> eleData)
 {
-    m_routeAvailable = m_routingModel && m_routingModel->rowCount() > 0;
-    m_points = m_routeAvailable ? m_routingModel->route().path() : GeoDataLineString();
-    m_eleData = calculateElevationData( m_points );
-
+    m_eleData = eleData;
+    m_points = points;
     calculateStatistics( m_eleData );
     if ( m_eleData.length() >= 2 ) {
         m_axisX.setRange( m_eleData.first().x(), m_eleData.last().x() );
         m_axisY.setRange( qMin( m_minElevation, qreal( 0.0 ) ), m_maxElevation );
     }
-    emit dataUpdated();
 
-    forceRepaint();
+    emit dataUpdated();
 }
 
 void ElevationProfileFloatItem::updateVisiblePoints()
 {
-    if ( ! ( m_routeAvailable && m_routingModel ) ) {
-        return;
-    }
-    GeoDataLineString points = m_routingModel->route().path();
-    if ( points.size() < 2 ) {
+    if ( ! m_activeDataSource->isDataAvailable() || m_points.size() < 2 ) {
         return;
     }
 
@@ -539,8 +527,8 @@ void ElevationProfileFloatItem::updateVisiblePoints()
     QList<QList<int> > routeSegments;
     QList<int> currentRouteSegment;
     for ( int i = 0; i < m_eleData.count(); i++ ) {
-        qreal lon = points[i].longitude(GeoDataCoordinates::Degree);
-        qreal lat = points[i].latitude (GeoDataCoordinates::Degree);
+        qreal lon = m_points[i].longitude(GeoDataCoordinates::Degree);
+        qreal lat = m_points[i].latitude (GeoDataCoordinates::Degree);
         qreal x = 0;
         qreal y = 0;
 
@@ -572,6 +560,7 @@ void ElevationProfileFloatItem::updateVisiblePoints()
         m_lastVisiblePoint = m_eleData.count() - 1;
     }
 
+    // include setting range to statistics and test for m_zoomToViewport in calculateStatistics();
     if ( m_zoomToViewport ) {
         calculateStatistics( m_eleData );
         m_axisX.setRange( m_eleData.value( m_firstVisiblePoint ).x(),
@@ -582,71 +571,90 @@ void ElevationProfileFloatItem::updateVisiblePoints()
     return;
 }
 
-QList<QPointF> ElevationProfileFloatItem::calculateElevationData( const GeoDataLineString &lineString ) const
-{
-    // TODO: Don't re-calculate the whole route if only a small part of it was changed
-    QList<QPointF> result;
-
-    GeoDataLineString path;
-    for ( int i = 0; i < lineString.size(); i++ ) {
-        path.append( lineString[i] );
-
-        const qreal lat = lineString[i].latitude ( GeoDataCoordinates::Degree );
-        const qreal lon = lineString[i].longitude( GeoDataCoordinates::Degree );
-        qreal ele = marbleModel()->elevationModel()->height( lon, lat );
-        if ( ele == invalidElevationData ) { // no data
-            ele = 0;
-        }
-
-        // result.append( QPointF( path.length( EARTH_RADIUS ), ele ) );
-        // The code below does the same as the line above, but is much faster - O(1) instead of O(n)
-        if ( i ) {
-            Q_ASSERT( !result.isEmpty() ); // The else part below appended something in the first run
-            qreal const distance = EARTH_RADIUS * distanceSphere( lineString[i-1], lineString[i] );
-            result.append( QPointF( result.last().x() + distance, ele ) );
-        } else {
-            result.append( QPointF( 0, ele ) );
-        }
-    }
-
-    return result;
-}
-
 void ElevationProfileFloatItem::calculateStatistics( const QList<QPointF> &eleData )
 {
-    const int averageOrder = 5;
+    // This basically calculates the important peaks of the moving average filtered elevation and
+    // calculates the elevation data based on this points.
+    // This is done by always placing the averaging window in a way that it starts or ends at an
+    // original data point. This should ensure that all minima/maxima of the moving average
+    // filtered data are covered.
+    const qreal averageDistance = 200.0;
 
-    qreal lastAverage = 0;
     m_maxElevation = 0.0;
     m_minElevation = invalidElevationData;
-    m_gain = 0;
-    m_loss = 0;
+    m_gain = 0.0;
+    m_loss = 0.0;
     const int start = m_zoomToViewport ? m_firstVisiblePoint : 0;
-    const int end = m_zoomToViewport ? m_lastVisiblePoint : eleData.size();
-    for ( int i = start; i < end; ++i ) {
-        m_maxElevation = qMax( m_maxElevation, eleData.value( i ).y() );
-        m_minElevation = qMin( m_minElevation, eleData.value( i ).y() );
+    const int end = m_zoomToViewport ? m_lastVisiblePoint + 1 : eleData.size();
 
-        // Low-pass filtering (moving average) of the elevation profile to calculate gain and loss values
-        // not always the best method, see for example
-        // http://www.ikg.uni-hannover.de/fileadmin/ikg/staff/thesis/finished/documents/StudArb_Schulze.pdf
-        // (German), chapter 4.2
+    if( start < end ) {
+        qreal lastX = eleData.value( start ).x();
+        qreal lastY = eleData.value( start ).y();
+        qreal nextX = eleData.value( start + 1 ).x();
+        qreal nextY = eleData.value( start + 1 ).y();
 
-        if ( i >= averageOrder ) {
-            qreal average = 0;
-            for( int j = 0; j < averageOrder; j++ ) {
-                average += eleData.value( i-j ).y();
+        m_maxElevation = qMax( lastY, nextY );
+        m_minElevation = qMin( lastY, nextY );
+
+        int averageStart = start;
+        if(lastX + averageDistance < eleData.value( start + 2 ).x())
+            ++averageStart;
+
+        for ( int index = start + 2; index <= end; ++index ) {
+            qreal indexX = index < end ? eleData.value( index ).x() : eleData.value( end - 1 ).x() + averageDistance;
+            qreal indexY = eleData.value( qMin( index, end - 1 ) ).y();
+            m_maxElevation = qMax( m_maxElevation, indexY );
+            m_minElevation = qMin( m_minElevation, indexY );
+
+            // Low-pass filtering (moving average) of the elevation profile to calculate gain and loss values
+            // not always the best method, see for example
+            // http://www.ikg.uni-hannover.de/fileadmin/ikg/staff/thesis/finished/documents/StudArb_Schulze.pdf
+            // (German), chapter 4.2
+
+            // Average over the part ending with the previous point.
+            // Do complete recalculation to avoid accumulation of floating point artifacts.
+            nextY = 0;
+            qreal averageX = nextX - averageDistance;
+            for( int averageIndex = averageStart; averageIndex < index; ++averageIndex ) {
+                qreal nextAverageX = eleData.value( averageIndex ).x();
+                qreal ratio = ( nextAverageX - averageX ) / averageDistance; // Weighting of original data based on covered distance
+                nextY += eleData.value( qMax( averageIndex - 1, 0 ) ).y() * ratio;
+                averageX = nextAverageX;
             }
-            average /= averageOrder;
-            if ( i == averageOrder ) {
-                lastAverage = average; // else the initial elevation would be counted as gain
+
+            while( averageStart < index ) {
+                // This handles the part ending with the previous point on the first iteration and the parts starting with averageStart afterwards
+                if ( nextY > lastY ) {
+                    m_gain += nextY - lastY;
+                } else {
+                    m_loss += lastY - nextY;
+                }
+
+                // Here we split the data into parts that average over the same data points
+                // As soon as the end of the averaging window reaches the current point we reached the end of the current part
+                lastX = nextX;
+                lastY = nextY;
+                nextX = eleData.value( averageStart ).x() + averageDistance;
+                if( nextX >= indexX ) {
+                    break;
+                }
+
+                // We don't need to recalculate the average completely, just remove the reached point
+                qreal ratio = (nextX - lastX) / averageDistance;
+                nextY += ( eleData.value( index - 1 ).y() - eleData.value( qMax( averageStart - 1, 0 ) ).y() ) * ratio;
+                ++averageStart;
             }
-            if ( average > lastAverage ) {
-                m_gain += average - lastAverage;
-            } else {
-                m_loss += lastAverage - average;
-            }
-            lastAverage = average;
+
+            // This is for the next part already, the end of the averaging window is at the following point
+            nextX = indexX;
+        }
+
+        // Also include the last point
+        nextY = eleData.value( end - 1 ).y();
+        if ( nextY > lastY ) {
+            m_gain += nextY - lastY;
+        } else {
+            m_loss += lastY - nextY;
         }
     }
 }
@@ -696,9 +704,27 @@ void ElevationProfileFloatItem::toggleZoomToViewport()
     emit settingsChanged( nameId() );
 }
 
+void ElevationProfileFloatItem::switchToRouteDataSource()
+{
+    switchDataSource(&m_routeDataSource);
+}
+
+void ElevationProfileFloatItem::switchToTrackDataSource(int index)
+{
+    m_trackDataSource.setSourceIndex(index);
+    switchDataSource(&m_trackDataSource);
+}
+
+void ElevationProfileFloatItem::switchDataSource(ElevationProfileDataSource* source)
+{
+    disconnect(m_activeDataSource, SIGNAL(dataUpdated(GeoDataLineString,QList<QPointF>)),0,0);
+    m_activeDataSource = source;
+    connect(m_activeDataSource, SIGNAL(dataUpdated(GeoDataLineString,QList<QPointF>)), this, SLOT(handleDataUpdate(GeoDataLineString,QList<QPointF>)));
+    m_activeDataSource->requestUpdate();
+}
 
 }
 
 Q_EXPORT_PLUGIN2(ElevationProfileFloatItem, Marble::ElevationProfileFloatItem)
 
-#include "ElevationProfileFloatItem.moc"
+#include "moc_ElevationProfileFloatItem.cpp"

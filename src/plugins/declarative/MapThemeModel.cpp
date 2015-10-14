@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MapThemeModel.h"
@@ -129,4 +129,4 @@ void MapThemeModel::handleChangedThemes()
     endResetModel();
 }
 
-#include "MapThemeModel.moc"
+#include "moc_MapThemeModel.cpp"

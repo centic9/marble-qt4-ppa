@@ -1,10 +1,11 @@
 #!/usr/bin/make -f
 
-include /usr/share/pkg-kde-tools/qt-kde-team/2/debian-qt-kde.mk
+include /usr/share/pkg-kde-tools/qt-kde-team/3/debian-qt-kde.mk
 libpkgs_gen_strict_local_shlibs = $(libpkgs_all_packages)
-include /usr/share/pkg-kde-tools/qt-kde-team/2/library-packages.mk
+include /usr/share/pkg-kde-tools/qt-kde-team/3/library-packages.mk
 
-marble_soversion := $(shell dh_listpackages | sed -n '/^libmarblewidget/{s/^libmarblewidget//p}')
+#marble_soversion := $(shell dh_listpackages | sed -n '/^libmarblewidget/{s/^libmarblewidget//p}')
+marble_soversion := 21
 marble_plugin_path = /usr/lib/kde4/plugins/marble/$(marble_soversion)
 
 vendor := $(shell dpkg-vendor --query Vendor)
@@ -17,8 +18,11 @@ endif
 
 override_dh_auto_configure:
 	$(overridden_command) -- -DWITH_DESIGNER_PLUGIN=ON \
-        -DMARBLE_PLUGIN_PATH=$(marble_plugin_path) \
-        $(conf_args)
+				 -DWITH_KF5=TRUE \
+				 $(conf_args)
+
+override_dh_auto_build:
+	$(overridden_command)
 
 override_dh_installdirs:
 	$(overridden_command) -plibmarblewidget$(marble_soversion) $(marble_plugin_path)

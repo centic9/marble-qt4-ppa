@@ -23,6 +23,7 @@
 
 
 #include "AbstractProjection.h"
+#include "AzimuthalProjection.h"
 
 namespace Marble
 {
@@ -33,7 +34,7 @@ class SphericalProjectionPrivate;
  * @short A class to implement the spherical projection used by the "Globe" view.
  */
 
-class SphericalProjection : public AbstractProjection
+class SphericalProjection : public AzimuthalProjection
 {
     // Not a QObject so far because we don't need to send signals.
  public:
@@ -45,16 +46,21 @@ class SphericalProjection : public AbstractProjection
 
     virtual ~SphericalProjection();
 
-    virtual bool repeatableX() const;
-    virtual qreal  maxValidLat() const;
-    virtual qreal  minValidLat() const;
+    /**
+     * @brief Returns the user-visible name of the projection.
+     */
+    QString name() const;
 
-    virtual bool traversablePoles()  const { return true; }
-    virtual bool traversableDateLine()  const { return true; }
+    /**
+     * @brief Returns a short user description of the projection
+     * that can be used in tooltips or dialogs.
+     */
+    QString description() const;
 
-    virtual SurfaceType surfaceType() const { return Azimuthal; }
-
-    virtual PreservationType preservationType() const { return NoPreservation; }
+    /**
+     * @brief Returns an icon for the projection.
+     */
+    QIcon icon() const;
 
     /**
      * @brief Get the screen coordinates corresponding to geographical coordinates in the map.
@@ -75,10 +81,6 @@ class SphericalProjection : public AbstractProjection
                             const QSizeF& size,
                             bool &globeHidesPoint ) const;
 
-    virtual bool screenCoordinates( const GeoDataLineString &lineString,
-                            const ViewportParams *viewport,
-                            QVector<QPolygonF*> &polygons ) const;
-
     using AbstractProjection::screenCoordinates;
 
     /**
@@ -94,13 +96,6 @@ class SphericalProjection : public AbstractProjection
                          const ViewportParams *params,
                          qreal& lon, qreal& lat,
                          GeoDataCoordinates::Unit unit = GeoDataCoordinates::Degree ) const;
-
-    GeoDataLatLonAltBox latLonAltBox( const QRect& screenRect,
-                                      const ViewportParams *viewport ) const;
-
-    bool  mapCoversViewport( const ViewportParams *viewport ) const;
-
-    virtual QPainterPath mapShape( const ViewportParams *viewport ) const;
 
  protected:
     SphericalProjection(SphericalProjectionPrivate *dd );

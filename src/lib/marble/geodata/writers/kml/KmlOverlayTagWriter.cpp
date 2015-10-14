@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "KmlOverlayTagWriter.h"
@@ -29,7 +29,6 @@ bool KmlOverlayTagWriter::writeMid( const Marble::GeoNode *node, GeoWriter &writ
 {
     GeoDataOverlay const *overlay = static_cast<const GeoDataOverlay*>(node);
 
-    writer.writeOptionalElement( kml::kmlTag_name, overlay->name() );
     QString const color = KmlColorStyleTagWriter::formatColor( overlay->color() );
     writer.writeOptionalElement( kml::kmlTag_color, color, "ffffffff" );
     QString const drawOrder = QString::number( overlay->drawOrder() );

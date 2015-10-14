@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010 Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2011 Thibaut Gridel <tgridel@free.fr>
 // Copyright 2012,2013 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 
@@ -64,14 +64,13 @@ void ReverseGeocodingTask::run()
     emit finished( this );
 }
 
-RoutingTask::RoutingTask( RoutingRunner *runner, RoutingRunnerManager *manager, const MarbleModel *model, const RouteRequest* routeRequest ) :
+RoutingTask::RoutingTask( RoutingRunner *runner, RoutingRunnerManager *manager, const RouteRequest* routeRequest ) :
     QObject(),
     m_runner( runner ),
     m_routeRequest( routeRequest )
 {
     connect( m_runner, SIGNAL(routeCalculated(GeoDataDocument*)),
              manager, SLOT(addRoutingResult(GeoDataDocument*)) );
-    m_runner->setModel( model );
 }
 
 void RoutingTask::run()
@@ -102,4 +101,4 @@ void ParsingTask::run()
 
 }
 
-#include "RunnerTask.moc"
+#include "moc_RunnerTask.cpp"

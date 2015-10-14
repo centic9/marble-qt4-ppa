@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012       Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012       Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "SearchWidget.h"
@@ -190,4 +190,4 @@ void SearchWidgetPrivate::centerMapOn( const QModelIndex &index )
 
 }
 
-#include "SearchWidget.moc"
+#include "moc_SearchWidget.cpp"

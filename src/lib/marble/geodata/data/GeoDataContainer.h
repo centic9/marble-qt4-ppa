@@ -101,8 +101,13 @@ class GEODATA_EXPORT GeoDataContainer : public GeoDataFeature
      * @brief returns the position of an item in the list
      */
     int childPosition( const GeoDataFeature *child) const;
-    
-    void insert( GeoDataFeature *other, int index );
+
+    /**
+     * @brief inserts @p feature at position @p index in the container
+     */
+    void insert( int index, GeoDataFeature *feature );
+
+    GEODATA_DEPRECATED( void insert( GeoDataFeature *other, int index ) );
 
     /**
     * @brief add an element

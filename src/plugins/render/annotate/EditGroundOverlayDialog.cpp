@@ -8,8 +8,18 @@
 // Copyright 2013      Adrian Draghici <draghici.adrian.b@gmail.com>
 //
 
+// Self
 #include "EditGroundOverlayDialog.h"
 #include "ui_EditGroundOverlayDialog.h"
+
+// Qt
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
+
+//Marble
+#include "FormattedTextWidget.h"
 
 namespace Marble
 {
@@ -20,6 +30,7 @@ class EditGroundOverlayDialog::Private : public Ui::UiEditGroundOverlayDialog
 public:
     GeoDataGroundOverlay *m_overlay;
     TextureLayer         *m_textureLayer;
+    FormattedTextWidget *m_formattedTextWidget;
 
     Private( GeoDataGroundOverlay *overlay, TextureLayer *textureLayer );
     ~Private();
@@ -28,24 +39,36 @@ public:
 };
 
 EditGroundOverlayDialog::Private::Private( GeoDataGroundOverlay *overlay, TextureLayer *textureLayer ) :
-    Ui::UiEditGroundOverlayDialog(), m_overlay( overlay ), m_textureLayer( textureLayer )
+    Ui::UiEditGroundOverlayDialog(),
+    m_overlay( overlay ),
+    m_textureLayer( textureLayer )
 {
-
+    // nothing to do
 }
 
 EditGroundOverlayDialog::Private::~Private()
 {
-
+    // nothing to do
 }
 
-EditGroundOverlayDialog::EditGroundOverlayDialog( GeoDataGroundOverlay *overlay, TextureLayer *textureLayer, QWidget *parent )
-    : QDialog( parent ), d( new Private( overlay, textureLayer ) )
+EditGroundOverlayDialog::EditGroundOverlayDialog( GeoDataGroundOverlay *overlay,
+                                                  TextureLayer *textureLayer,
+                                                  QWidget *parent ) :
+    QDialog( parent ),
+    d( new Private( overlay, textureLayer ) )
 {
     d->setupUi( this );
 
-    d->m_name->setText( overlay->name() );
-    d->m_link->setText( overlay->absoluteIconFile() );
-    d->m_description->setText( overlay->description() );
+    d->m_formattedTextWidget = new FormattedTextWidget( d->m_descriptionTab );
+
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget( d->m_formattedTextWidget );
+    d->m_descriptionTab->setLayout( layout );
+
+    d->m_header->setName( overlay->name() );
+    d->m_header->setIconLink( overlay->absoluteIconFile() );
+    d->m_header->setPositionVisible(false);
+    d->m_formattedTextWidget->setText( overlay->description() );
 
     d->m_north->setRange( -90, 90 );
     d->m_south->setRange( -90, 90 );
@@ -60,9 +83,7 @@ EditGroundOverlayDialog::EditGroundOverlayDialog( GeoDataGroundOverlay *overlay,
     d->m_east->setValue( latLonBox.east( GeoDataCoordinates::Degree ) );
     d->m_rotation->setValue( latLonBox.rotation( GeoDataCoordinates::Degree ) );
 
-    connect( d->buttonBox, SIGNAL(accepted()), this, SLOT(updateGroundOverlay()) );
-    connect( d->buttonBox, SIGNAL(accepted()), this, SLOT(setGroundOverlayUpdated()) );
-    connect( d->buttonBox, SIGNAL(accepted()), d->m_textureLayer, SLOT(reset()) );
+    connect( d->buttonBox->button( QDialogButtonBox::Ok ), SIGNAL(pressed()), this, SLOT(checkFields()) );
 }
 
 EditGroundOverlayDialog::~EditGroundOverlayDialog()
@@ -70,12 +91,11 @@ EditGroundOverlayDialog::~EditGroundOverlayDialog()
     delete d;
 }
 
-
 void EditGroundOverlayDialog::updateGroundOverlay()
 {
-    d->m_overlay->setName( d->m_name->text() );
-    d->m_overlay->setIconFile( d->m_link->text() );
-    d->m_overlay->setDescription( d->m_description->toPlainText() );
+    d->m_overlay->setName( d->m_header->name() );
+    d->m_overlay->setIconFile( d->m_header->iconLink() );
+    d->m_overlay->setDescription( d->m_formattedTextWidget->text() );
 
     d->m_overlay->latLonBox().setBoundaries( d->m_north->value(),
                                              d->m_south->value(),
@@ -91,6 +111,28 @@ void EditGroundOverlayDialog::setGroundOverlayUpdated()
     emit groundOverlayUpdated( d->m_overlay );
 }
 
+void EditGroundOverlayDialog::checkFields()
+{
+    if ( d->m_header->name().isEmpty() ) {
+        QMessageBox::warning( this,
+                              tr( "No name specified" ),
+                              tr( "Please specify a name for this ground overlay." ) );
+    } else if ( d->m_header->iconLink().isEmpty() ) {
+        QMessageBox::warning( this,
+                              tr( "No image specified" ),
+                              tr( "Please specify an image file." ) );
+    } else if( !QFileInfo( d->m_header->iconLink() ).exists() ) {
+        QMessageBox::warning( this,
+                              tr( "Invalid image path" ),
+                              tr( "Please specify a valid path for the image file." ) );
+    } else {
+        this->updateGroundOverlay();
+        this->setGroundOverlayUpdated();
+        d->m_textureLayer->reset();
+        accept();
+    }
 }
 
-#include "EditGroundOverlayDialog.moc"
+}
+
+#include "moc_EditGroundOverlayDialog.cpp"

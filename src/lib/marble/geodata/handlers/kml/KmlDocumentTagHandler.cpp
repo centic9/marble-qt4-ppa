@@ -43,7 +43,7 @@ GeoNode* KmlDocumentTagHandler::parse(GeoParser& parser) const
     if( !(parentItem.qualifiedName().first.isNull() && parentItem.qualifiedName().second.isNull()) ) {
         // this happens if there is a parent element to the Document tag. We can work around that and simply expect that
         // the new Document tag works like a Folder
-        if( parentItem.represents( kmlTag_Folder ) || parentItem.represents( kmlTag_Document ) ) {
+        if( parentItem.represents( kmlTag_Folder ) || parentItem.represents( kmlTag_Document ) || parentItem.represents( kmlTag_Create ) ) {
             GeoDataDocument *document = new GeoDataDocument;
             KmlObjectTagHandler::parseIdentifiers( parser, document );
             parentItem.nodeAs<GeoDataContainer>()->append( document );
@@ -53,6 +53,7 @@ GeoNode* KmlDocumentTagHandler::parse(GeoParser& parser) const
         else if ( parentItem.qualifiedName().first == kmlTag_kml)
         {
             GeoDataDocument* doc = geoDataDoc( parser );
+            KmlObjectTagHandler::parseIdentifiers( parser, doc );
             return doc;
         }
     }

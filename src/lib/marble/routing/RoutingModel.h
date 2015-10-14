@@ -5,18 +5,17 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_ROUTINGMODEL_H
 #define MARBLE_ROUTINGMODEL_H
 
 #include "marble_export.h"
-#include "GeoDataLineString.h"
-#include "Route.h"
-
 #include <QAbstractListModel>
-#include <QTime>
+#include <QIODevice>
+
+#include "GeoDataCoordinates.h"
 
 /**
   * A QAbstractItemModel that contains a list of routing instructions.
@@ -28,8 +27,8 @@ namespace Marble
 {
 
 class RoutingModelPrivate;
+class Route;
 class RouteRequest;
-class GeoDataDocument;
 class MarbleModel;
 class MARBLE_EXPORT RoutingModel : public QAbstractListModel
 {
@@ -99,10 +98,9 @@ public:
 
 public Q_SLOTS:
     /**
-      * Old data in the model is discarded, the parsed content of the provided document
-      * is used as the new model data and a model reset is done
+      * Old data in the model is discarded and a model reset is done
       */
-    bool setCurrentRoute( GeoDataDocument* document );
+    void setRoute( const Route &route );
 
     void updatePosition( GeoDataCoordinates, qreal );
 

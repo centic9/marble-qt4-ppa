@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "RoutingLayer.h"
@@ -13,12 +13,11 @@
 #include "GeoDataCoordinates.h"
 #include "GeoDataLineString.h"
 #include "GeoPainter.h"
-#include "GeoSceneDocument.h"
-#include "GeoSceneHead.h"
 #include "MarblePlacemarkModel.h"
 #include "MarbleWidget.h"
 #include "MarbleWidgetPopupMenu.h"
 #include "RoutingModel.h"
+#include "Route.h"
 #include "RouteRequest.h"
 #include "MarbleModel.h"
 #include "AlternativeRoutesModel.h"
@@ -88,8 +87,6 @@ public:
 
     QItemSelectionModel *m_selectionModel;
 
-    bool m_routeDirty;
-
     QSize m_pixmapSize;
 
     RouteRequest *const m_routeRequest;
@@ -142,9 +139,6 @@ public:
     /** Paint icons for trip points etc */
     inline void renderRequest( GeoPainter *painter );
 
-    /** The route is dirty (needs an update) and should be painted to indicate that */
-    void setRouteDirty( bool dirty );
-
     /** Insert via points or emit position signal, if appropriate */
     inline bool handleMouseButtonRelease( QMouseEvent *e );
 
@@ -171,7 +165,9 @@ RoutingLayerPrivate::RoutingLayerPrivate( RoutingLayer *parent, MarbleWidget *wi
         q( parent ), m_movingIndex( -1 ), m_marbleWidget( widget ),
         m_targetPixmap( ":/data/bitmaps/routing_pick.png" ), m_dragStopOverRightIndex( -1 ),
         m_routingModel( widget->model()->routingManager()->routingModel() ),
-        m_placemarkModel( 0 ), m_selectionModel( 0 ), m_routeDirty( false ), m_pixmapSize( 22, 22 ),
+        m_placemarkModel( 0 ),
+        m_selectionModel( 0 ),
+        m_pixmapSize( 22, 22 ),
         m_routeRequest( widget->model()->routingManager()->routeRequest() ),
         m_activeMenuIndex( -1 ),
         m_alternativeRoutesModel( widget->model()->routingManager()->alternativeRoutesModel() ),
@@ -258,7 +254,7 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
 
     QPen standardRoutePen( m_marbleWidget->model()->routingManager()->routeColorStandard() );
     standardRoutePen.setWidth( 5 );
-    if ( m_routeDirty ) {
+    if ( m_marbleWidget->model()->routingManager()->state() == RoutingManager::Downloading ) {
         standardRoutePen.setStyle( Qt::DotLine );
     }
     painter->setPen( standardRoutePen );
@@ -316,6 +312,7 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
         return;
     }
 
+    Q_ASSERT( m_routingModel->rowCount() == m_routingModel->route().size() );
     m_instructionRegions.clear();
     for ( int i = 0; i < m_routingModel->rowCount(); ++i ) {
         QModelIndex index = m_routingModel->index( i, 0 );
@@ -323,39 +320,35 @@ void RoutingLayerPrivate::renderRoute( GeoPainter *painter )
 
         painter->setBrush( QBrush( m_marbleWidget->model()->routingManager()->routeColorAlternative() ) );
         if ( m_selectionModel && m_selectionModel->selection().contains( index ) ) {
-            for ( int j=0; j<m_routingModel->route().size(); ++j ) {
-                const RouteSegment & segment = m_routingModel->route().at( j );
-                if ( segment.maneuver().position() == pos ) {
-                    GeoDataLineString currentRoutePoints = segment.path();
+            const RouteSegment &segment = m_routingModel->route().at( i );
+            const GeoDataLineString currentRoutePoints = segment.path();
 
-                    QPen activeRouteSegmentPen( m_marbleWidget->model()->routingManager()->routeColorHighlighted() );
+            QPen activeRouteSegmentPen( m_marbleWidget->model()->routingManager()->routeColorHighlighted() );
 
-                    activeRouteSegmentPen.setWidth( 6 );
-                    if ( m_routeDirty ) {
-                        activeRouteSegmentPen.setStyle( Qt::DotLine );
-                    }
-                    painter->setPen( activeRouteSegmentPen );
-                    painter->drawPolyline( currentRoutePoints );
-
-                    painter->setPen( standardRoutePen );
-                    painter->setBrush( QBrush( alphaAdjusted( Oxygen::hotOrange4, 200 ) ) );
-                }
+            activeRouteSegmentPen.setWidth( 6 );
+            if ( m_marbleWidget->model()->routingManager()->state() == RoutingManager::Downloading ) {
+                activeRouteSegmentPen.setStyle( Qt::DotLine );
             }
+            painter->setPen( activeRouteSegmentPen );
+            painter->drawPolyline( currentRoutePoints );
+
+            painter->setPen( standardRoutePen );
+            painter->setBrush( QBrush( alphaAdjusted( Oxygen::hotOrange4, 200 ) ) );
         }
+        painter->drawEllipse( pos, 6, 6 );
 
         if ( m_isInteractive ) {
             QRegion region = painter->regionFromEllipse( pos, 12, 12 );
             m_instructionRegions.push_front( ModelRegion( index, region ) );
         }
-        painter->drawEllipse( pos, 6, 6 );
+    }
 
-        if( !m_routingModel->deviatedFromRoute() ) {
-            GeoDataCoordinates location = m_routingModel->route().currentSegment().nextRouteSegment().maneuver().position();
-            QString nextInstruction = m_routingModel->route().currentSegment().nextRouteSegment().maneuver().instructionText();
-            if( !nextInstruction.isEmpty() ) {
-                painter->setBrush( QBrush( Oxygen::hotOrange4 ) );
-                painter->drawEllipse( location, 6, 6 );
-            }
+    if( !m_routingModel->deviatedFromRoute() ) {
+        GeoDataCoordinates location = m_routingModel->route().currentSegment().nextRouteSegment().maneuver().position();
+        QString nextInstruction = m_routingModel->route().currentSegment().nextRouteSegment().maneuver().instructionText();
+        if( !nextInstruction.isEmpty() ) {
+            painter->setBrush( QBrush( Oxygen::hotOrange4 ) );
+            painter->drawEllipse( location, 6, 6 );
         }
     }
 }
@@ -384,8 +377,8 @@ void RoutingLayerPrivate::renderRequest( GeoPainter *painter )
 {
     m_regions.clear();
     for ( int i = 0; i < m_routeRequest->size(); ++i ) {
-        GeoDataCoordinates pos = m_routeRequest->at( i );
-        if ( pos.longitude() != 0.0 && pos.latitude() != 0.0 ) {
+        const GeoDataCoordinates pos = m_routeRequest->at( i );
+        if ( pos.isValid() ) {
             QPixmap pixmap = m_routeRequest->pixmap( i );
             painter->drawPixmap( pos, pixmap );
             QRegion region = painter->regionFromRect( pos, pixmap.width(), pixmap.height() );
@@ -620,7 +613,7 @@ RoutingLayer::RoutingLayer( MarbleWidget *widget, QWidget *parent ) :
         QObject( parent ), d( new RoutingLayerPrivate( this, widget ) )
 {
     connect( widget->model()->routingManager(), SIGNAL(stateChanged(RoutingManager::State)),
-             this, SLOT(updateRouteState(RoutingManager::State)) );
+             this, SLOT(updateRouteState()) );
     connect( widget, SIGNAL(visibleLatLonAltBoxChanged(GeoDataLatLonAltBox)),
             this, SLOT(setViewportChanged()) );
     connect( widget->model()->routingManager()->alternativeRoutesModel(), SIGNAL(currentRouteChanged(GeoDataDocument*)),
@@ -680,7 +673,7 @@ bool RoutingLayer::render( GeoPainter *painter, ViewportParams *viewport,
 
 RenderState RoutingLayer::renderState() const
 {
-    return RenderState( "Routing", d->m_routeDirty ? WaitingForUpdate : Complete );
+    return RenderState( "Routing", d->m_marbleWidget->model()->routingManager()->state() == RoutingManager::Downloading ? WaitingForUpdate : Complete );
 }
 
 bool RoutingLayer::eventFilter( QObject *obj, QEvent *event )
@@ -720,23 +713,12 @@ void RoutingLayer::synchronizeWith( QItemSelectionModel *selection )
     d->m_selectionModel = selection;
 }
 
-void RoutingLayerPrivate::setRouteDirty( bool dirty )
-{
-    m_routeDirty = dirty;
-
-    /** @todo: The full repaint can be avoided. The route however has changed
-      * and the exact bounding box needs to be recalculated before doing
-      * a partly repaint, otherwise we might end up repainting only parts of the route
-      */
-    emit q->repaintNeeded();
-}
-
 void RoutingLayer::removeViaPoint()
 {
     if ( d->m_activeMenuIndex >= 0 ) {
         d->m_routeRequest->remove( d->m_activeMenuIndex );
         d->m_activeMenuIndex = -1;
-        d->setRouteDirty( true );
+        emit repaintNeeded();
         d->m_marbleWidget->model()->routingManager()->retrieveRoute();
     }
 }
@@ -767,10 +749,10 @@ void RoutingLayer::exportRoute()
     }
 }
 
-void RoutingLayer::updateRouteState( RoutingManager::State state )
+void RoutingLayer::updateRouteState()
 {
-    d->setRouteDirty( state == RoutingManager::Downloading );
     setViewportChanged();
+    emit repaintNeeded();
 }
 
 void RoutingLayer::setViewportChanged()
@@ -798,4 +780,4 @@ bool RoutingLayer::isInteractive() const
 
 } // namespace Marble
 
-#include "RoutingLayer.moc"
+#include "moc_RoutingLayer.cpp"

@@ -1,2 +1,2 @@
-usr/lib/libastro.so.1
-usr/lib/libastro.so.0.*
+usr/lib/*/libastro.so.0.*
+usr/lib/*/libastro.so.1

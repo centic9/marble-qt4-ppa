@@ -12,6 +12,7 @@
 
 #include "ControlView.h"
 
+#include <QCloseEvent>
 #include <QLayout>
 #include <QSplitter>
 #include <QStringListModel>
@@ -34,6 +35,12 @@
 #include <QDockWidget>
 #include <QShortcut>
 #include <QMenu>
+#include <QToolBar>
+
+#ifdef MARBLE_DBUS
+#include <QDBusConnection>
+#include "MarbleDBusInterface.h"
+#endif
 
 #include "GeoSceneDocument.h"
 #include "GeoSceneHead.h"
@@ -47,6 +54,7 @@
 #include "PrintOptionsWidget.h"
 #include "ViewportParams.h"
 #include "ViewParams.h"
+#include "routing/Route.h"
 #include "routing/RoutingManager.h"
 #include "routing/RoutingModel.h"
 #include "routing/RouteRequest.h"
@@ -64,6 +72,7 @@
 #include "cloudsync/RouteSyncManager.h"
 #include "cloudsync/ConflictDialog.h"
 #include "cloudsync/MergeItem.h"
+#include "RenderPlugin.h"
 
 namespace Marble
 {
@@ -76,7 +85,9 @@ ControlView::ControlView( QWidget *parent )
      m_conflictDialog( 0 ),
      m_togglePanelVisibilityAction( 0 ),
      m_isPanelVisible( true ),
-     m_tourWidget( 0 )
+     m_tourWidget( 0 ),
+     m_annotationDock( 0 ),
+     m_annotationPlugin( 0 )
 {
     setWindowTitle( tr( "Marble - Virtual Globe" ) );
 
@@ -85,6 +96,17 @@ ControlView::ControlView( QWidget *parent )
     m_marbleWidget = new MarbleWidget( this );
     m_marbleWidget->setSizePolicy( QSizePolicy( QSizePolicy::MinimumExpanding,
                                                 QSizePolicy::MinimumExpanding ) );
+#ifdef MARBLE_DBUS
+    new MarbleDBusInterface( m_marbleWidget );
+    QDBusConnection::sessionBus().registerObject( "/Marble", m_marbleWidget );
+    if (!QDBusConnection::sessionBus().registerService( "org.kde.marble" )) {
+        QString const urlWithPid = QString("org.kde.marble-%1").arg( QCoreApplication::applicationPid() );
+        if ( !QDBusConnection::sessionBus().registerService( urlWithPid ) ) {
+            mDebug() << "Failed to register service org.kde.marble and " << urlWithPid << " with the DBus session bus.";
+        }
+    }
+#endif
+
 
     QVBoxLayout* layout = new QVBoxLayout;
     layout->addWidget( m_marbleWidget );
@@ -108,7 +130,7 @@ ControlView::~ControlView()
 
 QString ControlView::applicationVersion()
 {
-    return "1.9.2 (stable release)";
+    return "1.11.80 (1.12 Beta 1)";
 }
 
 MapThemeManager *ControlView::mapThemeManager()
@@ -248,6 +270,38 @@ void ControlView::openGeoUri( const QString& geoUriString )
             m_marbleWidget->setDistance( uriParser.coordinates().altitude() * METER2KM );
         }
     }
+}
+
+QActionGroup *ControlView::createViewSizeActionGroup( QObject* parent )
+{
+    QActionGroup* actionGroup = new QActionGroup( parent );
+
+    QAction *defaultAction = new QAction( tr( "Default (Resizable)" ), parent );
+    defaultAction->setCheckable( true );
+    defaultAction->setChecked( true );
+    actionGroup->addAction(defaultAction);
+
+    QAction *separator = new QAction( parent );
+    separator->setSeparator( true );
+    actionGroup->addAction(separator);
+
+    addViewSizeAction( actionGroup, tr("NTSC (%1x%2)"), 720, 486 );
+    addViewSizeAction( actionGroup, tr("PAL (%1x%2)"), 720, 576 );
+    addViewSizeAction( actionGroup, tr("NTSC 16:9 (%1x%2)"), 864, 486 );
+    addViewSizeAction( actionGroup, tr("PAL 16:9 (%1x%2)"), 1024, 576 );
+    // xgettext:no-c-format
+    addViewSizeAction( actionGroup, tr("DVD (%1x%2p)"), 852, 480 );
+    // xgettext:no-c-format
+    addViewSizeAction( actionGroup, tr("HD (%1x%2p)"), 1280, 720 );
+    // xgettext:no-c-format
+    addViewSizeAction( actionGroup, tr("Full HD (%1x%2p)"), 1920, 1080 );
+    addViewSizeAction( actionGroup, tr("Digital Cinema (%1x%2)"), 2048, 1536 );
+    /** FIXME: Needs testing, worked with errors.
+    addViewSizeAction(actionGroup, "4K UHD (%1x%2)", 3840, 2160);
+    addViewSizeAction(actionGroup, "4K (%1x%2)", 4096, 3072);
+    */
+
+    return actionGroup;
 }
 
 void ControlView::printPixmap( QPrinter * printer, const QPixmap& pixmap  )
@@ -410,7 +464,8 @@ void ControlView::printDrivingInstructions( QTextDocument &document, QString &te
         text += QString::number( i+1 );
         text += "</td><td align=\"right\" valign=\"middle\">";
 
-        text += QString::number( accumulator.length( EARTH_RADIUS ) * METER2KM, 'f', 1 );
+        qreal planetRadius = marbleModel()->planet()->radius();
+        text += QString::number( accumulator.length( planetRadius ) * METER2KM, 'f', 1 );
         /** @todo: support localization */
         text += " km</td><td valign=\"middle\">";
 
@@ -436,6 +491,15 @@ void ControlView::printDrivingInstructionsAdvice( QTextDocument &, QString &text
     text += ' ' + tr( "Road construction, weather and other unforeseen variables can result in this suggested route not to be the most expedient or safest route to your destination." );
     text += ' ' + tr( "Please use common sense while navigating." ) + "</p>";
 #endif
+}
+
+void ControlView::addViewSizeAction( QActionGroup* actionGroup, const QString &nameTemplate, int width, int height )
+{
+    QString const name = nameTemplate.arg( width ).arg( height );
+    QAction *action = new QAction( name, actionGroup->parent() );
+    action->setCheckable( true );
+    action->setData( QSize( width, height ) );
+    actionGroup->addAction( action );
 }
 
 
@@ -617,12 +681,40 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     mainWindow->tabifyDockWidget( mapViewDock, legendDock );
     mapViewDock->raise();
 
+    m_annotationDock = new QDockWidget( QObject::tr( "Edit Maps" ) );
+    m_annotationDock->setObjectName( "annotateDock" );
+    m_annotationDock->hide();
+    m_annotationDock->toggleViewAction()->setVisible( false );
+
+    QList<RenderPlugin *> renderPluginList = marbleWidget()->renderPlugins();
+    QList<RenderPlugin *>::const_iterator i = renderPluginList.constBegin();
+    QList<RenderPlugin *>::const_iterator const end = renderPluginList.constEnd();
+
+    for (; i != end; ++i ) {
+        if( (*i)->nameId() == "annotation" ) {
+            m_annotationPlugin = *i;
+            QObject::connect(m_annotationPlugin, SIGNAL(enabledChanged(bool)),
+                             this, SLOT(updateAnnotationDockVisibility()));
+            QObject::connect(m_annotationPlugin, SIGNAL(visibilityChanged(bool,QString)),
+                             this, SLOT(updateAnnotationDockVisibility()));
+            QObject::connect(m_annotationPlugin, SIGNAL(actionGroupsChanged()),
+                             this, SLOT(updateAnnotationDock()));
+            updateAnnotationDock();
+            updateAnnotationDockVisibility();
+            mainWindow->addDockWidget( Qt::LeftDockWidgetArea, m_annotationDock );
+        }
+    }
+
+    mainWindow->tabifyDockWidget( tourDock, m_annotationDock );
+    mainWindow->tabifyDockWidget( m_annotationDock, fileViewDock );
+
     QList<QAction*> panelActions;
     panelActions << routingDock->toggleViewAction();
     panelActions << locationDock->toggleViewAction();
     panelActions << m_searchDock->toggleViewAction();
     panelActions << mapViewDock->toggleViewAction();
     panelActions << fileViewDock->toggleViewAction();
+    panelActions << m_annotationDock->toggleViewAction();
     panelActions << legendDock->toggleViewAction();
     panelActions << tourDock->toggleViewAction();
 
@@ -632,6 +724,7 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     m_panelActions << m_searchDock->toggleViewAction();
     m_panelActions << mapViewDock->toggleViewAction();
     m_panelActions << fileViewDock->toggleViewAction();
+    m_panelActions << m_annotationDock->toggleViewAction();
     m_panelActions << legendDock->toggleViewAction();
     m_panelActions << tourDock->toggleViewAction();
     foreach( QAction* action, m_panelActions ) {
@@ -711,6 +804,47 @@ void ControlView::showConflictDialog( MergeItem *item )
     m_conflictDialog->open();
 }
 
+void ControlView::updateAnnotationDockVisibility()
+{
+    if( m_annotationPlugin != 0 && m_annotationDock != 0 ) {
+        if( m_annotationPlugin->visible() && m_annotationPlugin->enabled() ) {
+            m_annotationDock->toggleViewAction()->setVisible( true );
+        } else {
+            m_annotationDock->setVisible( false );
+            m_annotationDock->toggleViewAction()->setVisible( false );
+        }
+    }
+}
+
+void ControlView::updateAnnotationDock()
+{
+    const QList<QActionGroup*> *tmp_actionGroups = m_annotationPlugin->actionGroups();
+    QWidget *widget = new QWidget( m_annotationDock );
+    QVBoxLayout *layout = new QVBoxLayout;
+    QToolBar *firstToolbar = new QToolBar( widget );
+    QToolBar *secondToolbar = new QToolBar( widget );
+    QSpacerItem *spacer = new QSpacerItem( 0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    if( !tmp_actionGroups->isEmpty() ) {
+        bool firstToolbarFilled = false;
+        foreach( QAction *action, tmp_actionGroups->first()->actions() ) {
+            if( action->objectName() == "toolbarSeparator" ) {
+                firstToolbarFilled = true;
+            } else {
+                if( !firstToolbarFilled ) {
+                    firstToolbar->addAction( action );
+                } else {
+                    secondToolbar->addAction( action );
+                }
+            }
+        }
+    }
+    layout->addWidget( firstToolbar );
+    layout->addWidget( secondToolbar );
+    layout->addSpacerItem( spacer );
+    widget->setLayout( layout );
+    m_annotationDock->setWidget( widget );
+}
+
 void ControlView::togglePanelVisibility()
 {
     Q_ASSERT( m_panelVisibility.size() == m_panelActions.size() );
@@ -746,12 +880,29 @@ void ControlView::handleTourLinkClicked(const QString& path)
 {
     QString tourPath = MarbleDirs::path( path );
     if ( !tourPath.isEmpty() ) {
-        if ( m_tourWidget->openTour( tourPath ) ) {
-            m_tourWidget->togglePlaying();
-        }
+        openTour( tourPath );
+    }
+}
+
+void ControlView::openTour( const QString &filename )
+{
+    if ( m_tourWidget->openTour( filename ) ) {
+        m_tourWidget->startPlaying();
+    }
+}
+
+void ControlView::closeEvent( QCloseEvent *event )
+{
+    QCloseEvent newEvent;
+    QCoreApplication::sendEvent( m_tourWidget, &newEvent );
+
+    if ( newEvent.isAccepted() ) {
+        event->accept();
+    } else {
+        event->ignore();
     }
 }
 
 }
 
-#include "ControlView.moc"
+#include "moc_ControlView.cpp"

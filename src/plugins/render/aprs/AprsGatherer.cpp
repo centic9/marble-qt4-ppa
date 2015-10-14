@@ -170,8 +170,8 @@ AprsGatherer::run()
 
             qreal longitude =
                 calculateLongitude( QString ( mic_e_matcher.cap( 4 ) ),
-                                    m_dstCallLongitudeOffset[dstCall[5]],
-                                    m_dstCallSouthEast[dstCall[6]] );
+                                    m_dstCallLongitudeOffset[dstCall[4]],
+                                    m_dstCallSouthEast[dstCall[5]] );
 
 //           mDebug() << "  MIC-E: " << line.toLocal8Bit().data();
 //           mDebug() << "    lat: " << latitude;
@@ -232,11 +232,6 @@ AprsGatherer::addObject( const QString &callSign,
     }
 }
 
-void AprsGatherer::initMicETables()
-{
-#include "AprsGatherer_mic_e.h"
-}
-
 qreal AprsGatherer::calculateLongitude( const QString &threeBytes, int offset,
                                          bool isEast )
 {
@@ -287,4 +282,4 @@ AprsGatherer::sleepFor(int seconds)
     sleep(seconds);
 }
 
-#include "AprsGatherer.moc"
+#include "moc_AprsGatherer.cpp"

@@ -1,3 +1,138 @@
+marble (4:15.08.2-0ubuntu1) wily; urgency=medium
+
+  * Vivid backport
+  * New upstream release
+
+ -- Scarlett Clark <sgclark@kubuntu.org>  Wed, 14 Oct 2015 13:01:02 +0100
+
+marble (4:15.08.1-0ubuntu1) wily; urgency=medium
+
+  [ Jonathan Riddell ]
+  * Add missing marble-qt.install file
+  * Add upstream_find-quazip.diff to fix finding library
+
+  [ Clive Johnston ]
+  * New upstream release (15.08.1)
+
+ -- Clive Johnston <clivejo@aol.com>  Tue, 22 Sep 2015 17:43:28 +0100
+
+marble (4:15.08.0-0ubuntu5) wily; urgency=medium
+
+  * Add libqt5extserialport-dev build-depends
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 04 Sep 2015 12:17:52 +0100
+
+marble (4:15.08.0-0ubuntu4) wily; urgency=medium
+
+  * Renable patches previously disabled in kf5 port
+    + fix_qmake_fallback.diff
+    + do_not_install_private_headers
+    + kubuntu_disable-MarbleRunnerManagerTest.diff
+
+ -- Harald Sitter <sitter@kde.org>  Mon, 31 Aug 2015 14:33:06 +0200
+
+marble (4:15.08.0-0ubuntu3) wily; urgency=medium
+
+  * Update symbols
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 21 Aug 2015 14:23:43 +0100
+
+marble (4:15.08.0-0ubuntu2) wily; urgency=medium
+
+  * Fix .install file
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 21 Aug 2015 13:28:56 +0100
+
+marble (4:15.08.0-0ubuntu1) wily; urgency=medium
+
+  [ José Manuel Santamaría Lema ]
+  * Update symbols: mark as optional symbols gone after building with
+    GCC 5
+
+  [ Jonathan Riddell ]
+  * New upstream release
+  * Port to frameworks 5
+  * new upstream beta release
+
+  [ Philip Muškovac ]
+  * Add upstream_fix-vtable-linking.diff to fix vtable linking
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 13 Aug 2015 11:44:25 +0100
+
+marble (4:15.04.2-0ubuntu2) wily; urgency=medium
+
+  * Update symbol file for armhf
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Mon, 22 Jun 2015 15:21:44 +0200
+
+marble (4:15.04.2-0ubuntu1) wily; urgency=medium
+
+  [ Jonathan Riddell ]
+  * Make kubuntu_disable-MarbleRunnerManagerTest.diff apply with policy
+
+  [ Scarlett Clark ]
+  * New upstream release
+  * wrap-and-sort 
+
+  [ Jonathan Riddell ]
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Tue, 09 Jun 2015 22:33:11 +0200
+
+marble (4:14.12.3-0ubuntu2) vivid; urgency=medium
+
+  * Disable running the MarbleRunnerManagerTest test. Upstream says
+    it is flakey and to be ignored.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 16 Mar 2015 18:02:12 +0100
+
+marble (4:14.12.3-0ubuntu1) vivid; urgency=medium
+
+  * New upstream release
+
+ -- Scarlett Clark <sgclark@kubuntu.org>  Fri, 13 Mar 2015 13:42:25 -0700
+
+marble (4:14.12.2-0ubuntu1) vivid; urgency=medium
+
+  * New upstream release
+  * Remove unstable from watch file, uscan fails with 
+    remote site does not even have current version
+  * batchpatch new symbols.
+
+ -- Scarlett Clark <sgclark@kubuntu.org>  Tue, 10 Feb 2015 08:12:41 -0800
+
+marble (4:14.12.0-0ubuntu2) vivid; urgency=medium
+
+  * Remove .acc files, there are no abi tars and we already have .symbols files
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 18 Dec 2014 14:08:05 +0100
+
+marble (4:14.12.0-0ubuntu1) vivid; urgency=medium
+
+  * New upstream release
+  * Remove kdelibs5-dev depend version as there was not a new release.
+
+ -- Scarlett Clark <sgclark@kubuntu.org>  Mon, 15 Dec 2014 15:59:58 +0100
+
+marble (4:14.11.97-0ubuntu2) vivid; urgency=medium
+
+  * Update symbols file
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Tue, 09 Dec 2014 17:39:18 +0100
+
+marble (4:14.11.97-0ubuntu1) vivid; urgency=medium
+
+  * New upstream RC release
+  * Merge with Debian, remaining changes:
+   - not-installed
+   - build-dep on libwlocate-dev
+   - marble-plugins depends on libwlocate0, runtime dependency
+   - fix syntax in debian/copyright
+  * libmarblewidget19 now libmarblewidget20
+  * PPA build
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 03 Dec 2014 17:51:20 +0100
+
 marble (4:4.14.2-1) unstable; urgency=medium
 
   * New upstream release (4.14.2).
@@ -49,6 +184,105 @@ marble (4:4.13.3-1) unstable; urgency=medium
 
  -- Maximiliano Curia <maxy@debian.org>  Mon, 28 Jul 2014 15:42:19 +0200
 
+marble (4:4.14.2-0ubuntu1) vivid; urgency=medium
+
+  * New upstream release
+  * Batchpatch new symbols.
+  * Fix empty short license for marble.nsi
+
+ -- Scarlett Clark <sgclark@kubuntu.org>  Fri, 10 Oct 2014 06:28:53 -0700
+
+marble (4:4.14.1-0ubuntu2) utopic; urgency=medium
+
+  * Build-depend on libquazip-dev rather than libquazip0-dev.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 16 Oct 2014 13:28:50 +0100
+
+marble (4:4.14.1-0ubuntu1) utopic; urgency=medium
+
+  * New upstream release
+
+ -- Scarlett Clark <scarlett@scarlettgatelyclark.com>  Mon, 22 Sep 2014 17:49:45 +0200
+
+marble (4:4.14.0-0ubuntu1) utopic; urgency=medium
+
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 20 Aug 2014 13:35:00 +0200
+
+marble (4:4.13.97-0ubuntu2) utopic; urgency=medium
+
+  * Update .symbols file for armhf 
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Mon, 04 Aug 2014 18:17:17 +0200
+
+marble (4:4.13.97-0ubuntu1) utopic; urgency=medium
+
+  * New upstream beta release RC
+
+ -- Scarlett Clark <scarlett@scarlettgatelyclark.com>  Fri, 01 Aug 2014 17:24:58 +0200
+
+marble (4:4.13.95-0ubuntu2) utopic; urgency=medium
+
+  * update symbols for new gcc
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 31 Jul 2014 17:44:35 +0200
+
+marble (4:4.13.95-0ubuntu1) utopic; urgency=medium
+
+  * New upstream beta release
+
+ -- Scarlett Clark <scarlett@scarlettgatelyclark.com>  Wed, 30 Jul 2014 18:50:32 +0200
+
+marble (4:4.13.90-0ubuntu3) utopic; urgency=medium
+
+  * Fix another two symbols on armhf.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 28 Jul 2014 16:07:46 +0100
+
+marble (4:4.13.90-0ubuntu2) utopic; urgency=medium
+
+  * Put the old contents of debian/libmarblewidget18.symbols back as
+    debian/libmarblewidget19.symbols, and just update it for the changes in
+    libmarblewidget19 rather than rewriting it from scratch.  This way we
+    keep the previous changes to handle qreal differences on armhf.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 28 Jul 2014 15:34:34 +0100
+
+marble (4:4.13.90-0ubuntu1) utopic; urgency=medium
+
+  [ Jonathan Riddell ]
+  * Switch to libmarblewidget19 for new soversion
+
+  [ Scarlett Clark ]
+  * New upstream beta release
+  * Update: do_not_install_private_headers. 
+
+ -- Scarlett Clark <scarlett@scarlettgatelyclark.com>  Thu, 24 Jul 2014 23:38:32 +0200
+
+marble (4:4.13.2-0ubuntu2) utopic; urgency=medium
+
+  * Update debian/libmarblewidget18.symbols for armhf specific symbol changes
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 23 Jun 2014 22:46:57 -0400
+
+marble (4:4.13.2-0ubuntu1) utopic; urgency=medium
+
+  * Remove upstream_tests-fix-build-when-qreal-double.patch now upstream
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 18 Jun 2014 12:36:33 +0100
+
+marble (4:4.13.1-2ubuntu1) utopic; urgency=medium
+
+  * Merge with debian, remaining changes
+    - libquazip-dev -> libquazip0-dev
+    - Keep Breaks/Replaces
+    - Add libwlocate-dev to build deps
+    - Keep our symbols files
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Thu, 12 Jun 2014 19:15:58 +0200
+
 marble (4:4.13.1-2) unstable; urgency=medium
 
   [ Maximiliano Curia ]
@@ -77,6 +311,45 @@ marble (4:4.13.1-1) experimental; urgency=medium
 
  -- Maximiliano Curia <maxy@debian.org>  Mon, 26 May 2014 11:25:02 +0200
 
+marble (4:4.13.0-0ubuntu2) UNRELEASED; urgency=medium
+
+  * Split marble-mobile into an own package LP: #1312104
+    + Dependency/Suggests retained from marble package (at least the deps
+      actually are confirmed as required)
+
+ -- Harald Sitter <apachelogger@kubuntu.org>  Fri, 25 Apr 2014 09:39:29 +0200
+
+marble (4:4.13.0-0ubuntu1) trusty; urgency=medium
+
+  * New upstream KDE Software Compilation release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 10 Apr 2014 22:23:47 +0100
+
+marble (4:4.12.97-0ubuntu1) trusty; urgency=medium
+
+  * New upstream release candidate
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Wed, 02 Apr 2014 11:51:24 +0200
+
+marble (4:4.12.95-0ubuntu1) trusty; urgency=medium
+
+  * New upstream beta release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Sun, 23 Mar 2014 12:50:41 +0100
+
+marble (4:4.12.90-0ubuntu1) trusty; urgency=medium
+
+  [ Philip Muškovac ]
+  * Rename libmarblewidget17 to libmarblewidget18 for new ABI and refresh
+    install and symbol files
+  * Add new packages: libastro1 and libastro-dev
+  * Add new files to marble.install
+
+  [ Jonathan Riddell ]
+  * New upstream beta release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 19 Mar 2014 11:56:59 +0000
+
 marble (4:4.12.4-2) unstable; urgency=medium
 
   * Upload to unstable
@@ -96,6 +369,12 @@ marble (4:4.12.3-1) experimental; urgency=medium
 
  -- Maximiliano Curia <maxy@debian.org>  Tue, 04 Mar 2014 00:06:02 +0100
 
+marble (4:4.12.3-0ubuntu1) trusty; urgency=medium
+
+  * New upstream bugfix release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Tue, 04 Mar 2014 21:12:07 +0100
+
 marble (4:4.12.2-1) experimental; urgency=medium
 
   * New upstream release.
@@ -105,6 +384,60 @@ marble (4:4.12.2-1) experimental; urgency=medium
   * Bump kde-sc-dev-latest build dependency.
 
  -- Maximiliano Curia <maxy@debian.org>  Mon, 10 Feb 2014 11:32:24 +0100
+
+marble (4:4.12.2-0ubuntu3) trusty; urgency=medium
+
+  * Add libwlocate0 as explicit dependency of marble-plugins. It is a
+    runtime dependency that otherwise makes the WlocatePositionProviderPlugin
+    fail to load. LP: #1284099
+
+ -- Harald Sitter <apachelogger@kubuntu.org>  Mon, 24 Feb 2014 14:32:54 +0100
+
+marble (4:4.12.2-0ubuntu2) trusty; urgency=medium
+
+  * Update symbols file
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 12 Feb 2014 15:29:54 +0000
+
+marble (4:4.12.2-0ubuntu1) trusty; urgency=medium
+
+  * New upstream bugfix release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Wed, 05 Feb 2014 00:23:14 +0000
+
+marble (4:4.12.1-0ubuntu1) trusty; urgency=low
+
+  * New upstream bugfix release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Thu, 16 Jan 2014 08:36:55 +0000
+
+marble (4:4.12.0-0ubuntu1) trusty; urgency=low
+
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 18 Dec 2013 17:38:28 +0000
+
+marble (4:4.11.97-0ubuntu1) trusty; urgency=low
+
+  * New upstream RC release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 29 Nov 2013 13:35:57 +0000
+
+marble (4:4.11.95-0ubuntu1) trusty; urgency=low
+
+  [ Rohan Garg ]
+  * New upstream beta release
+
+  [ Philip Muškovac ]
+  * Update install path for the designer plugins
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Mon, 25 Nov 2013 18:33:44 +0100
+
+marble (4:4.11.80-0ubuntu1) trusty; urgency=low
+
+  * New upstream beta release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Sat, 23 Nov 2013 17:55:34 +0100
 
 marble (4:4.11.5+dfsg-1) unstable; urgency=low
 
@@ -153,6 +486,75 @@ marble (4:4.11.2-1) experimental; urgency=low
 
  -- Maximiliano Curia <maxy@debian.org>  Mon, 07 Oct 2013 16:53:09 +0200
 
+marble (4:4.11.2-0ubuntu1) saucy; urgency=low
+
+  * New upstream bugfix release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Mon, 30 Sep 2013 14:50:00 +0100
+
+marble (4:4.11.1-0ubuntu1) saucy; urgency=low
+
+  * New upstream bugfix release.
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Fri, 06 Sep 2013 22:37:00 +0100
+
+marble (4:4.11.0a-0ubuntu1) saucy; urgency=low
+
+  [ Howard Chan ]
+  * New upstream release
+
+  [ Rohan Garg ]
+  * Update libmarblewidget16.install
+
+ -- Howard Chan <smartboyhw@gmail.com>  Thu, 08 Aug 2013 12:53:16 +0800
+
+marble (4:4.10.97-0ubuntu1) saucy; urgency=low
+
+  * New upstream RC 2 release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 26 Jul 2013 19:59:43 +0100
+
+marble (4:4.10.95-0ubuntu1) saucy; urgency=low
+
+  [ Rohan Garg ]
+  * New upstream RC release
+
+  [ Philip Muškovac ]
+  * Add new symbols for libmarblewidget16
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Fri, 19 Jul 2013 12:33:26 +0000
+
+marble (4:4.10.90-0ubuntu1) saucy; urgency=low
+
+  [ Michał Zając ]
+  * New upstream beta release
+
+  [ Howard Chan ]
+  * Fix symbols file for libmarblewidget16.
+
+ -- Howard Chan <smartboyhw@gmail.com>  Fri, 28 Jun 2013 18:28:16 +0100
+
+marble (4:4.10.80-0ubuntu2) saucy; urgency=low
+
+  * Make sure the marble-qt binary is installed
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Fri, 21 Jun 2013 17:35:07 +0530
+
+marble (4:4.10.80-0ubuntu1) saucy; urgency=low
+
+  [ Rohan Garg ]
+  * New upstream release
+    - Update install files
+    - Update symbols
+    - Bump so versions
+      - libmarblewidget15 -> libmarblewidget16
+    - New Qt only package, marble-qt
+
+  [ Jonathan Riddell ]
+  * Add build-dep on libquazip0-dev
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Fri, 21 Jun 2013 01:45:17 +0100
+
 marble (4:4.10.5-1) unstable; urgency=low
 
   * New upstream release.
@@ -170,6 +572,22 @@ marble (4:4.10.4-1) experimental; urgency=low
   * Add myself to uploaders.
 
  -- Maximiliano Curia <maxy@debian.org>  Fri, 14 Jun 2013 14:31:34 +0200
+
+marble (4:4.10.4-0ubuntu1) saucy-proposed; urgency=low
+
+  * New upstream bugfix release
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Fri, 07 Jun 2013 00:48:20 +0100
+
+marble (4:4.10.3-0ubuntu1) saucy; urgency=low
+
+  * New upstream release
+  * Merge with Debian, remaining change:
+   - add marble-touch package
+   - remove marble-touch from not-installed
+   - add build-dep on libwlocate-dev libqextserialport-dev
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 08 May 2013 16:10:55 +0000
 
 marble (4:4.10.2-2) experimental; urgency=low
 
@@ -190,6 +608,108 @@ marble (4:4.10.2-1) experimental; urgency=low
     Sneaky added by upstream.
 
  -- Sune Vuorela <sune@debian.org>  Wed, 03 Apr 2013 19:39:10 +0000
+
+marble (4:4.10.2-0ubuntu1) raring; urgency=low
+
+  * New upstream bugfix release
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sun, 31 Mar 2013 14:59:36 +0200
+
+marble (4:4.10.1-0ubuntu1) raring-proposed; urgency=low
+
+  * New upstream bugfix release
+  * Add a new symbol to libmarblewidget15.symbols 
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Tue, 05 Mar 2013 16:44:44 +0000
+
+marble (4:4.10.0-0ubuntu1) raring-proposed; urgency=low
+
+  [ Rohan Garg ]
+  * New upstream release
+
+  [ Philip Muškovac ]
+  * Build-depend on libqextserialport-dev 
+
+ -- Rohan Garg <rohangarg@kubuntu.org>  Wed, 06 Feb 2013 12:09:45 +0000
+
+marble (4:4.9.98-0ubuntu1) raring-proposed; urgency=low
+
+  * Add build-dep on libwlocate-dev
+  * New upstream release candidate
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 18 Jan 2013 16:02:03 +0000
+
+marble (4:4.9.97-0ubuntu1) raring; urgency=low
+
+  * New upstream release candidate
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Thu, 03 Jan 2013 22:45:26 +0100
+
+marble (4:4.9.95-0ubuntu1) raring; urgency=low
+
+  * New upstream RC release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Tue, 18 Dec 2012 23:43:04 +0000
+
+marble (4:4.9.90-0ubuntu1) raring-proposed; urgency=low
+
+  * New upstream beta release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Fri, 07 Dec 2012 18:12:34 +0000
+
+marble (4:4.9.80-0ubuntu1) raring; urgency=low
+
+  [ Jonathan Riddell ]
+  * New upstream beta release
+
+  [ Jonathan Kolberg ]
+  * Rename libmarblewidget14 to 15, to match lib name
+
+  [ Scott Kitterman ]
+  * Add new plugins to marble-plugins.install
+  * Add new desktop files for applications and services to marble.install
+  * Update debian/libmarblewidgets15.symbols
+
+ -- Scott Kitterman <scott@kitterman.com>  Wed, 21 Nov 2012 21:45:07 -0500
+
+marble (4:4.9.3-0ubuntu1) raring; urgency=low
+
+  * New upstream release (LP: #1074747)
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Tue, 06 Nov 2012 22:44:37 +0100
+
+marble (4:4.9.2-0ubuntu1) quantal-proposed; urgency=low
+
+  * New upstream bugfix release
+  * New upstream bugfix release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Tue, 02 Oct 2012 15:36:13 +0100
+
+marble (4:4.9.1-0ubuntu1) quantal; urgency=low
+
+  * New upstream release
+
+ -- Harald Sitter <apachelogger@ubuntu.com>  Tue, 04 Sep 2012 15:24:12 +0530
+
+marble (4:4.9.0-0ubuntu1) quantal; urgency=low
+
+  * Use direct build-depends versions rather than kde-sc-dev-latest
+  * New upstream release
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 26 Jul 2012 22:42:39 +0100
+
+marble (4:4.8.90-0ubuntu1) quantal; urgency=low
+
+  * New upstream beta release.
+
+ -- Felix Geyer <debfx@ubuntu.com>  Mon, 11 Jun 2012 23:41:36 +0200
+
+marble (4:4.8.80-0ubuntu1) quantal; urgency=low
+
+  * New upstream beta release
+
+ -- Jonathan Kolberg <bulldog98@kubuntu.org>  Sat, 26 May 2012 15:14:42 +0200
 
 marble (4:4.8.4-3) unstable; urgency=low
 
@@ -219,6 +739,66 @@ marble (4:4.8.4-1) experimental; urgency=low
 
  -- Sune Vuorela <sune@debian.org>  Sat, 16 Jun 2012 14:16:46 +0200
 
+marble (4:4.8.3-0ubuntu1) quantal; urgency=low
+
+  * New upstream release
+  * Update symbol files for gcc 4.7
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sun, 13 May 2012 19:23:42 +0200
+
+marble (4:4.8.2-0ubuntu2) precise-proposed; urgency=low
+
+  * Rebuild for .pot generation
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 12 Apr 2012 16:32:08 +0100
+
+marble (4:4.8.2-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Fri, 30 Mar 2012 20:14:23 +0200
+
+marble (4:4.8.1-0ubuntu1) precise; urgency=low
+
+  * New upstream release 
+    - update marble-plugins.install for new install location of qml plugins
+    - remove missing private symbols from libmarblewidget13.symobls
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sat, 03 Mar 2012 18:28:57 +0100
+
+marble (4:4.8.0-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Thu, 19 Jan 2012 12:01:27 +0000
+
+marble (4:4.7.97-0ubuntu1) precise; urgency=low
+
+  [ Jonathan Riddell ]
+  * New upstream RC release
+
+  [ Felix Geyer ]
+  * Update symbols files.
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 04 Jan 2012 13:15:02 +0000
+
+marble (4:4.7.95-0ubuntu1) precise; urgency=low
+
+  [ Philip Muškovac ]
+  * New upstream release candidate
+    - update marble-plugins.install
+  
+  [ Felix Geyer ]
+  * Update symbols files.
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Sat, 24 Dec 2011 17:12:32 +0100
+
+marble (4:4.7.90-0ubuntu1) precise; urgency=low
+
+  * New upstream beta release
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 14 Dec 2011 13:28:07 +0000
+
 marble (4:4.7.4-2) unstable; urgency=low
 
   * Team upload. Upload to unstable.
@@ -238,9 +818,61 @@ marble (4:4.7.4-1) experimental; urgency=low
 
  -- Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>  Sun, 18 Dec 2011 00:56:20 +0100
 
+marble (4:4.7.3-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+  * Merge with Debian
+   - Drop build-dep on qtmobility-dev, in universe
+   - Drop debian/marble-plugins.install.linux, not built
+   - marble-plugins replaces/breaks marble
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Wed, 23 Nov 2011 23:46:51 +0000
+
 marble (4:4.7.2-1) experimental; urgency=low
 
   [ José Manuel Santamaría Lema ]
   * Initial release. Start from the Ubuntu packaging, thanks!
 
  -- Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>  Sat, 03 Dec 2011 10:45:50 -0300
+
+marble (4:4.7.2-0r1) raring; urgency=low
+
+  * Initial release. Start from the Ubuntu packaging, thanks!
+
+ -- José Manuel Santamaría Lema <panfaust@gmail.com>  Sun, 25 Sep 2011 19:04:36 +0200
+
+marble (4:4.7.2-0ubuntu1) oneiric-proposed; urgency=low
+
+  * New upstream release (LP: #872506)
+
+ -- Jonathan Kolberg <bulldog98@kubuntu-de.org>  Fri, 14 Oct 2011 23:45:32 +0200
+
+marble (4:4.7.1-0ubuntu2) oneiric; urgency=low
+
+  * No-change rebuild so translations aren't stripped from .desktop
+    files anymore.
+
+ -- Felix Geyer <debfx-pkg@fobos.de>  Fri, 16 Sep 2011 01:16:33 +0200
+
+marble (4:4.7.1-0ubuntu1) oneiric; urgency=low
+
+  * New upstream release
+
+ -- Jonathan Kolberg <bulldog98@kubuntu-de.org>  Fri, 02 Sep 2011 23:41:05 +0200
+
+marble (4:4.7.0-0ubuntu1) oneiric; urgency=low
+
+  * New upstream release 
+    - remove missing private symbols from libmarblewidget12.symbols and
+      add new symbols.
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Fri, 22 Jul 2011 23:08:42 +0200
+
+marble (4:4.6.90+repack-0ubuntu1) oneiric; urgency=low
+
+  * New upstrem release candidate
+  * Update packaging for split tarball
+  * Repack upstream source to include missing license copies
+
+ -- Philip Muškovac <yofel@kubuntu.org>  Mon, 11 Jul 2011 15:43:02 +0200
+

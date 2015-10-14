@@ -16,7 +16,6 @@
 #include <math.h>
 
 #include <QString>
-#include <QColor>
 
 #include "marble_export.h"
 #include "MarbleColors.h"
@@ -42,10 +41,15 @@ Q_DECLARE_FLAGS(TessellationFlags, TessellationFlag)
  * @brief This enum is used to choose the projection shown in the view.
  */
 enum Projection { 
-    Spherical,          ///< Spherical projection
+    Spherical,          ///< Spherical projection ("Orthographic")
     Equirectangular,    ///< Flat projection ("plate carree")
-    Mercator            ///< Mercator projection
-    // NOTE: MarbleWidget::setProjection(int) relies on Mercator being the last
+    Mercator,           ///< Mercator projection
+    Gnomonic,           ///< Gnomonic projection
+    Stereographic,      ///< Stereographic projection
+    LambertAzimuthal,   ///< Lambert Azimuthal Equal-Area projection
+    AzimuthalEquidistant,   ///< Azimuthal Equidistant projection
+    VerticalPerspective ///< Vertical perspective projection
+    // NOTE: MarbleWidget::setProjection(int) relies on VerticalPerspective being the last
     // value above. Adjust that method if you do changes here
 };
 
@@ -211,9 +215,21 @@ const qreal NM2FT = 6080; // nm feet
 const qreal M2FT = 3.2808;
 const qreal FT2M = 1.0 / M2FT;
 
+// Conversion Metric / Imperial System: meter vs inch
+const qreal M2IN = 39.3701;
+const qreal IN2M = 1.0 / M2IN;
+
+// Conversion Metric / Imperial System: meter vs yard
+const qreal M2YD = 1.09361;
+const qreal YD2M = 1.0 / M2YD;
+
 // Conversion meter vs millimeter
-const qreal M2MM = 1000;
+const qreal M2MM = 1000.0;
 const qreal MM2M = 1.0 / M2MM;
+
+// Conversion meter vs centimeter
+const qreal M2CM = 100.0;
+const qreal CM2M = 1.0 / M2CM;
 
 // Conversion degree vs. radians
 const qreal DEG2RAD = M_PI / 180.0;
@@ -239,14 +255,14 @@ const qreal SEC2HOUR = 1.0 / HOUR2SEC;
 
 // String for about dialog and http user agent
 // FIXME: check if blanks are allowed in user agent version numbers
-const QString MARBLE_VERSION_STRING = QString::fromLatin1( "0.19.2 (stable release)" );
+const QString MARBLE_VERSION_STRING = QString::fromLatin1( "0.21.80 (0.22 Beta 1)" );
 
 // API Version id:
 // form : 0xMMmmpp
 //        MM = major revision.
 //        mm = minor revision.
 //        pp = patch revision.
-#define MARBLE_VERSION 0x001302
+#define MARBLE_VERSION 0x001550
 
 static const char NOT_AVAILABLE[] = QT_TR_NOOP("not available");
 
@@ -254,7 +270,7 @@ const int tileDigits = 6;
 
 // Average earth radius in m
 // Deprecated: Please use model()->planetRadius() instead.
-const qreal EARTH_RADIUS = 6378000.0;
+const qreal EARTH_RADIUS = 6378137.0;
 
 // Maximum level of base tiles
 const int maxBaseTileLevel = 4;
@@ -264,15 +280,6 @@ const unsigned int c_defaultTileSize = 675;
 
 class MarbleGlobalPrivate;
 class MarbleLocale;
-
-#ifdef __GNUC__
-#define MARBLE_DEPRECATED(func) func __attribute__ ((deprecated))
-#elif defined(_MSC_VER)
-#define MARBLE_DEPRECATED(func) __declspec(deprecated) func
-#else
-#pragma message("WARNING: You need to implement MARBLE_DEPRECATED for this compiler in MarbleGlobal.h")
-#define MARBLE_DEPRECATED(func) func
-#endif
 
 class  MARBLE_EXPORT MarbleGlobal
 {

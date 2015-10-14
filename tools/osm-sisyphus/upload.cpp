@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "upload.h"
@@ -128,7 +128,7 @@ bool Upload::adjustNewstuffFile(const Package &package)
 
     QDomElement root = m_xml.documentElement();
     QDomNodeList regions = root.elementsByTagName( "stuff" );
-    for ( unsigned int i = 0; i < regions.length(); ++i ) {
+    for ( int i = 0; i < int(regions.length()); ++i ) {
         QDomNode node = regions.item( i );
         if (!node.namedItem("payload").isNull()) {
             QUrl url = node.namedItem("payload").toElement().text();
@@ -302,4 +302,4 @@ QString Upload::releaseDate() const
     return QDateTime::currentDateTime().toString("MM/dd/yy");
 }
 
-#include "upload.moc"
+#include "moc_upload.cpp"
