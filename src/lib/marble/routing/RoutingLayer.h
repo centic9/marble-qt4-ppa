@@ -59,6 +59,8 @@ public:
     bool render( GeoPainter *painter, ViewportParams *viewport,
                  const QString &renderPos = "NONE", GeoSceneLayer *layer = 0 );
 
+    RenderState renderState() const;
+
     /**
       * Set the proxy model another QAbstractItemView uses that should share
       * its selection model with us. Needed because this class uses an unfiltered
@@ -75,6 +77,18 @@ public:
       * Set the view context to determine whether the map is used interactively
       */
     void setViewContext( ViewContext viewContext );
+
+    /**
+     * Determine whether the route can be edited by the user (via points added,
+     * route cleared)
+     */
+    void setInteractive( bool interactive );
+
+    /**
+     * Returns whether the route is interactive (true by default if not changed
+     * by setInteractive)
+     */
+    bool isInteractive() const;
 
 Q_SIGNALS:
     /**

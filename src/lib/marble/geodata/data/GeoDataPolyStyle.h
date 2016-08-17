@@ -50,6 +50,9 @@ class GEODATA_EXPORT GeoDataPolyStyle : public GeoDataColorStyle
     */
     GeoDataPolyStyle& operator=( const GeoDataPolyStyle& other );
 
+    bool operator==( const GeoDataPolyStyle &other ) const;
+    bool operator!=( const GeoDataPolyStyle &other ) const;
+
     /// Provides type information for downcasting a GeoNode
     virtual const char* nodeType() const;
 
@@ -85,6 +88,18 @@ class GEODATA_EXPORT GeoDataPolyStyle : public GeoDataColorStyle
      * @return brush style.
      */
     Qt::BrushStyle brushStyle() const;
+
+    /**
+     * @brief Set the color index which will be used to assign color to brush
+     * @param colorIndex The value of color index
+     */
+    void setColorIndex( quint8 colorIndex );
+
+    /**
+     * @brief Return the value of color index
+     * @return Color index
+     */
+    quint8 colorIndex() const;
 
     /**
      * @brief  Serialize the style to a stream.

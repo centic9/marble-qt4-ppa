@@ -94,13 +94,9 @@ public:
 
     QString format;
 
-    QString wmsProjection;
     QStringList wmsLegends;
 
     QString sourceImage;
-
-    QString dgmlOutput;
-    QString legendHtml;
 };
 
 class PreviewDialog : public QDialog
@@ -262,7 +258,6 @@ void MapWizard::parseServerCapabilities( QNetworkReply* reply )
     QDomElement firstLayer = xml.documentElement().firstChildElement( "Capability" ).firstChildElement( "Layer" );
     QDomNodeList layers = firstLayer.elementsByTagName( "Layer" );
 
-    d->wmsProjection = firstLayer.firstChildElement( "SRS" ).text();
     d->uiWidget.listWidgetWmsMaps->clear();
     d->wmsFetchedMaps.clear();
 
@@ -314,8 +309,8 @@ void MapWizard::createWmsLegend( QNetworkReply* reply )
     image.write( result );
     image.close();
 
-    createLegendHtml();
-    createLegendFile();
+    const QString legendHtml = createLegendHtml();
+    createLegendFile( legendHtml );
 }
 
 void MapWizard::setWmsServers( const QStringList& uris )
@@ -413,7 +408,7 @@ bool MapWizard::createFiles( const GeoSceneDocument* document )
         return false;
 }
 
-void MapWizard::createLegendHtml( QString image )
+QString MapWizard::createLegendHtml( const QString& image )
 {
     QString htmlOutput;
     QXmlStreamWriter stream( &htmlOutput );
@@ -435,16 +430,17 @@ void MapWizard::createLegendHtml( QString image )
     stream.writeComment( " ##customLegendEntries:all## " );
     stream.writeEndElement();
     stream.writeEndElement();
-    d->legendHtml = htmlOutput;
+
+    return htmlOutput;
 }
 
-void MapWizard::createLegendFile()
+void MapWizard::createLegendFile( const QString& legendHtml )
 {
     QDir map( QString( "%1/maps/earth/%2" ).arg( MarbleDirs::localPath() ).arg( d->mapTheme ) );
     
     QFile html( QString( "%1/legend.html" ).arg( map.absolutePath() ) );
     html.open( QIODevice::ReadWrite );
-    html.write( d->legendHtml.toLatin1().data() );
+    html.write( legendHtml.toLatin1().data() );
     html.close();
 }
 
@@ -548,8 +544,8 @@ void MapWizard::createLegend()
     image.setFileName( d->uiWidget.lineEditLegend_2->text() );
     image.copy( QString( "%1/legend/legend.png" ).arg( map.absolutePath() ) );
 
-    createLegendHtml();
-    createLegendFile();
+    const QString legendHtml = createLegendHtml();
+    createLegendFile( legendHtml );
 }
 
 void MapWizard::querySourceImage()
@@ -571,8 +567,8 @@ void MapWizard::queryLegendImage()
 {
     QString fileName = QFileDialog::getOpenFileName();
     d->uiWidget.lineEditLegend_2->setText( fileName );
-    createLegendHtml( d->uiWidget.lineEditLegend_2->text() );
-    d->uiWidget.textBrowserLegend->setHtml( d->legendHtml );
+    const QString legendHtml = createLegendHtml( d->uiWidget.lineEditLegend_2->text() );
+    d->uiWidget.textBrowserLegend->setHtml( legendHtml );
 }
 
 QString MapWizard::createArchive( QWidget *parent, QString mapId )
@@ -1106,7 +1102,6 @@ void MapWizard::accept()
         d->uiWidget.textEditDesc->clear();
         d->uiWidget.labelPreview->clear();
         d->uiWidget.lineEditSource->clear();
-        d->dgmlOutput.clear();
         QTimer::singleShot( 0, this, SLOT(restart()) );
     }
 

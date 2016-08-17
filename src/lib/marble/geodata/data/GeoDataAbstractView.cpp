@@ -11,19 +11,34 @@
 
 #include "GeoDataAbstractView.h"
 
+#include "GeoDataCamera.h"
+#include "GeoDataLookAt.h"
+#include "GeoDataTypes.h"
+
 namespace Marble {
 
 class GeoDataAbstractViewPrivate
 {
 public:
+    GeoDataAbstractViewPrivate();
+
     GeoDataTimeSpan m_timeSpan;
     GeoDataTimeStamp m_timeStamp;
+    AltitudeMode m_altitudeMode;
 };
 
-GeoDataAbstractView::GeoDataAbstractView() :
-    d( new GeoDataAbstractViewPrivate )
+GeoDataAbstractViewPrivate::GeoDataAbstractViewPrivate() :
+    m_timeSpan(),
+    m_timeStamp(),
+    m_altitudeMode( ClampToGround )
 {
-    // nothing to do
+    // do nothing
+}
+
+GeoDataAbstractView::GeoDataAbstractView() :
+    d( new GeoDataAbstractViewPrivate() )
+{
+    // do nothing
 }
 
 GeoDataAbstractView::~GeoDataAbstractView()
@@ -43,6 +58,32 @@ GeoDataAbstractView &GeoDataAbstractView::operator =( const GeoDataAbstractView 
     GeoDataObject::operator=( other );
     *d = *other.d;
     return *this;
+}
+
+GeoDataCoordinates GeoDataAbstractView::coordinates() const
+{
+    if ( nodeType() == GeoDataTypes::GeoDataLookAtType) {
+        const GeoDataLookAt *lookAt = static_cast<const GeoDataLookAt*>( this );
+        if( lookAt ){
+            return lookAt->coordinates();
+        }
+    }
+    else if( nodeType() == GeoDataTypes::GeoDataCameraType ){
+        const GeoDataCamera *camera = static_cast<const GeoDataCamera*>( this );
+        if ( camera ){
+            return camera->coordinates();
+        }
+    }
+    return GeoDataCoordinates();
+}
+
+
+bool GeoDataAbstractView::equals(const GeoDataAbstractView &other) const
+{
+    return GeoDataObject::equals(other) &&
+           d->m_timeSpan == other.d->m_timeSpan &&
+           d->m_timeStamp == other.d->m_timeStamp &&
+           d->m_altitudeMode == other.d->m_altitudeMode;
 }
 
 const GeoDataTimeSpan &GeoDataAbstractView::timeSpan() const
@@ -73,6 +114,16 @@ const GeoDataTimeStamp &GeoDataAbstractView::timeStamp() const
 void GeoDataAbstractView::setTimeStamp( const GeoDataTimeStamp &timeStamp )
 {
     d->m_timeStamp = timeStamp;
+}
+
+AltitudeMode GeoDataAbstractView::altitudeMode() const
+{
+    return d->m_altitudeMode;
+}
+
+void GeoDataAbstractView::setAltitudeMode(const AltitudeMode altitudeMode)
+{
+    d->m_altitudeMode = altitudeMode;
 }
 
 }

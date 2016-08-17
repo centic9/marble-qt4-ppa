@@ -16,12 +16,13 @@
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
 #include "KmlColorStyleTagWriter.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerBallonStyle( GeoTagWriter::QualifiedName(GeoDataTypes::GeoDataBalloonStyleType,
-                                                                              kml::kmlTag_nameSpace22),
+                                                                              kml::kmlTag_nameSpaceOgc22),
                                                   new KmlBalloonStyleTagWriter() );
 
 bool KmlBalloonStyleTagWriter::write( const GeoNode *node,
@@ -29,11 +30,12 @@ bool KmlBalloonStyleTagWriter::write( const GeoNode *node,
 {
     const GeoDataBalloonStyle *balloonStyle = static_cast<const GeoDataBalloonStyle*>( node );
     writer.writeStartElement( kml::kmlTag_BalloonStyle );
+    KmlObjectTagWriter::writeIdentifiers( writer, balloonStyle );
 
-    QString const textColor = KmlColorStyleTagWriter::formatColor( balloonStyle->textColor() );
-    writer.writeOptionalElement( kml::kmlTag_textColor, textColor, "ff000000" );
     QString const backgroundColor = KmlColorStyleTagWriter::formatColor( balloonStyle->backgroundColor() );
     writer.writeOptionalElement( kml::kmlTag_bgColor, backgroundColor, "ffffffff" );
+    QString const textColor = KmlColorStyleTagWriter::formatColor( balloonStyle->textColor() );
+    writer.writeOptionalElement( kml::kmlTag_textColor, textColor, "ff000000" );
 
     QString const textString = balloonStyle->text();
     if ( textString.contains( QRegExp( "[<>&]" ) ) ) {

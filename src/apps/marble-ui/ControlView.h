@@ -35,6 +35,7 @@ class QPrinter;
 namespace Marble
 {
 
+class TourWidget;
 class CurrentLocationWidget;
 class MapThemeManager;
 class ConflictDialog;
@@ -56,7 +57,7 @@ class ControlView : public QWidget
       */
     static QString applicationVersion();
 
-    MarbleWidget      *marbleWidget()  const { return m_marbleWidget; }
+    MarbleWidget      *marbleWidget()        { return m_marbleWidget; }
     MarbleModel       *marbleModel()         { return m_marbleWidget->model(); }
     MapThemeManager   *mapThemeManager();
 
@@ -105,7 +106,6 @@ class ControlView : public QWidget
 
  public slots:
     void printMapScreenShot( QPointer<QPrintDialog> dialog );
-    void printPixmap( QPrinter * printer, const QPixmap& pixmap );
     void printPreview();
     void paintPrintPreview( QPrinter * printer );
 
@@ -118,6 +118,8 @@ class ControlView : public QWidget
      *  Toggles all of the docking panels on or off
      */
     void togglePanelVisibility();
+
+    void handleTourLinkClicked( const QString &path );
 
 signals:
     void showMapWizard();
@@ -139,11 +141,12 @@ private Q_SLOTS:
       */
     void synchronizeWithExternalMapEditor( const QString &application, const QString &argument );
 
+    static void printPixmap( QPrinter * printer, const QPixmap& pixmap );
     void printMap( QTextDocument &document, QString &text, QPrinter *printer );
     void printLegend( QTextDocument &document, QString &text );
     void printRouteSummary( QTextDocument &document, QString &text );
     void printDrivingInstructions( QTextDocument &document, QString &text );
-    void printDrivingInstructionsAdvice( QTextDocument &document, QString &text );
+    static void printDrivingInstructionsAdvice( QTextDocument &document, QString &text );
 
     MapThemeManager   *const m_mapThemeManager;
     MarbleWidget      *m_marbleWidget;
@@ -156,6 +159,7 @@ private Q_SLOTS:
     QList<QAction*>  m_panelActions;
     QList<bool>      m_panelVisibility;
     bool             m_isPanelVisible;
+    TourWidget      *m_tourWidget;
 };
 
 }

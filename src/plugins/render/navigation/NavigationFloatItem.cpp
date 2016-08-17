@@ -13,6 +13,7 @@
 #include "NavigationFloatItem.h"
 
 #include <qmath.h>
+#include <QContextMenuEvent>
 #include <QRect>
 #include <QPixmap>
 #include <QToolButton>
@@ -140,13 +141,15 @@ bool NavigationFloatItem::isInitialized() const
     return m_widgetItem;
 }
 
-void NavigationFloatItem::changeViewport( ViewportParams *viewport )
+void NavigationFloatItem::setProjection( const ViewportParams *viewport )
 {
     if ( viewport->radius() != m_oldViewportRadius ) {
         m_oldViewportRadius = viewport->radius();
         // The slider depends on the map state (zoom factor)
         update();
     }
+
+    AbstractFloatItem::setProjection( viewport );
 }
 
 bool NavigationFloatItem::eventFilter( QObject *object, QEvent *e )
@@ -225,7 +228,7 @@ void NavigationFloatItem::updateButtons( int zoomValue )
     }
 }
 
-QPixmap NavigationFloatItem::pixmap( const QString &id ) const
+QPixmap NavigationFloatItem::pixmap( const QString &id )
 {
     QPixmap result;
     if ( !QPixmapCache::find( id, result ) ) {

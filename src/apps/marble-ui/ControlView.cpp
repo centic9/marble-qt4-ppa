@@ -40,6 +40,7 @@
 #include "GeoUriParser.h"
 #include "MarbleWidget.h"
 #include "MarbleDebug.h"
+#include "MarbleDirs.h"
 #include "MarbleModel.h"
 #include "MarbleMap.h"
 #include "MapThemeManager.h"
@@ -60,6 +61,7 @@
 #include "BookmarkManager.h"
 #include "cloudsync/CloudSyncManager.h"
 #include "cloudsync/BookmarkSyncManager.h"
+#include "cloudsync/RouteSyncManager.h"
 #include "cloudsync/ConflictDialog.h"
 #include "cloudsync/MergeItem.h"
 
@@ -73,7 +75,8 @@ ControlView::ControlView( QWidget *parent )
      m_locationWidget( 0 ),
      m_conflictDialog( 0 ),
      m_togglePanelVisibilityAction( 0 ),
-     m_isPanelVisible( true )
+     m_isPanelVisible( true ),
+     m_tourWidget( 0 )
 {
     setWindowTitle( tr( "Marble - Virtual Globe" ) );
 
@@ -105,7 +108,7 @@ ControlView::~ControlView()
 
 QString ControlView::applicationVersion()
 {
-    return "1.8.3 (stable relase)";
+    return "1.9.2 (stable release)";
 }
 
 MapThemeManager *ControlView::mapThemeManager()
@@ -534,7 +537,9 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     legendDock->setObjectName( "legendDock" );
     legendDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
     LegendWidget* legendWidget = new LegendWidget( this );
-    legendWidget->setMarbleModel( marbleModel() );
+    legendWidget->setMarbleModel( m_marbleWidget->model() );
+    connect( legendWidget, SIGNAL(tourLinkClicked(QString)),
+             this, SLOT(handleTourLinkClicked(QString)) );
     connect( legendWidget, SIGNAL(propertyValueChanged(QString,bool)),
              marbleWidget(), SLOT(setPropertyValue(QString,bool)) );
     legendDock->setWidget( legendWidget );
@@ -602,9 +607,9 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     QDockWidget *tourDock = new QDockWidget( tr( "Tour" ), this );
     tourDock->setObjectName( "tourDock" );
     tourDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
-    TourWidget *tourWidget = new TourWidget( this );
-    tourWidget->setMarbleWidget( marbleWidget() );
-    tourDock->setWidget( tourWidget );
+    m_tourWidget = new TourWidget( this );
+    m_tourWidget->setMarbleWidget( marbleWidget() );
+    tourDock->setWidget( m_tourWidget );
     mainWindow->addDockWidget( Qt::LeftDockWidgetArea, tourDock );
     tourDock->hide();
 
@@ -619,9 +624,7 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     panelActions << mapViewDock->toggleViewAction();
     panelActions << fileViewDock->toggleViewAction();
     panelActions << legendDock->toggleViewAction();
-    // Hidden from the menu for Marble 1.8 but still
-    // available in the context menu for the curious
-    //panelActions << tourDock->toggleViewAction();
+    panelActions << tourDock->toggleViewAction();
 
     // Local list of panel view toggle actions
     m_panelActions << routingDock->toggleViewAction();
@@ -630,7 +633,7 @@ QList<QAction*> ControlView::setupDockWidgets( QMainWindow *mainWindow )
     m_panelActions << mapViewDock->toggleViewAction();
     m_panelActions << fileViewDock->toggleViewAction();
     m_panelActions << legendDock->toggleViewAction();
-    //m_panelActions << tourDock->toggleViewAction();
+    m_panelActions << tourDock->toggleViewAction();
     foreach( QAction* action, m_panelActions ) {
         m_panelVisibility << action->isVisible();
     }
@@ -736,6 +739,16 @@ void ControlView::togglePanelVisibility()
         // Change Menu Item Text
         m_togglePanelVisibilityAction->setText( tr("Hide &All Panels") );
         m_isPanelVisible = true;
+    }
+}
+
+void ControlView::handleTourLinkClicked(const QString& path)
+{
+    QString tourPath = MarbleDirs::path( path );
+    if ( !tourPath.isEmpty() ) {
+        if ( m_tourWidget->openTour( tourPath ) ) {
+            m_tourWidget->togglePlaying();
+        }
     }
 }
 

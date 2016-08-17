@@ -15,15 +15,22 @@
 #include "GeoWriter.h"
 #include "GeoTagWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
+
+static GeoTagWriterRegistrar s_writerLod(
+    GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataLodType,
+                                 kml::kmlTag_nameSpaceOgc22 ),
+    new KmlLodTagWriter);
 
 bool KmlLodTagWriter::write( const GeoNode *node,
 				 GeoWriter& writer ) const
 {
     const GeoDataLod *lod = static_cast<const GeoDataLod*>( node );
     writer.writeStartElement(kml::kmlTag_Lod);
+    KmlObjectTagWriter::writeIdentifiers( writer, lod );
     writer.writeTextElement( kml::kmlTag_minLodPixels,  QString::number(lod->minLodPixels()) );
     writer.writeTextElement( kml::kmlTag_maxLodPixels,  QString::number(lod->maxLodPixels()) );
     writer.writeTextElement( kml::kmlTag_minFadeExtent, QString::number(lod->minFadeExtent()) );

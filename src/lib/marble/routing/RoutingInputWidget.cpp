@@ -93,9 +93,9 @@ public:
 
     QMenu* createBookmarkMenu( RoutingInputWidget *parent );
 
-    void createBookmarkActions( QMenu* menu, GeoDataFolder* bookmarksFolder, QObject *parent );
+    static void createBookmarkActions( QMenu* menu, GeoDataFolder* bookmarksFolder, QObject *parent );
 
-    QPixmap addDropDownIndicator( const QPixmap &pixmap ) const;
+    static QPixmap addDropDownIndicator( const QPixmap &pixmap );
 
     void updateDescription();
 };
@@ -235,7 +235,7 @@ void RoutingInputWidgetPrivate::createBookmarkActions( QMenu* menu, GeoDataFolde
     }
 }
 
-QPixmap RoutingInputWidgetPrivate::addDropDownIndicator(const QPixmap &pixmap) const
+QPixmap RoutingInputWidgetPrivate::addDropDownIndicator(const QPixmap &pixmap)
 {
     QPixmap result( pixmap.size() + QSize( 8, pixmap.height() ) );
     result.fill( QColor( Qt::transparent ) );

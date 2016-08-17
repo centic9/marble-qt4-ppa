@@ -14,17 +14,13 @@ set( osm_handlers_SRCS
         handlers/OsmBoundsTagHandler.cpp
         handlers/OsmBoundTagHandler.cpp
         handlers/OsmElementDictionary.cpp
-        handlers/OsmGlobals.cpp
         handlers/OsmNdTagHandler.cpp
-        handlers/OsmNodeFactory.cpp
         handlers/OsmNodeTagHandler.cpp
         handlers/OsmOsmTagHandler.cpp
         handlers/OsmRelationTagHandler.cpp
         handlers/OsmMemberTagHandler.cpp
         handlers/OsmTagTagHandler.cpp
         handlers/OsmWayTagHandler.cpp
-        handlers/OsmWayFactory.cpp
-        handlers/OsmRelationFactory.cpp
    )
 
 set( osm_SRCS OsmParser.cpp OsmPlugin.cpp OsmRunner.cpp )
@@ -40,4 +36,5 @@ if(QTONLY)
 else(QTONLY)
   install(PROGRAMS marble_osm.desktop DESTINATION ${APPS_INSTALL_DIR})
   install(FILES marble_part_osm.desktop DESTINATION ${SERVICES_INSTALL_DIR})
+  install(FILES marble_thumbnail_osm.desktop DESTINATION ${SERVICES_INSTALL_DIR})
 endif(QTONLY)

@@ -40,7 +40,7 @@ class FileLoaderPrivate
 {
 public:
     FileLoaderPrivate( FileLoader* parent, MarbleModel *model, bool recenter,
-                       const QString& file, const QString& property, GeoDataStyle* style, DocumentRole role )
+                       const QString& file, const QString& property, const GeoDataStyle* style, DocumentRole role )
         : q( parent),
           m_runner( model->pluginManager() ),
           m_recenter( recenter ),
@@ -53,8 +53,8 @@ public:
           m_clock( model->clock() )
     {
         if( m_style ) {
-            m_styleMap->setStyleId("default-map");
-            m_styleMap->insert("normal", QString("#").append(m_style->styleId()));
+            m_styleMap->setId("default-map");
+            m_styleMap->insert("normal", QString("#").append(m_style->id()));
         }
     }
 
@@ -75,12 +75,14 @@ public:
 
     ~FileLoaderPrivate()
     {
+        delete m_style;
+        delete m_styleMap;
     }
 
     void createFilterProperties( GeoDataContainer *container );
-    int cityPopIdx( qint64 population ) const;
-    int spacePopIdx( qint64 population ) const;
-    int areaPopIdx( qreal area ) const;
+    static int cityPopIdx( qint64 population );
+    static int spacePopIdx( qint64 population );
+    static int areaPopIdx( qreal area );
 
     void documentParsed( GeoDataDocument *doc, const QString& error);
 
@@ -90,7 +92,7 @@ public:
     QString m_filepath;
     QString m_contents;
     QString m_property;
-    GeoDataStyle* m_style;
+    const GeoDataStyle *const m_style;
     DocumentRole m_documentRole;
     GeoDataStyleMap* m_styleMap;
     GeoDataDocument *m_document;
@@ -100,7 +102,7 @@ public:
 };
 
 FileLoader::FileLoader( QObject* parent, MarbleModel *model, bool recenter,
-                       const QString& file, const QString& property, GeoDataStyle* style, DocumentRole role )
+                       const QString& file, const QString& property, const GeoDataStyle* style, DocumentRole role )
     : QThread( parent ),
       d( new FileLoaderPrivate( this, model, recenter, file, property, style, role ) )
 {
@@ -257,7 +259,7 @@ void FileLoaderPrivate::createFilterProperties( GeoDataContainer *container )
                 placemark->geometry()->nodeType() != GeoDataTypes::GeoDataPointType
                  && m_documentRole == MapDocument
                  && m_style ) {
-                placemark->setStyleUrl( QString("#").append( m_styleMap->styleId() ) );
+                placemark->setStyleUrl( QString("#").append( m_styleMap->id() ) );
             }
 
             // Mountain (H), Volcano (V), Shipwreck (W)
@@ -424,7 +426,7 @@ void FileLoaderPrivate::createFilterProperties( GeoDataContainer *container )
     }
 }
 
-int FileLoaderPrivate::cityPopIdx( qint64 population ) const
+int FileLoaderPrivate::cityPopIdx( qint64 population )
 {
     int popidx = 3;
 
@@ -439,7 +441,7 @@ int FileLoaderPrivate::cityPopIdx( qint64 population ) const
     return popidx;
 }
 
-int FileLoaderPrivate::spacePopIdx( qint64 population ) const
+int FileLoaderPrivate::spacePopIdx( qint64 population )
 {
     int popidx = 1;
 
@@ -456,7 +458,7 @@ int FileLoaderPrivate::spacePopIdx( qint64 population ) const
     return popidx;
 }
 
-int FileLoaderPrivate::areaPopIdx( qreal area ) const
+int FileLoaderPrivate::areaPopIdx( qreal area )
 {
     int popidx = 1;
     if      ( area <  200000  )      popidx=5;

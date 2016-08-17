@@ -19,6 +19,16 @@ GeoDataSoundCue::GeoDataSoundCue() :
 {
 }
 
+bool GeoDataSoundCue::operator==(const GeoDataSoundCue& other) const
+{
+    return this->m_delayedStart == other.m_delayedStart && this->m_href == other.m_href;
+}
+
+bool GeoDataSoundCue::operator!=(const GeoDataSoundCue& other) const
+{
+    return !this->operator==(other);
+}
+
 GeoDataSoundCue::~GeoDataSoundCue()
 {
 }
@@ -36,16 +46,6 @@ QString GeoDataSoundCue::href() const
 void GeoDataSoundCue::setHref(const QString &url)
 {
     m_href = url;
-}
-
-QString GeoDataSoundCue::id() const
-{
-    return m_id;
-}
-
-void GeoDataSoundCue::setId(const QString &i)
-{
-    m_id = i;
 }
 
 double GeoDataSoundCue::delayedStart() const

@@ -229,34 +229,33 @@ void OwncloudSyncBackend::deleteRoute( const QString &timestamp )
     connect( d->m_routeDeleteReply, SIGNAL(finished()), this, SIGNAL(routeDeleted()) );
 }
 
-QPixmap OwncloudSyncBackend::createPreview( const QString &timestamp )
+QPixmap OwncloudSyncBackend::createPreview( const QString &timestamp ) const
 {
-    MarbleWidget *mapWidget = new MarbleWidget;
-    foreach( RenderPlugin* plugin, mapWidget->renderPlugins() ) {
+    MarbleWidget mapWidget;
+    foreach( RenderPlugin* plugin, mapWidget.renderPlugins() ) {
         plugin->setEnabled( false );
     }
 
-    mapWidget->setProjection( Mercator );
-    mapWidget->setMapThemeId( "earth/openstreetmap/openstreetmap.dgml" );
-    mapWidget->resize( 512, 512 );
+    mapWidget.setProjection( Mercator );
+    mapWidget.setMapThemeId( "earth/openstreetmap/openstreetmap.dgml" );
+    mapWidget.resize( 512, 512 );
 
-    RoutingManager* manager = mapWidget->model()->routingManager();
+    RoutingManager* manager = mapWidget.model()->routingManager();
     manager->loadRoute( d->m_cacheDir.absolutePath() + QString( "/%0.kml" ).arg( timestamp ) );
     GeoDataLatLonBox const bbox = manager->routingModel()->route().bounds();
 
     if ( !bbox.isEmpty() ) {
-        mapWidget->centerOn( bbox );
+        mapWidget.centerOn( bbox );
     }
 
-    QPixmap pixmap = QPixmap::grabWidget( mapWidget );
+    QPixmap pixmap = QPixmap::grabWidget( &mapWidget );
     QDir( d->m_cacheDir.absolutePath() ).mkpath( "preview" );
     pixmap.save( d->m_cacheDir.absolutePath() + "/preview/" + timestamp + ".jpg" );
 
-    delete mapWidget;
     return pixmap;
 }
 
-QString OwncloudSyncBackend::routeName( const QString &timestamp )
+QString OwncloudSyncBackend::routeName( const QString &timestamp ) const
 {
     QFile file( d->m_cacheDir.absolutePath() + QString( "/%0.kml" ).arg( timestamp ) );
     file.open( QFile::ReadOnly );
@@ -421,13 +420,13 @@ void OwncloudSyncBackend::saveDownloadedRoute()
     emit routeDownloaded();
 }
 
-QUrl OwncloudSyncBackend::endpointUrl( const QString &endpoint )
+QUrl OwncloudSyncBackend::endpointUrl( const QString &endpoint ) const
 {
     QString endpointUrl = QString( "%0/%1" ).arg( d->m_cloudSyncManager->apiUrl().toString() ).arg( endpoint );
     return QUrl( endpointUrl );
 }
 
-QUrl OwncloudSyncBackend::endpointUrl( const QString &endpoint, const QString &parameter )
+QUrl OwncloudSyncBackend::endpointUrl( const QString &endpoint, const QString &parameter ) const
 {
     QString endpointUrl = QString( "%0/%1/%2" ).arg( d->m_cloudSyncManager->apiUrl().toString() ).arg( endpoint ).arg( parameter );
     return QUrl( endpointUrl );

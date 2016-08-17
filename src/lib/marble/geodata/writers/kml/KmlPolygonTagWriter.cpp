@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2012      Shou Ya <shouyatf@gmail.com>
+// Copyright 2014      Marek Hakala <hakala.marek@gmail.com>
 //
 
 #include "KmlPolygonTagWriter.h"
@@ -14,13 +15,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerLookAt(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataPolygonType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlPolygonTagWriter);
 
 bool KmlPolygonTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -28,6 +30,8 @@ bool KmlPolygonTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataPolygon *polygon = static_cast<const GeoDataPolygon*>( node );
 
     writer.writeStartElement( kml::kmlTag_Polygon );
+    KmlObjectTagWriter::writeIdentifiers( writer, polygon );
+    writer.writeOptionalElement( kml::kmlTag_extrude, QString::number( polygon->extrude() ), "0" );
 
     writer.writeStartElement( "outerBoundaryIs" );
     writeElement( &polygon->outerBoundary(), writer );

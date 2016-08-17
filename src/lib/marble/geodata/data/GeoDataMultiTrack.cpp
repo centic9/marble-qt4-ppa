@@ -36,11 +36,38 @@ GeoDataMultiTrack::~GeoDataMultiTrack()
 {
 }
 
-GeoDataMultiTrackPrivate* GeoDataMultiTrack::p() const
+GeoDataMultiTrackPrivate* GeoDataMultiTrack::p()
 {
     return static_cast<GeoDataMultiTrackPrivate*>(d);
 }
 
+const GeoDataMultiTrackPrivate* GeoDataMultiTrack::p() const
+{
+    return static_cast<GeoDataMultiTrackPrivate*>(d);
+}
+
+
+bool GeoDataMultiTrack::operator==( const GeoDataMultiTrack& other ) const
+{
+    if ( !equals(other) ) return false;
+
+    QVector<GeoDataTrack*>::const_iterator d_it = p()->m_vector.constBegin();
+    QVector<GeoDataTrack*>::const_iterator d_end = p()->m_vector.constEnd();
+    QVector<GeoDataTrack*>::const_iterator other_it = other.p()->m_vector.constBegin();
+    QVector<GeoDataTrack*>::const_iterator other_end = other.p()->m_vector.constEnd();
+
+
+    for (; d_it != d_end && other_it != other_end; ++d_it, ++other_it) {
+        if ( **d_it != **other_it ) return false;
+    }
+
+    return d_it == d_end && other_it == other_end;
+}
+
+bool GeoDataMultiTrack::operator!=( const GeoDataMultiTrack& other ) const
+{
+    return !this->operator==( other );
+}
 
 const GeoDataLatLonAltBox& GeoDataMultiTrack::latLonAltBox() const
 {
@@ -164,7 +191,7 @@ const GeoDataTrack* GeoDataMultiTrack::child( int i ) const
 /**
  * @brief returns the position of an item in the list
  */
-int GeoDataMultiTrack::childPosition( GeoDataTrack *object)
+int GeoDataMultiTrack::childPosition( const GeoDataTrack *object ) const
 {
     for ( int i=0; i< p()->m_vector.size(); i++ )
     {

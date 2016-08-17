@@ -1,0 +1,29 @@
+[Desktop Entry]
+Type=Service
+Name=KML Geographic Compressed Data
+Name[ca]=Dades geogràfiques comprimides KML
+Name[da]=KML geografiske komprimerede data
+Name[de]=KML-Geografiedaten (komprimiert)
+Name[en_GB]=KML Geographic Compressed Data
+Name[es]=Datos geográficos comprimidos KML
+Name[et]=KML tihendatud geograafilised andmed
+Name[fi]=Pakattu KML-paikkatieto
+Name[fr]=Données géographiques KML compressées
+Name[it]=Dati geografici compressi KML
+Name[nds]=Komprimeert KML-Geodaten
+Name[nl]=KML Geographic Compressed Data
+Name[pl]=Spakowane dane geograficzne KML
+Name[pt]=Dados Geográficos Comprimidos em KML
+Name[pt_BR]=Dados geográficos compactados em KML
+Name[sk]=Zemepisné komprimované dáta KML
+Name[sl]=Stisnjeni geografski podatki KML
+Name[sv]=KML komprimerad geografisk data
+Name[uk]=стиснені географічні дані KML
+Name[x-test]=xxKML Geographic Compressed Dataxx
+Name[zh_TW]=KML 地理壓縮資料
+
+X-KDE-ServiceTypes=ThumbCreator
+MimeType=application/vnd.google-earth.kmz;
+
+X-KDE-Library=marblethumbnail
+CacheThumbnail=true

@@ -185,6 +185,16 @@ enum SearchMode {
     AreaSearch ///< Search a certain region of a planet (e.g. visible region)
 };
 
+/**
+ * @brief
+ */
+enum RenderStatus {
+    Complete, ///< All data is there and up to date
+    WaitingForUpdate, ///< Rendering is based on complete, but outdated data, data update was requested
+    WaitingForData, ///< Rendering is based on no or partial data, more data was requested (e.g. pending network queries)
+    Incomplete ///< Data is missing and some error occurred when trying to retrieve it (e.g. network failure)
+};
+
 const int defaultLevelZeroColumns = 2;
 const int defaultLevelZeroRows = 1;
 
@@ -229,14 +239,14 @@ const qreal SEC2HOUR = 1.0 / HOUR2SEC;
 
 // String for about dialog and http user agent
 // FIXME: check if blanks are allowed in user agent version numbers
-const QString MARBLE_VERSION_STRING = QString::fromLatin1( "0.18.3 (stable release)" );
+const QString MARBLE_VERSION_STRING = QString::fromLatin1( "0.19.2 (stable release)" );
 
 // API Version id:
 // form : 0xMMmmpp
 //        MM = major revision.
 //        mm = minor revision.
 //        pp = patch revision.
-#define MARBLE_VERSION 0x001203
+#define MARBLE_VERSION 0x001302
 
 static const char NOT_AVAILABLE[] = QT_TR_NOOP("not available");
 

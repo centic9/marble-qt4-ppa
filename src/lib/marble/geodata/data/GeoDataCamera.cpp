@@ -37,6 +37,21 @@ GeoDataCamera& GeoDataCamera::operator=( const GeoDataCamera &other )
     return *this;
 }
 
+bool GeoDataCamera::operator==( const GeoDataCamera &other ) const
+{
+    return equals(other) &&
+           d->m_coordinates == other.d->m_coordinates &&
+           d->m_roll == other.d->m_roll &&
+           d->m_heading == other.d->m_heading &&
+           d->m_tilt == other.d->m_tilt &&
+           altitudeMode() == other.altitudeMode();
+}
+
+bool GeoDataCamera::operator!=( const GeoDataCamera &other ) const
+{
+    return !this->operator==(other);
+}
+
 GeoDataCamera::~GeoDataCamera()
 {
     if( !d->ref.deref() ) {
@@ -129,17 +144,6 @@ void GeoDataCamera::setTilt(qreal tilt)
 {
     detach();
     d->m_tilt = tilt;
-}
-
-AltitudeMode GeoDataCamera::altitudeMode() const
-{
-    return d->m_altitudeMode;
-}
-
-void GeoDataCamera::setAltitudeMode(const AltitudeMode altitudeMode)
-{
-    detach();
-    d->m_altitudeMode = altitudeMode;
 }
 
 void GeoDataCamera::detach()

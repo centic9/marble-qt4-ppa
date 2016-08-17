@@ -20,7 +20,7 @@ namespace Marble
 
 static GeoTagWriterRegistrar s_writerIconStyle(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataIconStyleType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
         new KmlIconStyleTagWriter );
 
 KmlIconStyleTagWriter::KmlIconStyleTagWriter() : KmlColorStyleTagWriter( kml::kmlTag_IconStyle )
@@ -53,7 +53,7 @@ bool KmlIconStyleTagWriter::writeMid( const GeoNode *node, GeoWriter& writer ) c
     return true;
 }
 
-QString KmlIconStyleTagWriter::unitString(GeoDataHotSpot::Units unit) const
+QString KmlIconStyleTagWriter::unitString(GeoDataHotSpot::Units unit)
 {
     switch (unit) {
     case GeoDataHotSpot::Pixels: return "pixels";

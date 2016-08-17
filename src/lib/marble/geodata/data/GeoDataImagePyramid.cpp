@@ -53,6 +53,20 @@ GeoDataImagePyramid &GeoDataImagePyramid::operator=( const GeoDataImagePyramid &
     return *this;
 }
 
+bool GeoDataImagePyramid::operator==( const GeoDataImagePyramid& other )
+{
+    return equals(other) &&
+           d->m_tileSize == other.d->m_tileSize &&
+           d->m_maxWidth == other.d->m_maxWidth &&
+           d->m_maxHeight == other.d->m_maxHeight &&
+           d->m_gridOrigin == other.d->m_gridOrigin;
+}
+
+bool GeoDataImagePyramid::operator!=( const GeoDataImagePyramid& other )
+{
+    return !this->operator==(other);
+}
+
 GeoDataImagePyramid::~GeoDataImagePyramid()
 {
     delete d;

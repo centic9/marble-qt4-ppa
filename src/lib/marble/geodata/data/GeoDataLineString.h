@@ -292,6 +292,13 @@ class GEODATA_EXPORT GeoDataLineString : public GeoDataGeometry
 
 
 /*!
+    \brief Returns true/false depending on whether this and other are/are not equal.
+*/
+    bool operator==( const GeoDataLineString &other ) const;
+    bool operator!=( const GeoDataLineString &other ) const;
+
+
+/*!
     \brief Returns an iterator that points to the begin of the LineString.
 */
     QVector<GeoDataCoordinates>::Iterator begin();
@@ -356,10 +363,12 @@ class GEODATA_EXPORT GeoDataLineString : public GeoDataGeometry
 */
     virtual void unpack( QDataStream& stream );
 
-
  protected:
-    GeoDataLineStringPrivate *p() const;
     GeoDataLineString(GeoDataLineStringPrivate* priv);
+
+ private:
+    GeoDataLineStringPrivate *p();
+    const GeoDataLineStringPrivate *p() const;
 };
 
 }

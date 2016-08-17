@@ -202,7 +202,7 @@ QVector<OsmPlacemark> OsmDatabase::find( const DatabaseQuery &userQuery )
     mDebug() << "Offline OSM search query took" << timer.elapsed() << "ms for" << result.count() << "results.";
 
     qSort( result.begin(), result.end() );
-    unique( result );
+    makeUnique( result );
 
     if ( userQuery.position().isValid() ) {
         const PlacemarkSmallerDistance placemarkSmallerDistance( userQuery.position() );
@@ -219,7 +219,7 @@ QVector<OsmPlacemark> OsmDatabase::find( const DatabaseQuery &userQuery )
     return result;
 }
 
-void OsmDatabase::unique( QVector<OsmPlacemark> &placemarks ) const
+void OsmDatabase::makeUnique( QVector<OsmPlacemark> &placemarks )
 {
     for ( int i=1; i<placemarks.size(); ++i ) {
         if ( placemarks[i-1] == placemarks[i] ) {
@@ -229,7 +229,7 @@ void OsmDatabase::unique( QVector<OsmPlacemark> &placemarks ) const
     }
 }
 
-QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataCoordinates &b ) const
+QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataCoordinates &b )
 {
     qreal distance = EARTH_RADIUS * distanceSphere( a, b);
 
@@ -288,7 +288,7 @@ QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataC
     return fuzzyDistance + ' ' + heading;
 }
 
-qreal OsmDatabase::bearing( const GeoDataCoordinates &a, const GeoDataCoordinates &b ) const
+qreal OsmDatabase::bearing( const GeoDataCoordinates &a, const GeoDataCoordinates &b )
 {
     qreal delta = b.longitude() - a.longitude();
     qreal lat1 = a.latitude();
@@ -297,7 +297,7 @@ qreal OsmDatabase::bearing( const GeoDataCoordinates &a, const GeoDataCoordinate
                        cos( lat1 ) * sin( lat2 ) - sin( lat1 ) * cos( lat2 ) * cos ( delta ) ), 2 * M_PI );
 }
 
-QString OsmDatabase::wildcardQuery( const QString &term ) const
+QString OsmDatabase::wildcardQuery( const QString &term )
 {
     QString result = term;
     if ( term.contains( '*' ) ) {

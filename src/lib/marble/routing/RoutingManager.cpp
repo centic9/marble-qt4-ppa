@@ -28,6 +28,7 @@
 #include "PluginManager.h"
 #include "PositionProviderPlugin.h"
 #include "RoutingRunnerManager.h"
+#include <KmlElementDictionary.h>
 
 #include <QFile>
 #include <QMessageBox>
@@ -80,7 +81,7 @@ public:
 
     GeoDataFolder* routeRequest() const;
 
-    QString stateFile( const QString &name = QString( "route.kml" ) ) const;
+    static QString stateFile( const QString &name = QString( "route.kml" ) );
 
     void saveRoute( const QString &filename );
 
@@ -125,7 +126,7 @@ GeoDataFolder* RoutingManagerPrivate::routeRequest() const
     return result;
 }
 
-QString RoutingManagerPrivate::stateFile( const QString &name) const
+QString RoutingManagerPrivate::stateFile( const QString &name)
 {
     QString const subdir = "routing";
     QDir dir( MarbleDirs::localPath() );
@@ -146,7 +147,7 @@ QString RoutingManagerPrivate::stateFile( const QString &name) const
 void RoutingManagerPrivate::saveRoute(const QString &filename)
 {
     GeoWriter writer;
-    writer.setDocumentType( "http://earth.google.com/kml/2.2" );
+    writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
 
     QMutexLocker locker( &m_fileMutex );
     QFile file( filename );
@@ -388,14 +389,16 @@ void RoutingManager::setGuidanceModeEnabled( bool enabled )
             text += ' ' + tr( "Please use common sense while navigating." ) + "</p>";
             text += "<p>" + tr( "The Marble development team wishes you a pleasant and safe journey." ) + "</p>";
             QPointer<QMessageBox> messageBox = new QMessageBox( QMessageBox::Information, tr( "Guidance Mode - Marble" ), text, QMessageBox::Ok );
-            QCheckBox showAgain( tr( "Show again" ) );
-            showAgain.setChecked( true );
-            showAgain.blockSignals( true ); // otherwise it'd close the dialog
-            messageBox->addButton( &showAgain, QMessageBox::ActionRole );
-            bool const smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
+            QCheckBox *showAgain = new QCheckBox( tr( "Show again" ) );
+            showAgain->setChecked( true );
+            showAgain->blockSignals( true ); // otherwise it'd close the dialog
+            messageBox->addButton( showAgain, QMessageBox::ActionRole );
+            const bool smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
             messageBox->resize( 380, smallScreen ? 400 : 240 );
             messageBox->exec();
-            d->m_guidanceModeWarning = showAgain.isChecked();
+            if ( !messageBox.isNull() ) {
+                d->m_guidanceModeWarning = showAgain->isChecked();
+            }
             delete messageBox;
         }
     } else {
@@ -489,7 +492,7 @@ void RoutingManager::setRouteColorStandard( QColor color )
     d->m_routeColorStandard = color;
 }
 
-QColor RoutingManager::routeColorStandard()
+QColor RoutingManager::routeColorStandard() const
 {
     return d->m_routeColorStandard;
 }
@@ -499,7 +502,7 @@ void RoutingManager::setRouteColorHighlighted( QColor color )
     d->m_routeColorHighlighted = color;
 }
 
-QColor RoutingManager::routeColorHighlighted()
+QColor RoutingManager::routeColorHighlighted() const
 {
     return d->m_routeColorHighlighted;
 }
@@ -509,7 +512,7 @@ void RoutingManager::setRouteColorAlternative( QColor color )
     d->m_routeColorAlternative = color;
 }
 
-QColor RoutingManager::routeColorAlternative()
+QColor RoutingManager::routeColorAlternative() const
 {
     return d->m_routeColorAlternative;
 }

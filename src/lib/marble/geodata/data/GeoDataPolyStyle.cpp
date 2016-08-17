@@ -34,6 +34,8 @@ class GeoDataPolyStylePrivate
     /// whether to draw the outline
     bool  m_outline;
     Qt::BrushStyle m_brushStyle;
+    /// The value of colorIndex will be maped to a color for brush
+    quint8 m_colorIndex;
 };
 
 GeoDataPolyStyle::GeoDataPolyStyle()
@@ -62,6 +64,22 @@ GeoDataPolyStyle& GeoDataPolyStyle::operator=( const GeoDataPolyStyle& other )
     GeoDataColorStyle::operator=( other );
     *d = *other.d;
     return *this;
+}
+
+bool GeoDataPolyStyle::operator==( const GeoDataPolyStyle &other ) const
+{
+    if ( GeoDataColorStyle::operator!=( other ) ) {
+        return false;
+    }
+
+    return d->m_fill == other.d->m_fill &&
+           d->m_outline == other.d->m_outline &&
+           d->m_brushStyle == other.d->m_brushStyle;
+}
+
+bool GeoDataPolyStyle::operator!=( const GeoDataPolyStyle &other ) const
+{
+    return !this->operator==( other );
 }
 
 const char* GeoDataPolyStyle::nodeType() const
@@ -99,20 +117,32 @@ Qt::BrushStyle GeoDataPolyStyle::brushStyle() const
     return d->m_brushStyle;
 }
 
+void GeoDataPolyStyle::setColorIndex( quint8 colorIndex )
+{
+    d->m_colorIndex = colorIndex;
+}
+
+quint8 GeoDataPolyStyle::colorIndex() const
+{
+    return d->m_colorIndex;
+}
+
 void GeoDataPolyStyle::pack( QDataStream& stream ) const
 {
     GeoDataColorStyle::pack( stream );
-    
+
     stream << d->m_fill;
     stream << d->m_outline;
+    stream << d->m_colorIndex;
 }
 
 void GeoDataPolyStyle::unpack( QDataStream& stream )
 {
     GeoDataColorStyle::unpack( stream );
-    
+
     stream >> d->m_fill;
     stream >> d->m_outline;
+    stream >> d->m_colorIndex;
 }
 
 }

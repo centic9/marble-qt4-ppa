@@ -17,12 +17,13 @@
 #include "GeoWriter.h"
 #include "KmlGroundOverlayWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerCamera( GeoTagWriter::QualifiedName(GeoDataTypes::GeoDataCameraType,
-                                                                            kml::kmlTag_nameSpace22),
+                                                                            kml::kmlTag_nameSpaceOgc22),
                                                new KmlCameraTagWriter() );
 
 
@@ -31,6 +32,7 @@ bool KmlCameraTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataCamera *camera = static_cast<const GeoDataCamera*>(node);
 
     writer.writeStartElement( kml::kmlTag_Camera );
+    KmlObjectTagWriter::writeIdentifiers( writer, camera );
 
     if (camera->timeStamp().when().isValid()) {
         writer.writeStartElement("gx:TimeStamp");

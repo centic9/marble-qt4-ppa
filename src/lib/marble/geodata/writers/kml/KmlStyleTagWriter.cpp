@@ -14,13 +14,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerStyle(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataStyleType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlStyleTagWriter );
 
 bool KmlStyleTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -28,14 +29,14 @@ bool KmlStyleTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
     const GeoDataStyle *style = static_cast<const GeoDataStyle*>( node );
 
     writer.writeStartElement( kml::kmlTag_Style );
-    writer.writeAttribute( "id", style->styleId() );
+    KmlObjectTagWriter::writeIdentifiers( writer, style );
 
-    writeElement( &style->balloonStyle(), writer );
     writeElement( &style->iconStyle(), writer );
     writeElement( &style->labelStyle(), writer );
     writeElement( &style->lineStyle(), writer );
-    writeElement( &style->listStyle(), writer );
     writeElement( &style->polyStyle(), writer );
+    writeElement( &style->balloonStyle(), writer );
+    writeElement( &style->listStyle(), writer );
 
     writer.writeEndElement();
 

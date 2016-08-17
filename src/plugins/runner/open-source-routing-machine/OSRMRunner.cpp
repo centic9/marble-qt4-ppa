@@ -129,12 +129,12 @@ void OSRMRunner::get()
              this, SLOT(handleError(QNetworkReply::NetworkError)), Qt::DirectConnection );
 }
 
-void OSRMRunner::append(QString *input, const QString &key, const QString &value) const
+void OSRMRunner::append(QString *input, const QString &key, const QString &value)
 {
     *input += '&' + key + '=' + value;
 }
 
-GeoDataLineString *OSRMRunner::decodePolyline( const QString &geometry ) const
+GeoDataLineString *OSRMRunner::decodePolyline( const QString &geometry )
 {
     // See https://developers.google.com/maps/documentation/utilities/polylinealgorithm
     GeoDataLineString* lineString = new GeoDataLineString;
@@ -157,7 +157,7 @@ GeoDataLineString *OSRMRunner::decodePolyline( const QString &geometry ) const
     return lineString;
 }
 
-RoutingInstruction::TurnType OSRMRunner::parseTurnType( const QString &instruction ) const
+RoutingInstruction::TurnType OSRMRunner::parseTurnType( const QString &instruction )
 {   
     if ( instruction == "1" ) {
         return RoutingInstruction::Straight;
@@ -197,7 +197,7 @@ RoutingInstruction::TurnType OSRMRunner::parseTurnType( const QString &instructi
     return RoutingInstruction::Unknown;
 }
 
-GeoDataDocument *OSRMRunner::parse( const QByteArray &input )
+GeoDataDocument *OSRMRunner::parse( const QByteArray &input ) const
 {
     QScriptEngine engine;
     // Qt requires parentheses around json code

@@ -54,7 +54,7 @@ class PositionTrackingPrivate
 
     void updateStatus();
 
-    QString statusFile();
+    static QString statusFile();
 
     PositionTracking *const q;
 
@@ -160,16 +160,16 @@ PositionTracking::PositionTracking( GeoDataTreeModel *model )
     lineStyle.setColor( transparentRed );
     lineStyle.setWidth( 4 );
     style.setLineStyle(lineStyle);
-    style.setStyleId("track");
+    style.setId("track");
 
     GeoDataStyleMap styleMap;
-    styleMap.setStyleId("map-track");
-    styleMap.insert("normal", QString("#").append(style.styleId()));
+    styleMap.setId("map-track");
+    styleMap.insert("normal", QString("#").append(style.id()));
     d->m_document.addStyleMap(styleMap);
     d->m_document.addStyle(style);
     d->m_document.append( d->m_currentTrackPlacemark );
 
-    d->m_currentTrackPlacemark->setStyleUrl(QString("#").append(styleMap.styleId()));
+    d->m_currentTrackPlacemark->setStyleUrl(QString("#").append(styleMap.id()));
 
     d->m_treeModel->addDocument( &d->m_document );
 }
@@ -261,7 +261,7 @@ bool PositionTracking::saveTrack( const QString& fileName )
 
     GeoWriter writer;
     //FIXME: a better way to do this?
-    writer.setDocumentType( kml::kmlTag_nameSpace22 );
+    writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
 
     GeoDataDocument *document = new GeoDataDocument;
     QFileInfo fileInfo( fileName );

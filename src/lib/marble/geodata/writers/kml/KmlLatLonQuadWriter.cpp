@@ -14,13 +14,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerLatLonQuad(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataLatLonQuadType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlLatLonQuadWriter );
 
 bool KmlLatLonQuadWriter::write( const GeoNode *node,
@@ -30,6 +31,7 @@ bool KmlLatLonQuadWriter::write( const GeoNode *node,
 
     if ( latLonQuad->isValid() ) {
         writer.writeStartElement( kml::kmlTag_nameSpaceGx22, kml::kmlTag_LatLonQuad );
+        KmlObjectTagWriter::writeIdentifiers( writer, latLonQuad );
 
         writer.writeStartElement( kml::kmlTag_coordinates );
 

@@ -47,13 +47,13 @@ private Q_SLOTS:
     void get();
 
 private:
-    void append( QString* input, const QString &key, const QString &value ) const;
+    static void append( QString* input, const QString &key, const QString &value );
 
-    GeoDataLineString* decodePolyline( const QString &geometry ) const;
+    static GeoDataLineString* decodePolyline( const QString &geometry );
 
-    RoutingInstruction::TurnType parseTurnType( const QString &instruction ) const;
+    static RoutingInstruction::TurnType parseTurnType( const QString &instruction );
 
-    GeoDataDocument* parse( const QByteArray &input );
+    GeoDataDocument* parse( const QByteArray &input ) const;
 
     QNetworkAccessManager m_networkAccessManager;
 

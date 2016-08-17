@@ -30,6 +30,7 @@
 
 #include "marble_export.h"
 #include "GeoDataCoordinates.h"       // In geodata/data/
+#include "RenderState.h"
 
 // Qt
 class QAbstractItemModel;
@@ -389,7 +390,7 @@ class MARBLE_EXPORT MarbleMap : public QObject
 
     QFont defaultFont() const;
 
-    const TextureLayer *textureLayer() const;
+    TextureLayer *textureLayer() const;
 
     /**
      * @brief Add a layer to be included in rendering.
@@ -400,6 +401,10 @@ class MARBLE_EXPORT MarbleMap : public QObject
      * @brief Remove a layer from being included in rendering.
      */
     void removeLayer( LayerInterface *layer );
+
+    RenderStatus renderStatus() const;
+
+    RenderState renderState() const;
 
  public Q_SLOTS:
 
@@ -680,6 +685,14 @@ class MARBLE_EXPORT MarbleMap : public QObject
      * @brief Signal that a render item has been initialized
      */
     void renderPluginInitialized( RenderPlugin *renderPlugin );
+
+    /**
+     * @brief Emitted when the layer rendering status has changed
+     * @param status New render status
+     */
+    void renderStatusChanged( RenderStatus status );
+
+    void renderStateChanged( const RenderState &state );
 
  protected:
 

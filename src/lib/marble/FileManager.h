@@ -53,13 +53,13 @@ class FileManager : public QObject
     /**
      * Loads a new file into the manager.
      */
-    void addFile( const QString &fileName, const QString &property, GeoDataStyle* style, DocumentRole role, bool recenter = false );
+    void addFile( const QString &fileName, const QString &property, const GeoDataStyle* style, DocumentRole role, bool recenter = false );
 
 
     /**
      * Loads multiple files into the manager.
      */
-    void addFile( const QStringList &fileNames, const QStringList &propertyList, const QList<GeoDataStyle*> &styles, DocumentRole role );
+    void addFile( const QStringList &fileNames, const QStringList &propertyList, const QList<const GeoDataStyle*> &styles, DocumentRole role );
 
 
     /**
@@ -72,12 +72,14 @@ class FileManager : public QObject
     */
     void addData( const QString &name, const QString &data, DocumentRole role );
 
-    void saveFile( GeoDataDocument *document );
-    void closeFile( GeoDataDocument *document );
+    void saveFile( const QString &fileName, const GeoDataDocument *document );
+    void closeFile( const GeoDataDocument *document );
 
     int size() const;
     GeoDataDocument *at( const QString &key );
 
+    /** Returns the number of files being opened at the moment */
+    int pendingFiles() const;
 
  Q_SIGNALS:
     void fileAdded( const QString &key );

@@ -131,7 +131,7 @@ private Q_SLOTS:
      * executes print dialog for printing its content.
      *
      */
-    void printContent();
+    void printContent() const;
 
     /**
      * @brief Updates Back Button (web surfing history)
@@ -168,7 +168,7 @@ Q_SIGNALS:
 
 private:
     QPixmap pixmap( const QString &imageid ) const;
-    void colorize( QImage &img, const QColor &col ) const;
+    static void colorize( QImage &img, const QColor &col );
     QWidget* transform( QPoint &point ) const;
 
     QWidget *m_widget;

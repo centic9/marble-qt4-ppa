@@ -27,6 +27,8 @@ public:
     GeoDataCamera(const GeoDataCamera& other);
 
     GeoDataCamera& operator=(const GeoDataCamera &other);
+    bool operator==( const GeoDataCamera &other ) const;
+    bool operator!=( const GeoDataCamera &other ) const;
 
     ~GeoDataCamera();
 
@@ -97,10 +99,6 @@ public:
     qreal tilt() const;
 
     void setTilt(qreal tilt);
-
-    AltitudeMode altitudeMode() const;
-
-    void setAltitudeMode(const AltitudeMode altitudeMode);
 
     void setCoordinates( const GeoDataCoordinates& coordinates );
 

@@ -37,7 +37,12 @@ GeoDataMultiGeometry::~GeoDataMultiGeometry()
 {
 }
 
-GeoDataMultiGeometryPrivate* GeoDataMultiGeometry::p() const
+GeoDataMultiGeometryPrivate* GeoDataMultiGeometry::p()
+{
+    return static_cast<GeoDataMultiGeometryPrivate*>(d);
+}
+
+const GeoDataMultiGeometryPrivate* GeoDataMultiGeometry::p() const
 {
     return static_cast<GeoDataMultiGeometryPrivate*>(d);
 }
@@ -164,7 +169,7 @@ const GeoDataGeometry* GeoDataMultiGeometry::child( int i ) const
 /**
  * @brief returns the position of an item in the list
  */
-int GeoDataMultiGeometry::childPosition( GeoDataGeometry *object)
+int GeoDataMultiGeometry::childPosition( const GeoDataGeometry *object ) const
 {
     for ( int i=0; i< p()->m_vector.size(); i++ )
     {

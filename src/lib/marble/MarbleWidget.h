@@ -28,6 +28,8 @@
 #include "MarbleGlobal.h"             // types needed in all of marble.
 #include "marble_export.h"
 #include "GeoDataFolder.h"
+#include "RenderState.h"
+
 // Qt
 class QAbstractItemModel;
 class QItemSelectionModel;
@@ -139,6 +141,8 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
     Q_PROPERTY(bool showRivers   READ showRivers      WRITE setShowRivers)
     Q_PROPERTY(bool showLakes    READ showLakes       WRITE setShowLakes)
 
+    Q_PROPERTY( RenderStatus renderStatus READ renderStatus NOTIFY renderStatusChanged )
+
     Q_PROPERTY(quint64 volatileTileCacheLimit    READ volatileTileCacheLimit    WRITE setVolatileTileCacheLimit)
 
  public:
@@ -161,7 +165,8 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
     /**
      * @brief Return the model that this view shows.
      */
-    MarbleModel *model() const;
+    MarbleModel *model();
+    const MarbleModel *model() const;
 
     ViewportParams *viewport();
     const ViewportParams *viewport() const;
@@ -583,6 +588,17 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
     // @deprecated Please use setZoom
     //MARBLE_DEPRECATED( void zoomView( int zoom, FlyToMode mode = Instant ) );
 
+    /**
+     * Summarized render status of the current map view
+     * @see renderState
+     */
+    RenderStatus renderStatus() const;
+
+    /**
+     * Detailed render status of the current map view
+     */
+    RenderState renderState() const;
+
  public Q_SLOTS:
 
     /// @name Position management slots
@@ -981,7 +997,7 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
 
     void setInputEnabled( bool );
 
-    const TextureLayer *textureLayer() const;
+    TextureLayer *textureLayer() const;
 
     //@}
 
@@ -1031,6 +1047,14 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
      * when the user moves the map around or zooms.
      */
     void visibleLatLonAltBoxChanged( const GeoDataLatLonAltBox& visibleLatLonAltBox );
+
+    /**
+     * @brief Emitted when the layer rendering status has changed
+     * @param status New render status
+     */
+    void renderStatusChanged( RenderStatus status );
+
+    void renderStateChanged( const RenderState &state );
 
  protected:
     /**

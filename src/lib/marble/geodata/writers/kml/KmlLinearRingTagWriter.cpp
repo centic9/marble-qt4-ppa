@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2014      Marek Hakala <hakala.marek@gmail.com>
 //
 
 #include "KmlLinearRingTagWriter.h"
@@ -14,13 +15,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerLookAt(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataLinearRingType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlLinearRingTagWriter );
 
 bool KmlLinearRingTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -30,6 +32,8 @@ bool KmlLinearRingTagWriter::write( const GeoNode *node, GeoWriter& writer ) con
     if ( ring->size() > 1 )
     {
         writer.writeStartElement( kml::kmlTag_LinearRing );
+        KmlObjectTagWriter::writeIdentifiers( writer, ring );
+        writer.writeOptionalElement( kml::kmlTag_extrude, QString::number( ring->extrude() ), "0" );
         writer.writeStartElement( "coordinates" );
 
         for ( int i = 0; i < ring->size(); ++i )

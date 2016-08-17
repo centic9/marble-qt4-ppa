@@ -50,6 +50,20 @@ GeoDataBalloonStyle &GeoDataBalloonStyle::operator=( const GeoDataBalloonStyle &
     return *this;
 }
 
+bool GeoDataBalloonStyle::operator==( const GeoDataBalloonStyle &other ) const
+{
+    return equals(other) &&
+           d->m_bgColor == other.d->m_bgColor &&
+           d->m_mode == other.d->m_mode &&
+           d->m_text == other.d->m_text &&
+           d->m_textColor == other.d->m_textColor;
+}
+
+bool GeoDataBalloonStyle::operator!=( const GeoDataBalloonStyle &other ) const
+{
+    return !this->operator==(other);
+}
+
 GeoDataBalloonStyle::~GeoDataBalloonStyle()
 {
     delete d;

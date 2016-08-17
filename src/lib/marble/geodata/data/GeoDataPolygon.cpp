@@ -36,9 +36,47 @@ GeoDataPolygon::~GeoDataPolygon()
 #endif
 }
 
-GeoDataPolygonPrivate* GeoDataPolygon::p() const
+GeoDataPolygonPrivate* GeoDataPolygon::p()
 {
     return static_cast<GeoDataPolygonPrivate*>(d);
+}
+
+const GeoDataPolygonPrivate* GeoDataPolygon::p() const
+{
+    return static_cast<GeoDataPolygonPrivate*>(d);
+}
+
+bool GeoDataPolygon::operator==( const GeoDataPolygon &other ) const
+{
+    const GeoDataPolygonPrivate *d = p();
+    const GeoDataPolygonPrivate *other_d = other.p();
+
+    if ( !GeoDataGeometry::equals(other) ||
+         tessellate() != other.tessellate() ||
+         isClosed() != other.isClosed() ||
+         d->inner.size() != other_d->inner.size() ||
+         d->outer != other_d->outer ) {
+        return false;
+    }
+
+    QVector<GeoDataLinearRing>::const_iterator itBound = d->inner.constBegin();
+    QVector<GeoDataLinearRing>::const_iterator itEnd = d->inner.constEnd();
+    QVector<GeoDataLinearRing>::const_iterator otherItBound = other_d->inner.constBegin();
+    QVector<GeoDataLinearRing>::const_iterator otherItEnd= other_d->inner.constEnd();
+
+    for ( ; itBound != itEnd && otherItBound != otherItEnd; ++itBound, ++otherItBound ) {
+        if ( *itBound != *itBound) {
+            return false;
+        }
+    }
+
+    Q_ASSERT ( itBound == itEnd && otherItBound == otherItEnd );
+    return true;
+}
+
+bool GeoDataPolygon::operator!=( const GeoDataPolygon &other ) const
+{
+    return !this->operator==(other);
 }
 
 bool GeoDataPolygon::isClosed() const

@@ -6,6 +6,7 @@
 // the source code.
 //
 // Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2014      Marek Hakala <hakala.marek@gmail.com>
 //
 
 #include "KmlLineStringTagWriter.h"
@@ -14,13 +15,14 @@
 #include "GeoDataTypes.h"
 #include "GeoWriter.h"
 #include "KmlElementDictionary.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
 
 static GeoTagWriterRegistrar s_writerLookAt(
     GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataLineStringType,
-                                 kml::kmlTag_nameSpace22 ),
+                                 kml::kmlTag_nameSpaceOgc22 ),
     new KmlLineStringTagWriter );
 
 bool KmlLineStringTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
@@ -30,6 +32,8 @@ bool KmlLineStringTagWriter::write( const GeoNode *node, GeoWriter& writer ) con
     if ( lineString->size() > 1 )
     {
         writer.writeStartElement( kml::kmlTag_LineString );
+        KmlObjectTagWriter::writeIdentifiers( writer, lineString );
+        writer.writeOptionalElement( kml::kmlTag_extrude, QString::number( lineString->extrude() ), "0" );
         writer.writeStartElement( "coordinates" );
 
         // Write altitude for *all* elements, if *any* element

@@ -17,14 +17,21 @@
 #include "KmlElementDictionary.h"
 #include "KmlLatLonAltBoxWriter.h"
 #include "KmlLodTagWriter.h"
+#include "KmlObjectTagWriter.h"
 
 namespace Marble
 {
+
+static GeoTagWriterRegistrar s_writerRegion(
+    GeoTagWriter::QualifiedName( GeoDataTypes::GeoDataRegionType,
+                                 kml::kmlTag_nameSpaceOgc22 ),
+    new KmlRegionTagWriter);
 
 bool KmlRegionTagWriter::write( const GeoNode *node, GeoWriter& writer ) const
 {
     const GeoDataRegion *region = static_cast<const GeoDataRegion*>( node );
     writer.writeStartElement( kml::kmlTag_Region );
+    KmlObjectTagWriter::writeIdentifiers( writer, region );
     writeElement( &region->latLonAltBox(), writer );
     writeElement( &region->lod(), writer );
     writer.writeEndElement();

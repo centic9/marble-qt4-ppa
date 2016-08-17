@@ -46,7 +46,12 @@ GeoDataLineString::~GeoDataLineString()
 #endif
 }
 
-GeoDataLineStringPrivate* GeoDataLineString::p() const
+GeoDataLineStringPrivate* GeoDataLineString::p()
+{
+    return static_cast<GeoDataLineStringPrivate*>(d);
+}
+
+const GeoDataLineStringPrivate* GeoDataLineString::p() const
 {
     return static_cast<GeoDataLineStringPrivate*>(d);
 }
@@ -55,7 +60,7 @@ void GeoDataLineStringPrivate::interpolateDateLine( const GeoDataCoordinates & p
                                                     const GeoDataCoordinates & currentCoords,
                                                     GeoDataCoordinates & previousAtDateLine,
                                                     GeoDataCoordinates & currentAtDateLine,
-                                                    TessellationFlags f )
+                                                    TessellationFlags f ) const
 {
     GeoDataCoordinates dateLineCoords;
 
@@ -84,7 +89,7 @@ void GeoDataLineStringPrivate::interpolateDateLine( const GeoDataCoordinates & p
 
 GeoDataCoordinates GeoDataLineStringPrivate::findDateLine( const GeoDataCoordinates & previousCoords,
                                              const GeoDataCoordinates & currentCoords,
-                                             int recursionCounter )
+                                             int recursionCounter ) const
 {
     int currentSign = ( currentCoords.longitude() < 0.0 ) ? -1 : +1 ;
     int previousSign = ( previousCoords.longitude() < 0.0 ) ? -1 : +1 ;
@@ -259,6 +264,37 @@ GeoDataLineString& GeoDataLineString::operator << ( const GeoDataLineString& val
     return *this;
 }
 
+bool GeoDataLineString::operator==( const GeoDataLineString &other ) const
+{
+    if ( !GeoDataGeometry::equals(other) ||
+          size() != other.size() ||
+          tessellate() != other.tessellate() ) {
+        return false;
+    }
+
+    const GeoDataLineStringPrivate* d = p();
+    const GeoDataLineStringPrivate* other_d = other.p();
+
+    QVector<GeoDataCoordinates>::const_iterator itCoords = d->m_vector.constBegin();
+    QVector<GeoDataCoordinates>::const_iterator otherItCoords = other_d->m_vector.constBegin();
+    QVector<GeoDataCoordinates>::const_iterator itEnd = d->m_vector.constEnd();
+    QVector<GeoDataCoordinates>::const_iterator otherItEnd = other_d->m_vector.constEnd();
+
+    for ( ; itCoords != itEnd && otherItCoords != otherItEnd; ++itCoords, ++otherItCoords ) {
+        if ( *itCoords != *otherItCoords ) {
+            return false;
+        }
+    }
+
+    Q_ASSERT ( itCoords == itEnd && otherItCoords == otherItEnd );
+    return true;
+}
+
+bool GeoDataLineString::operator!=( const GeoDataLineString &other ) const
+{
+    return !this->operator==(other);
+}
+
 void GeoDataLineString::clear()
 {
     GeoDataGeometry::detach();
@@ -376,7 +412,7 @@ GeoDataLineString GeoDataLineString::toPoleCorrected() const
     }
 }
 
-void GeoDataLineStringPrivate::toPoleCorrected( const GeoDataLineString& q, GeoDataLineString& poleCorrected )
+void GeoDataLineStringPrivate::toPoleCorrected( const GeoDataLineString& q, GeoDataLineString& poleCorrected ) const
 {
     poleCorrected.setTessellationFlags( q.tessellationFlags() );
 
@@ -445,7 +481,7 @@ void GeoDataLineStringPrivate::toPoleCorrected( const GeoDataLineString& q, GeoD
 void GeoDataLineStringPrivate::toDateLineCorrected(
                            const GeoDataLineString & q,
                            QVector<GeoDataLineString*> & lineStrings
-                           )
+                           ) const
 {
     const bool isClosed = q.isClosed();
 

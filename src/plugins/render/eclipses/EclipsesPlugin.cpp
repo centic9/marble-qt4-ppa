@@ -35,7 +35,6 @@ EclipsesPlugin::EclipsesPlugin()
     : RenderPlugin( 0 ),
       m_isInitialized( false ),
       m_marbleWidget( 0 ),
-      m_clock( 0 ),
       m_model( 0 ),
       m_eclipsesActionGroup( 0 ),
       m_eclipsesMenuAction( 0 ),
@@ -53,7 +52,6 @@ EclipsesPlugin::EclipsesPlugin( const MarbleModel *marbleModel )
     : RenderPlugin( marbleModel ),
      m_isInitialized( false ),
      m_marbleWidget( 0 ),
-     m_clock( 0 ),
      m_model( 0 ),
      m_eclipsesActionGroup( 0 ),
      m_eclipsesMenuAction( 0 ),
@@ -206,6 +204,9 @@ void EclipsesPlugin::initialize()
     // initialize eclipses model
     m_model = new EclipsesModel( marbleModel() );
 
+    connect( marbleModel()->clock(), SIGNAL(timeChanged()),
+             this, SLOT(updateEclipses()) );
+
     m_isInitialized = true;
 
     readSettings();
@@ -227,9 +228,6 @@ bool EclipsesPlugin::eventFilter( QObject *object, QEvent *e )
         connect( widget, SIGNAL(themeChanged(QString)),
                  this, SLOT(updateMenuItemState()) );
         m_marbleWidget = widget;
-        m_clock = m_marbleWidget->model()->clock();
-        connect( m_clock, SIGNAL(timeChanged()),
-                 this, SLOT(updateEclipses()) );
     }
 
     return RenderPlugin::eventFilter(object, e);
@@ -255,9 +253,8 @@ bool EclipsesPlugin::render( GeoPainter *painter,
     return true;
 }
 
-bool EclipsesPlugin::renderItem( GeoPainter *painter, EclipsesItem *item )
+bool EclipsesPlugin::renderItem( GeoPainter *painter, EclipsesItem *item ) const
 {
-    QList<GeoDataCoordinates>::const_iterator ci;
     int phase = item->phase();
 
     // Draw full penumbra shadow cone
@@ -488,8 +485,7 @@ void EclipsesPlugin::showEclipse( int year, int index )
     Q_ASSERT( item );
 
     if( item ) {
-        Q_ASSERT( m_clock );
-        m_clock->setDateTime( item->dateMaximum() );
+        m_marbleWidget->model()->clock()->setDateTime( item->dateMaximum() );
         m_marbleWidget->centerOn( item->maxLocation() );
     }
 }

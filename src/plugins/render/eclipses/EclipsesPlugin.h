@@ -27,7 +27,6 @@ namespace Marble
 {
 
 class MarbleWidget;
-class MarbleClock;
 class EclipsesModel;
 class EclipsesItem;
 class EclipsesBrowserDialog;
@@ -86,7 +85,6 @@ protected:
     bool eventFilter( QObject *object, QEvent *e );
 
 private Q_SLOTS:
-    bool renderItem( GeoPainter *painter, EclipsesItem *item );
     void readSettings();
     void writeSettings();
     void updateSettings();
@@ -130,10 +128,12 @@ private Q_SLOTS:
     void updateMenuItemState();
 
 private:
+    bool renderItem( GeoPainter *painter, EclipsesItem *item ) const;
+
+private:
     bool m_isInitialized;
 
     MarbleWidget *m_marbleWidget;
-    MarbleClock *m_clock;
 
     EclipsesModel *m_model;
     QList<QActionGroup*> m_actionGroups;

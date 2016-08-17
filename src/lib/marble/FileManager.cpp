@@ -24,6 +24,8 @@
 #include "GeoDataDocument.h"
 #include "GeoDataLatLonAltBox.h"
 #include "GeoDataStyle.h"
+#include "GeoWriter.h"
+#include <KmlElementDictionary.h>
 
 
 using namespace Marble;
@@ -74,7 +76,7 @@ FileManager::~FileManager()
     delete d;
 }
 
-void FileManager::addFile( const QString& filepath, const QString& property, GeoDataStyle* style, DocumentRole role, bool recenter )
+void FileManager::addFile( const QString& filepath, const QString& property, const GeoDataStyle* style, DocumentRole role, bool recenter )
 {
     if( d->m_fileItemHash.contains( filepath ) ) {
             return;  // already loaded
@@ -92,7 +94,7 @@ void FileManager::addFile( const QString& filepath, const QString& property, Geo
     d->appendLoader( loader );
 }
 
-void FileManager::addFile( const QStringList& filepaths, const QStringList& propertyList, const QList<GeoDataStyle*>& styles, DocumentRole role )
+void FileManager::addFile( const QStringList& filepaths, const QStringList& propertyList, const QList<const GeoDataStyle*>& styles, DocumentRole role )
 {
     for (int i = 0 ; i < filepaths.size(); ++i ) {
         addFile( filepaths.at(i), propertyList.at(i), styles.at(i), role );
@@ -145,12 +147,21 @@ void FileManagerPrivate::closeFile( const QString& key )
     }
 }
 
-void FileManager::saveFile( GeoDataDocument *document )
+void FileManager::saveFile( const QString &fileName, const GeoDataDocument *document )
 {
-    Q_UNUSED(document)
+    GeoWriter writer;
+    writer.setDocumentType( kml::kmlTag_nameSpaceOgc22 );
+
+    QFile file( fileName );
+    if ( !file.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
+        return;
+    }
+
+    writer.write( &file, document );
+    file.close();
 }
 
-void FileManager::closeFile( GeoDataDocument *document )
+void FileManager::closeFile( const GeoDataDocument *document )
 {
     QHash < QString, GeoDataDocument* >::iterator itpoint = d->m_fileItemHash.begin();
     QHash < QString, GeoDataDocument* >::iterator const endpoint = d->m_fileItemHash.end();
@@ -173,6 +184,11 @@ GeoDataDocument * FileManager::at( const QString &key )
         return d->m_fileItemHash.value( key );
     }
     return 0;
+}
+
+int FileManager::pendingFiles() const
+{
+    return d->m_loaderList.size();
 }
 
 void FileManagerPrivate::cleanupLoader( FileLoader* loader )

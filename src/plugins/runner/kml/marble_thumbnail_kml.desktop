@@ -1,0 +1,29 @@
+[Desktop Entry]
+Type=Service
+Name=KML Geographic Data
+Name[ca]=Dades geogràfiques KML
+Name[da]=KML geografiske data
+Name[de]=KML-Geografiedaten
+Name[en_GB]=KML Geographic Data
+Name[es]=Datos geográficos KML
+Name[et]=KML geograafilised andmed
+Name[fi]=KML-paikkatieto
+Name[fr]=Données géographiques KML
+Name[it]=Dati geografici KML
+Name[nds]=KML-Geodaten
+Name[nl]=KML Geographic Data
+Name[pl]=Dane geograficzne KML
+Name[pt]=Dados Geográficos em KML
+Name[pt_BR]=Dados geográficos em KML
+Name[sk]=Zemepisné dáta KML
+Name[sl]=Geografski podatki KML
+Name[sv]=KML geografisk data
+Name[uk]=географічні дані KML
+Name[x-test]=xxKML Geographic Dataxx
+Name[zh_TW]=KML 地理資料
+
+X-KDE-ServiceTypes=ThumbCreator
+MimeType=application/vnd.google-earth.kml+xml;
+
+X-KDE-Library=marblethumbnail
+CacheThumbnail=true

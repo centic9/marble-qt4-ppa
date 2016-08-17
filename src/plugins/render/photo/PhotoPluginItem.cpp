@@ -71,11 +71,6 @@ QString PhotoPluginItem::name() const
 {
     return title();
 }
-
-QString PhotoPluginItem::itemType() const
-{
-    return QString( "photoItem" );
-}
  
 bool PhotoPluginItem::initialized() const
 {
@@ -195,7 +190,7 @@ void PhotoPluginItem::openBrowser()
         popup->setSize( QSizeF( 700, 450 ) );
         popup->setUrl( QUrl( QString( "http://m.flickr.com/photos/%1/%2/" )
                                   .arg( owner() ).arg( id() ) ) );
-        popup->setVisible( true );
+        popup->popup();
     } else {
         if( !m_browser ) {
             m_browser = new TinyWebBrowser();

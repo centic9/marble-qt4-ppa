@@ -35,7 +35,7 @@ class HttpDownloadManager;
 class SunLocator;
 class ViewportParams;
 
-class TextureLayer : public QObject, public LayerInterface
+class MARBLE_EXPORT TextureLayer : public QObject, public LayerInterface
 {
     Q_OBJECT
 
@@ -72,6 +72,8 @@ class TextureLayer : public QObject, public LayerInterface
 
     int preferredRadiusCeil( int radius ) const;
     int preferredRadiusFloor( int radius ) const;
+
+    RenderState renderState() const;
 
     virtual QString runtimeTrace() const;
 
