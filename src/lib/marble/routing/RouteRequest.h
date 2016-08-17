@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_ROUTEREQUEST_H
@@ -13,7 +13,6 @@
 
 #include "marble_export.h"
 #include "GeoDataCoordinates.h"
-#include "GeoDataPlacemark.h"
 #include "RoutingProfile.h"
 
 #include <QFlags>
@@ -21,6 +20,7 @@
 namespace Marble
 {
 
+class GeoDataPlacemark;
 class RouteRequestPrivate;
 
 /**

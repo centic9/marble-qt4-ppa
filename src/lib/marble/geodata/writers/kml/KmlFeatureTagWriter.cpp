@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2013      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "KmlFeatureTagWriter.h"
@@ -41,7 +41,10 @@ bool KmlFeatureTagWriter::write( const Marble::GeoNode *node, GeoWriter &writer 
 
         // when a document has only one feature and no styling
         // the document tag is excused
-        if( (document->styles().count() == 0)
+        if( (document->id().isEmpty())
+            && (document->name().isEmpty())
+            && (document->targetId().isEmpty())
+            && (document->styles().count() == 0)
             && (document->styleMaps().count() == 0)
             && (document->extendedData().isEmpty())
             && (document->featureList().count() == 1) ) {

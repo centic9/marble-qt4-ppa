@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "jobqueue.h"
@@ -62,4 +62,4 @@ void JobQueue::startJob(Job *job)
     QThreadPool::globalInstance()->start(job);
 }
 
-#include "jobqueue.moc"
+#include "moc_jobqueue.cpp"

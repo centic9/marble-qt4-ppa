@@ -20,6 +20,7 @@
 
         <gx:AnimatedUpdate>
           <Update>
+            <targetHref></targetHref>
             <Create>
               <Placemark id="placemark891">
                 <Point>
@@ -36,12 +37,14 @@
 
         <gx:AnimatedUpdate>
           <Update>
+            <targetHref></targetHref>
             <Change>
               <Placemark targetId="underwater1">
                 <gx:balloonVisibility>1</gx:balloonVisibility>
               </Placemark>
             </Change>
           </Update>
+          <gx:delayedStart>4.2</gx:delayedStart>
         </gx:AnimatedUpdate>
 
         <gx:FlyTo>
@@ -58,6 +61,7 @@
 
         <gx:AnimatedUpdate>
           <Update>
+            <targetHref></targetHref>
             <Change>
               <Placemark targetId="underwater2">
                 <gx:balloonVisibility>1</gx:balloonVisibility>
@@ -72,6 +76,7 @@
 
         <gx:AnimatedUpdate>
           <Update>
+            <targetHref></targetHref>
             <Delete>
               <Placemark targetId="underwater2"/>
             </Delete>

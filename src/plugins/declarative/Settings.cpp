@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "Settings.h"
@@ -54,4 +54,4 @@ void Settings::setValue( const QString &group, const QString &key, const QVarian
     settings.endGroup();
 }
 
-#include "Settings.moc"
+#include "moc_Settings.cpp"

@@ -119,8 +119,8 @@ void FlightGearPositionProviderPlugin::readPendingDatagrams()
 
         m_socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         typedef QList<QByteArray>::Iterator Iterator;
-        QList<QByteArray> splitted = datagram.split('\n');
-        for (Iterator i = splitted.begin(); i != splitted.end(); i++) {
+        QList<QByteArray> split = datagram.split('\n');
+        for (Iterator i = split.begin(); i != split.end(); i++) {
             fixBadGPRMC(*i);
             i->append( "\n" );
             parseNmeaSentence( *i );
@@ -152,7 +152,7 @@ void FlightGearPositionProviderPlugin::parseNmeaSentence( const QString &sentenc
         QStringList const values = sentence.split( ',' );
         if ( values.size() > 10 ) {
             if ( values[6] == 0 ) {
-                m_status = PositionProviderStatusUnavailable; // no fix
+                m_status = PositionProviderStatusAcquiring; // no fix
             } else {
                 double const lat = parsePosition( values[2], values[3] == "S" );
                 double const lon = parsePosition( values[4], values[5] == "W" );
@@ -229,4 +229,4 @@ QString FlightGearPositionProviderPlugin::error() const
 
 Q_EXPORT_PLUGIN2( FlightGearPositionProviderPlugin, Marble::FlightGearPositionProviderPlugin )
 
-#include "FlightGearPositionProviderPlugin.moc"
+#include "moc_FlightGearPositionProviderPlugin.cpp"

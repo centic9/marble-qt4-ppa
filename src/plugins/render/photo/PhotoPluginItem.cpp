@@ -109,7 +109,7 @@ bool PhotoPluginItem::operator<( const AbstractDataPluginItem *other ) const
 
 QUrl PhotoPluginItem::photoUrl() const
 {
-    QString url = "http://farm%1.static.flickr.com/%2/%3_%4_s.jpg";
+    QString url = "https://farm%1.static.flickr.com/%2/%3_%4_s.jpg";
     
     return QUrl( url.arg( farm() ).arg( server() ).arg( id() ).arg( secret() ) );
 }
@@ -202,4 +202,4 @@ void PhotoPluginItem::openBrowser()
     }
 }
 
-#include "PhotoPluginItem.moc"
+#include "moc_PhotoPluginItem.cpp"

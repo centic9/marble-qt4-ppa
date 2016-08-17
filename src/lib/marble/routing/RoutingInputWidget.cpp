@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser  <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser  <nienhueser@kde.org>
 // Copyright 2012      Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
 //
 
@@ -14,7 +14,13 @@
 #include "MarbleLocale.h"
 #include "MarblePlacemarkModel.h"
 #include "RouteRequest.h"
+
+#ifdef MARBLE_NO_WEBKIT
+#include "NullTinyWebBrowser.h"
+#else
 #include "TinyWebBrowser.h"
+#endif
+
 #include "BookmarkManager.h"
 #include "MarbleModel.h"
 #include "MarbleWidget.h"
@@ -36,6 +42,7 @@
 #include <QToolButton>
 #include <QKeyEvent>
 #include <QDomDocument>
+#include <QPainter>
 
 namespace Marble
 {
@@ -120,7 +127,12 @@ void RoutingInputWidgetPrivate::updateDescription()
     }
     else if ( m_route->name( m_index ).isEmpty() )
     {
-        m_lineEdit->setText( placemark.coordinate().toString().trimmed() );
+        if ( !placemark.address().isEmpty() ) {
+            m_lineEdit->setText( placemark.address() );
+        }
+        else {
+            m_lineEdit->setText( placemark.coordinate().toString().trimmed() );
+        }
     }
     else
     {
@@ -496,4 +508,4 @@ void RoutingInputWidget::showMenu()
 
 } // namespace Marble
 
-#include "RoutingInputWidget.moc"
+#include "moc_RoutingInputWidget.cpp"

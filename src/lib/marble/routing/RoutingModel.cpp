@@ -5,35 +5,20 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "RoutingModel.h"
 
-#include "MarbleDebug.h"
-#include "MarbleDirs.h"
+#include "Planet.h"
 #include "MarbleMath.h"
-#include "GeoDataCoordinates.h"
-#include "GeoDataDocument.h"
-#include "GeoDataGeometry.h"
-#include "GeoDataFolder.h"
-#include "GeoDataPlacemark.h"
+#include "Route.h"
 #include "RouteRequest.h"
 #include "PositionTracking.h"
 #include "MarbleModel.h"
-#include "MarbleWidget.h"
 #include "MarbleGlobal.h"
-#include "GeoDataExtendedData.h"
 
-#include <QBuffer>
-#include <QPointer>
-#include <QRegExp>
-#include <QVector>
-#include <QHash>
-#include <QByteArray>
-#include <QMessageBox>
 #include <QPixmap>
-#include <QDomDocument>
 
 namespace Marble
 {
@@ -49,18 +34,16 @@ public:
     };
 
     RoutingModelPrivate( RouteRequest* request );
+    MarbleModel *m_marbleModel;
 
     Route m_route;
 
     RouteDeviation m_deviation;
     PositionTracking* m_positionTracking;
     RouteRequest* const m_request;
-    GeoDataCoordinates m_position;
 #if QT_VERSION >= 0x050000
     QHash<int, QByteArray> m_roleNames;
 #endif
-
-    static void importPlacemark( RouteSegment &outline, QVector<RouteSegment> &segments, const GeoDataPlacemark *placemark );
 
     void updateViaPoints( const GeoDataCoordinates &position );
 };
@@ -86,57 +69,13 @@ void RoutingModelPrivate::updateViaPoints( const GeoDataCoordinates &position )
     }
 }
 
-void RoutingModelPrivate::importPlacemark( RouteSegment &outline, QVector<RouteSegment> &segments, const GeoDataPlacemark *placemark )
-{
-    const GeoDataGeometry* geometry = placemark->geometry();
-    const GeoDataLineString* lineString = dynamic_cast<const GeoDataLineString*>( geometry );
-    QStringList blacklist = QStringList() << "" << "Route" << "Tessellated";
-    RouteSegment segment;
-    bool isOutline = true;
-    if ( !blacklist.contains( placemark->name() ) ) {
-        if( lineString ) {
-            Maneuver maneuver;
-            maneuver.setInstructionText( placemark->name() );
-            maneuver.setPosition( lineString->at( 0 ) );
-
-            if ( placemark->extendedData().contains( "turnType" ) ) {
-                QVariant turnType = placemark->extendedData().value( "turnType" ).value();
-                // The enum value is converted to/from an int in the QVariant
-                // because only a limited set of data types can be serialized with QVariant's
-                // toString() method (which is used to serialize <ExtendedData>/<Data> values)
-                maneuver.setDirection( Maneuver::Direction( turnType.toInt() ) );
-            }
-
-            if ( placemark->extendedData().contains( "roadName" ) ) {
-                QVariant roadName = placemark->extendedData().value( "roadName" ).value();
-                maneuver.setRoadName( roadName.toString() );
-            }
-
-            segment.setManeuver( maneuver );
-            isOutline = false;
-        }
-    }
-
-    if ( lineString ) {
-        segment.setPath( *lineString );
-
-        if ( isOutline ) {
-            outline = segment;
-        } else {
-            segments.push_back( segment );
-        }
-    }
-}
-
 RoutingModel::RoutingModel( RouteRequest* request, MarbleModel *model, QObject *parent ) :
         QAbstractListModel( parent ), d( new RoutingModelPrivate( request ) )
 {
-   if( model )
-    {
-        d->m_positionTracking = model->positionTracking();
-        QObject::connect( d->m_positionTracking, SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
-                 this, SLOT(updatePosition(GeoDataCoordinates,qreal)) );
-    }
+    d->m_marbleModel = model;
+    d->m_positionTracking = model->positionTracking();
+    QObject::connect( d->m_positionTracking, SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
+             this, SLOT(updatePosition(GeoDataCoordinates,qreal)) );
 
    QHash<int, QByteArray> roles;
    roles.insert( Qt::DisplayRole, "display" );
@@ -228,65 +167,14 @@ QHash<int, QByteArray> RoutingModel::roleNames() const
 }
 #endif
 
-bool RoutingModel::setCurrentRoute( GeoDataDocument* document )
+void RoutingModel::setRoute( const Route &route )
 {
-    d->m_route = Route();
-    QVector<RouteSegment> segments;
-    RouteSegment outline;
-
-    QVector<GeoDataFolder*> folders = document->folderList();
-    foreach( const GeoDataFolder *folder, folders ) {
-        foreach( const GeoDataPlacemark *placemark, folder->placemarkList() ) {
-            d->importPlacemark( outline, segments, placemark );
-        }
-    }
-
-    foreach( const GeoDataPlacemark *placemark, document->placemarkList() ) {
-        d->importPlacemark( outline, segments, placemark );
-    }
-
-    if ( segments.isEmpty() ) {
-        segments << outline;
-    }
-
-    // Map via points onto segments
-    if ( d->m_request->size() > 1 && segments.size() > 1 ) {
-        int index = 0;
-        for ( int j=0; j<d->m_request->size(); ++j ) {
-            QPair<int, qreal> minimum( -1, -1.0 );
-            int viaIndex = -1;
-            for ( int i=index; i<segments.size(); ++i ) {
-                RouteSegment const & segment = segments[i];
-                GeoDataCoordinates closest;
-                qreal const distance = segment.distanceTo( d->m_request->at( j ), closest, closest );
-                if ( minimum.first < 0 || distance < minimum.second ) {
-                    minimum.first = i;
-                    minimum.second = distance;
-                    viaIndex = j;
-                }
-            }
-
-            if ( minimum.first >= 0 ) {
-                index = minimum.first;
-                Maneuver viaPoint = segments[ minimum.first ].maneuver();
-                viaPoint.setWaypoint( d->m_request->at( viaIndex ), viaIndex );
-                segments[ minimum.first ].setManeuver( viaPoint );
-            }
-        }
-    }
-
-    if ( segments.size() > 0 ) {
-        foreach( const RouteSegment &segment, segments ) {
-            d->m_route.addRouteSegment( segment );
-        }
-    }
-
+    d->m_route = route;
     d->m_deviation = RoutingModelPrivate::Unknown;
 
     beginResetModel();
     endResetModel();
     emit currentRouteChanged();
-    return true;
 }
 
 void RoutingModel::exportGpx( QIODevice *device ) const
@@ -406,11 +294,11 @@ int RoutingModel::rightNeighbor( const GeoDataCoordinates &position, RouteReques
 
 void RoutingModel::updatePosition( GeoDataCoordinates location, qreal /*speed*/ )
 {
-    d->m_position = location;
     d->m_route.setPosition( location );
 
-    d->updateViaPoints( d->m_position );
-    qreal distance = EARTH_RADIUS * distanceSphere( location, d->m_route.positionOnRoute() );
+    d->updateViaPoints( location );
+    qreal planetRadius = d->m_marbleModel->planet()->radius();
+    qreal distance = planetRadius * distanceSphere( location, d->m_route.positionOnRoute() );
     emit positionChanged();
 
     qreal deviation = 0.0;
@@ -438,4 +326,4 @@ const Route & RoutingModel::route() const
 
 } // namespace Marble
 
-#include "RoutingModel.moc"
+#include "moc_RoutingModel.cpp"

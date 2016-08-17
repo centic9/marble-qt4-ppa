@@ -5,28 +5,30 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "RoutingManager.h"
 
 #include "AlternativeRoutesModel.h"
-#include "MarbleWidget.h"
 #include "MarbleModel.h"
 #include "RouteRequest.h"
 #include "RoutingModel.h"
 #include "RoutingProfilesModel.h"
 #include "RoutingRunnerPlugin.h"
-#include "AutoNavigation.h"
 #include "GeoWriter.h"
 #include "GeoDataDocument.h"
-#include "GeoDataParser.h"
+#include "GeoDataExtendedData.h"
 #include "GeoDataFolder.h"
+#include "GeoDataParser.h"
+#include "GeoDataPlacemark.h"
+#include "GeoDataTreeModel.h"
 #include "MarbleDirs.h"
 #include "MarbleDebug.h"
 #include "PositionTracking.h"
 #include "PluginManager.h"
 #include "PositionProviderPlugin.h"
+#include "Route.h"
 #include "RoutingRunnerManager.h"
 #include <KmlElementDictionary.h>
 
@@ -49,15 +51,19 @@ public:
 
     RoutingProfilesModel m_profilesModel;
 
-    MarbleModel *const m_marbleModel;
+    RoutingManager::State m_state;
+
+    const PluginManager *const m_pluginManager;
+
+    GeoDataTreeModel *const m_treeModel;
+
+    PositionTracking *const m_positionTracking;
 
     AlternativeRoutesModel m_alternativeRoutesModel;
 
     RoutingRunnerManager m_runnerManager;
 
     bool m_haveRoute;
-
-    AutoNavigation *m_adjustNavigation;
 
     bool m_guidanceModeEnabled;
 
@@ -89,7 +95,13 @@ public:
 
     void addRoute( GeoDataDocument* route );
 
+    void routingFinished();
+
+    void setCurrentRoute( GeoDataDocument *route );
+
     void recalculateRoute( bool deviated );
+
+    static void importPlacemark( RouteSegment &outline, QVector<RouteSegment> &segments, const GeoDataPlacemark *placemark );
 };
 
 RoutingManagerPrivate::RoutingManagerPrivate( MarbleModel *model, RoutingManager* manager, QObject *parent ) :
@@ -97,11 +109,13 @@ RoutingManagerPrivate::RoutingManagerPrivate( MarbleModel *model, RoutingManager
         m_routeRequest( manager ),
         m_routingModel( &m_routeRequest, model, manager ),
         m_profilesModel( model->pluginManager() ),
-        m_marbleModel( model ),
+        m_state( RoutingManager::Retrieved ),
+        m_pluginManager( model->pluginManager() ),
+        m_treeModel( model->treeModel() ),
+        m_positionTracking( model->positionTracking() ),
         m_alternativeRoutesModel( parent ),
         m_runnerManager( model, q ),
         m_haveRoute( false ),
-        m_adjustNavigation( 0 ),
         m_guidanceModeEnabled( false ),
         m_shutdownPositionTracking( false ),
         m_guidanceModeWarning( true ),
@@ -158,6 +172,7 @@ void RoutingManagerPrivate::saveRoute(const QString &filename)
     }
 
     GeoDataDocument container;
+    container.setName( "Route" );
     GeoDataFolder* request = routeRequest();
     if ( request ) {
         container.append( request );
@@ -223,7 +238,8 @@ void RoutingManagerPrivate::loadRoute(const QString &filename)
             m_alternativeRoutesModel.clear();
             m_alternativeRoutesModel.addRoute( route, AlternativeRoutesModel::Instant );
             m_alternativeRoutesModel.setCurrentRoute( 0 );
-            emit q->stateChanged( RoutingManager::Retrieved );
+            m_state = RoutingManager::Retrieved;
+            emit q->stateChanged( m_state );
             emit q->routeRetrieved( route );
         } else {
             mDebug() << "Expected a GeoDataDocument child, didn't get one though";
@@ -232,8 +248,9 @@ void RoutingManagerPrivate::loadRoute(const QString &filename)
 
     if ( !loaded ) {
         mDebug() << "File " << filename << " is not a valid Marble route .kml file";
-        delete doc;
-        m_marbleModel->addGeoDataFile( filename );
+        if ( container ) {
+            m_treeModel->addDocument( container );
+        }
     }
 }
 
@@ -242,8 +259,10 @@ RoutingManager::RoutingManager( MarbleModel *marbleModel, QObject *parent ) : QO
 {
     connect( &d->m_runnerManager, SIGNAL(routeRetrieved(GeoDataDocument*)),
              this, SLOT(addRoute(GeoDataDocument*)) );
+    connect( &d->m_runnerManager, SIGNAL(routingFinished()),
+             this, SLOT(routingFinished()) );
     connect( &d->m_alternativeRoutesModel, SIGNAL(currentRouteChanged(GeoDataDocument*)),
-             &d->m_routingModel, SLOT(setCurrentRoute(GeoDataDocument*)) );
+             this, SLOT(setCurrentRoute(GeoDataDocument*)) );
     connect( &d->m_routingModel, SIGNAL(deviatedFromRoute(bool)),
              this, SLOT(recalculateRoute(bool)) );
 }
@@ -273,6 +292,11 @@ RouteRequest* RoutingManager::routeRequest()
     return &d->m_routeRequest;
 }
 
+RoutingManager::State RoutingManager::state() const
+{
+    return d->m_state;
+}
+
 void RoutingManager::retrieveRoute()
 {
     d->m_haveRoute = false;
@@ -280,19 +304,20 @@ void RoutingManager::retrieveRoute()
     int realSize = 0;
     for ( int i = 0; i < d->m_routeRequest.size(); ++i ) {
         // Sort out dummy targets
-        if ( d->m_routeRequest.at( i ).longitude() != 0.0 && d->m_routeRequest.at( i ).latitude() != 0.0 ) {
+        if ( d->m_routeRequest.at( i ).isValid() ) {
             ++realSize;
         }
     }
 
     d->m_alternativeRoutesModel.newRequest( &d->m_routeRequest );
     if ( realSize > 1 ) {
-        emit stateChanged( RoutingManager::Downloading );
+        d->m_state = RoutingManager::Downloading;
         d->m_runnerManager.retrieveRoute( &d->m_routeRequest );
     } else {
         d->m_routingModel.clear();
-        emit stateChanged( RoutingManager::Retrieved );
+        d->m_state = RoutingManager::Retrieved;
     }
+    emit stateChanged( d->m_state );
 }
 
 void RoutingManagerPrivate::addRoute( GeoDataDocument* route )
@@ -303,25 +328,118 @@ void RoutingManagerPrivate::addRoute( GeoDataDocument* route )
 
     if ( !m_haveRoute ) {
         m_haveRoute = route != 0;
-        emit q->stateChanged( RoutingManager::Retrieved );
     }
 
     emit q->routeRetrieved( route );
 }
 
+void RoutingManagerPrivate::routingFinished()
+{
+    m_state = RoutingManager::Retrieved;
+    emit q->stateChanged( m_state );
+}
+
+void RoutingManagerPrivate::setCurrentRoute( GeoDataDocument *document )
+{
+    Route route;
+    QVector<RouteSegment> segments;
+    RouteSegment outline;
+
+    QVector<GeoDataFolder*> folders = document->folderList();
+    foreach( const GeoDataFolder *folder, folders ) {
+        foreach( const GeoDataPlacemark *placemark, folder->placemarkList() ) {
+            importPlacemark( outline, segments, placemark );
+        }
+    }
+
+    foreach( const GeoDataPlacemark *placemark, document->placemarkList() ) {
+        importPlacemark( outline, segments, placemark );
+    }
+
+    if ( segments.isEmpty() ) {
+        segments << outline;
+    }
+
+    // Map via points onto segments
+    if ( m_routeRequest.size() > 1 && segments.size() > 1 ) {
+        int index = 0;
+        for ( int j = 0; j < m_routeRequest.size(); ++j ) {
+            QPair<int, qreal> minimum( -1, -1.0 );
+            int viaIndex = -1;
+            for ( int i = index; i < segments.size(); ++i ) {
+                const RouteSegment &segment = segments[i];
+                GeoDataCoordinates closest;
+                const qreal distance = segment.distanceTo( m_routeRequest.at( j ), closest, closest );
+                if ( minimum.first < 0 || distance < minimum.second ) {
+                    minimum.first = i;
+                    minimum.second = distance;
+                    viaIndex = j;
+                }
+            }
+
+            if ( minimum.first >= 0 ) {
+                index = minimum.first;
+                Maneuver viaPoint = segments[ minimum.first ].maneuver();
+                viaPoint.setWaypoint( m_routeRequest.at( viaIndex ), viaIndex );
+                segments[ minimum.first ].setManeuver( viaPoint );
+            }
+        }
+    }
+
+    if ( segments.size() > 0 ) {
+        foreach( const RouteSegment &segment, segments ) {
+            route.addRouteSegment( segment );
+        }
+    }
+
+    m_routingModel.setRoute( route );
+}
+
+void RoutingManagerPrivate::importPlacemark( RouteSegment &outline, QVector<RouteSegment> &segments, const GeoDataPlacemark *placemark )
+{
+    const GeoDataGeometry* geometry = placemark->geometry();
+    const GeoDataLineString* lineString = dynamic_cast<const GeoDataLineString*>( geometry );
+    QStringList blacklist = QStringList() << "" << "Route" << "Tessellated";
+    RouteSegment segment;
+    bool isOutline = true;
+    if ( !blacklist.contains( placemark->name() ) ) {
+        if( lineString ) {
+            Maneuver maneuver;
+            maneuver.setInstructionText( placemark->name() );
+            maneuver.setPosition( lineString->at( 0 ) );
+
+            if ( placemark->extendedData().contains( "turnType" ) ) {
+                QVariant turnType = placemark->extendedData().value( "turnType" ).value();
+                // The enum value is converted to/from an int in the QVariant
+                // because only a limited set of data types can be serialized with QVariant's
+                // toString() method (which is used to serialize <ExtendedData>/<Data> values)
+                maneuver.setDirection( Maneuver::Direction( turnType.toInt() ) );
+            }
+
+            if ( placemark->extendedData().contains( "roadName" ) ) {
+                QVariant roadName = placemark->extendedData().value( "roadName" ).value();
+                maneuver.setRoadName( roadName.toString() );
+            }
+
+            segment.setManeuver( maneuver );
+            isOutline = false;
+        }
+    }
+
+    if ( lineString ) {
+        segment.setPath( *lineString );
+
+        if ( isOutline ) {
+            outline = segment;
+        } else {
+            segments.push_back( segment );
+        }
+    }
+}
+
 AlternativeRoutesModel* RoutingManager::alternativeRoutesModel()
 {
     return &d->m_alternativeRoutesModel;
-}
-
-void RoutingManager::setAutoNavigation( AutoNavigation* adjustNavigation )
-{
-    d->m_adjustNavigation = adjustNavigation;
-}
-
-const AutoNavigation* RoutingManager::adjustNavigation() const
-{
-    return d->m_adjustNavigation;
 }
 
 void RoutingManager::writeSettings() const
@@ -361,8 +479,7 @@ RoutingProfile RoutingManager::defaultProfile( RoutingProfile::TransportType tra
         break;
     }
 
-    const PluginManager* pluginManager = d->m_marbleModel->pluginManager();
-    foreach( RoutingRunnerPlugin* plugin, pluginManager->routingRunnerPlugins() ) {
+    foreach( RoutingRunnerPlugin* plugin, d->m_pluginManager->routingRunnerPlugins() ) {
         if ( plugin->supportsTemplate( tpl ) ) {
             profile.pluginSettings()[plugin->nameId()] = plugin->templateSettings( tpl );
         }
@@ -378,6 +495,10 @@ void RoutingManager::readSettings()
 
 void RoutingManager::setGuidanceModeEnabled( bool enabled )
 {
+    if ( d->m_guidanceModeEnabled == enabled ) {
+        return;
+    }
+
     d->m_guidanceModeEnabled = enabled;
 
     if ( enabled ) {
@@ -405,25 +526,20 @@ void RoutingManager::setGuidanceModeEnabled( bool enabled )
         d->loadRoute( d->stateFile( "guidance.kml" ) );
     }
 
-    PositionTracking* tracking = d->m_marbleModel->positionTracking();
-    PositionProviderPlugin* positionProvider = tracking->positionProviderPlugin();
+    PositionProviderPlugin* positionProvider = d->m_positionTracking->positionProviderPlugin();
     if ( !positionProvider && enabled ) {
-        const PluginManager* pluginManager = d->m_marbleModel->pluginManager();
-        QList<const PositionProviderPlugin*> plugins = pluginManager->positionProviderPlugins();
+        QList<const PositionProviderPlugin*> plugins = d->m_pluginManager->positionProviderPlugins();
         if ( plugins.size() > 0 ) {
             positionProvider = plugins.first()->newInstance();
         }
-        tracking->setPositionProviderPlugin( positionProvider );
+        d->m_positionTracking->setPositionProviderPlugin( positionProvider );
         d->m_shutdownPositionTracking = true;
     } else if ( positionProvider && !enabled && d->m_shutdownPositionTracking ) {
         d->m_shutdownPositionTracking = false;
-        tracking->setPositionProviderPlugin( 0 );
+        d->m_positionTracking->setPositionProviderPlugin( 0 );
     }
 
-    if ( d->m_adjustNavigation ) {
-        d->m_adjustNavigation->setAutoZoom( enabled );
-        d->m_adjustNavigation->setRecenter( enabled ? AutoNavigation::RecenterOnBorder : AutoNavigation::DontRecenter );
-    }
+    emit guidanceModeEnabledChanged( d->m_guidanceModeEnabled );
 }
 
 void RoutingManagerPrivate::recalculateRoute( bool deviated )
@@ -436,10 +552,10 @@ void RoutingManagerPrivate::recalculateRoute( bool deviated )
         }
 
         if ( m_routeRequest.size() == 2 && m_routeRequest.visited( 0 ) && !m_routeRequest.visited( 1 ) ) {
-            m_routeRequest.setPosition( 0, m_marbleModel->positionTracking()->currentLocation(), QObject::tr( "Current Location" ) );
+            m_routeRequest.setPosition( 0, m_positionTracking->currentLocation(), QObject::tr( "Current Location" ) );
             q->retrieveRoute();
         } else if ( m_routeRequest.size() != 0 && !m_routeRequest.visited( m_routeRequest.size()-1 ) ) {
-            m_routeRequest.insert( 0, m_marbleModel->positionTracking()->currentLocation(), QObject::tr( "Current Location" ) );
+            m_routeRequest.insert( 0, m_positionTracking->currentLocation(), QObject::tr( "Current Location" ) );
             q->retrieveRoute();
         }
     }
@@ -524,4 +640,4 @@ bool RoutingManager::guidanceModeEnabled() const
 
 } // namespace Marble
 
-#include "RoutingManager.moc"
+#include "moc_RoutingManager.cpp"

@@ -30,6 +30,7 @@ class QProgressBar;
 namespace Marble
 {
 
+class GeoDataContainer;
 class MarbleWidget;
 class SunControlWidget;
 class TimeControlWidget;
@@ -58,7 +59,7 @@ public:
     void addGeoDataFile( const QString &fileName );
 
 protected:
-    void  closeEvent(QCloseEvent *event);
+    void  closeEvent( QCloseEvent *event );
 
 private:
     void  createActions();
@@ -82,6 +83,8 @@ private Q_SLOTS:
     void  fallBackToDefaultTheme();
 
     void  changeRecordingState();
+
+    void  updateApplicationTitle(const QString&);
 
     // File Menu
     void  openFile();
@@ -120,6 +123,7 @@ private Q_SLOTS:
     void  enterWhatsThis();
     void  aboutMarble();
     void  handbook();
+    void  openForum();
 
     //Bookmark Menu
     void  openEditBookmarkDialog();
@@ -198,6 +202,7 @@ private:
     QAction *m_aboutQtAction;
     QAction *m_lockFloatItemsAction;
     QAction *m_handbookAction;
+    QAction *m_forumAction;
 
     // Status Bar
     QString     m_position;

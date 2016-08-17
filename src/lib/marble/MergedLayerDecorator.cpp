@@ -225,6 +225,9 @@ void MergedLayerDecorator::Private::renderGroundOverlays( QImage *tileImage, con
     for ( int i =  0; i < m_groundOverlays.size(); ++i ) {
 
         const GeoDataGroundOverlay* overlay = m_groundOverlays.at( i );
+        if ( !overlay->isGloballyVisible() ) {
+            continue;
+        }
 
         const GeoDataLatLonBox overlayLatLonBox = overlay->latLonBox();
 
@@ -232,53 +235,67 @@ void MergedLayerDecorator::Private::renderGroundOverlays( QImage *tileImage, con
             continue;
         }
 
-        const qreal sinRotation = sin( -overlay->latLonBox().rotation() );
-        const qreal cosRotation = cos( -overlay->latLonBox().rotation() );
-
-        const qreal centerLat = overlayLatLonBox.center().latitude();
-
         const qreal pixelToLat = tileLatLonBox.height() / tileImage->height();
         const qreal pixelToLon = tileLatLonBox.width() / tileImage->width();
 
         const qreal latToPixel = overlay->icon().height() / overlayLatLonBox.height();
         const qreal lonToPixel = overlay->icon().width() / overlayLatLonBox.width();
 
+        const qreal  global_height = tileImage->height()
+                * TileLoaderHelper::levelToRow( m_levelZeroRows, tileId.zoomLevel() );
+        const qreal pixel2Rad = M_PI / global_height;
+        const qreal rad2Pixel = global_height / M_PI;
+
+        qreal latPixelPosition = rad2Pixel/2 * gdInv(tileLatLonBox.north());
+
         for ( int y = 0; y < tileImage->height(); ++y ) {
              QRgb *scanLine = ( QRgb* ) ( tileImage->scanLine( y ) );
 
-             qreal lat = tileLatLonBox.north() - y * pixelToLat;
+             qreal lat = 0;
+
+             if (m_textureLayers.at( 0 )->projection() ==  GeoSceneTiled::Mercator) {
+                  lat = gd(2 * (latPixelPosition - y) * pixel2Rad );
+             }
+             else {
+                  lat = tileLatLonBox.north() - y * pixelToLat;
+             }
 
              for ( int x = 0; x < tileImage->width(); ++x, ++scanLine ) {
                  qreal lon = GeoDataCoordinates::normalizeLon( tileLatLonBox.west() + x * pixelToLon );
 
-                 qreal centerLon = overlayLatLonBox.center().longitude();
+                 GeoDataCoordinates coords(lon, lat);
+                 GeoDataCoordinates rotatedCoords(coords);
 
-                 if ( overlayLatLonBox.crossesDateLine() ) {
-                     if ( lon < 0 && centerLon > 0 ) {
-                         centerLon -= 2 * M_PI;
-                     }
-                     if ( lon > 0 && centerLon < 0  ) {
-                         centerLon += 2 * M_PI;
-                     }
-                     if ( overlayLatLonBox.west() > 0 && overlayLatLonBox.east() > 0 && overlayLatLonBox.west() > overlayLatLonBox.east() && lon > 0 && lon < overlayLatLonBox.west() ) {
-                         if ( ! ( lon < overlayLatLonBox.west() && lon > overlayLatLonBox.toCircumscribedRectangle().west() ) ) {
-                            centerLon -= 2 * M_PI;
-                         }
-                     }
+                 if (overlay->latLonBox().rotation() != 0) {
+                    // Possible TODO: Make this faster by creating the axisMatrix beforehand
+                    // and just call Quaternion::rotateAroundAxis(const matrix &m) here.
+                    rotatedCoords = coords.rotateAround(overlayLatLonBox.center(), -overlay->latLonBox().rotation());
                  }
 
-                 qreal rotatedLon = ( lon - centerLon ) * cosRotation - ( lat - centerLat ) * sinRotation + centerLon;
-                 qreal rotatedLat = ( lon - centerLon ) * sinRotation + ( lat - centerLat ) * cosRotation + centerLat;
+                 // TODO: The rotated latLonBox is bigger. We need to take this into account.
+                 // (Currently the GroundOverlay sometimes gets clipped because of that)
+                 if ( overlay->latLonBox().contains( rotatedCoords ) ) {
 
-                 GeoDataCoordinates::normalizeLonLat( rotatedLon, rotatedLat );
-
-                 if ( overlay->latLonBox().contains( GeoDataCoordinates( rotatedLon, rotatedLat ) ) ) {
-
-                     qreal px = ( GeoDataLatLonBox( 0, 0, rotatedLon, overlayLatLonBox.west() ).width() * lonToPixel );
-                     qreal py = qreal( overlay->icon().height() ) - ( GeoDataLatLonBox( rotatedLat, overlayLatLonBox.south(), 0, 0 ).height() * latToPixel ) - 1;
+                     qreal px = GeoDataLatLonBox::width( rotatedCoords.longitude(), overlayLatLonBox.west() ) * lonToPixel;
+                     qreal py = (qreal)( overlay->icon().height() ) - ( GeoDataLatLonBox::height( rotatedCoords.latitude(), overlayLatLonBox.south() ) * latToPixel ) - 1;
 
                      if ( px >= 0 && px < overlay->icon().width() && py >= 0 && py < overlay->icon().height() ) {
-                         *scanLine = ImageF::pixelF( overlay->icon(), px, py );
+                         int alpha = qAlpha( overlay->icon().pixel( px, py ) );
+                         if ( alpha != 0 )
+                         {
+                            QRgb result = ImageF::pixelF( overlay->icon(), px, py );
+
+                            if (alpha == 255)
+                            {
+                                *scanLine = result;
+                            }
+                            else
+                            {
+                                *scanLine = qRgb( ( alpha * qRed(result) + (255 - alpha) * qRed(*scanLine) ) / 255,
+                                            ( alpha * qGreen(result) + (255 - alpha) * qGreen(*scanLine) ) / 255,
+                                            ( alpha * qBlue(result) + (255 - alpha) * qBlue(*scanLine) ) / 255 );
+                            }
+                         }
                      }
                  }
              }
@@ -561,7 +578,12 @@ QVector<const GeoSceneTextureTile *> MergedLayerDecorator::Private::findRelevant
         // check, if layer provides tiles for the current level
         if ( !candidate->hasMaximumTileLevel() ||
              candidate->maximumTileLevel() >= stackedTileId.zoomLevel() ) {
-            result.append( candidate );
+            //check if the tile intersects with texture bounds
+            if ( candidate->latLonBox().isNull()
+                || candidate->latLonBox().intersects( stackedTileId.toLatLonBox( candidate ) ) )
+            {
+                result.append( candidate );
+            }
         }
     }
 

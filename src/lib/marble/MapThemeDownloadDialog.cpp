@@ -6,7 +6,7 @@
 // the source code.
 //
 // Copyright 2013 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
-// Copyright 2013 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013 Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MapThemeDownloadDialog.h"
@@ -354,4 +354,4 @@ QString MapItemDelegate::text( const QModelIndex &index )
 
 }
 
-#include "MapThemeDownloadDialog.moc"
+#include "moc_MapThemeDownloadDialog.cpp"

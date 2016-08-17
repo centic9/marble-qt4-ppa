@@ -6,7 +6,7 @@
 // the source code.
 //
 // Copyright 2008 Henry de Valence <hdevalence@gmail.com>
-// Copyright 2010 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010 Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2010-2013 Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 // Copyright 2011 Thibaut Gridel <tgridel@free.fr>
 
@@ -105,6 +105,7 @@ void SearchRunnerManager::Private::addSearchResult( const QVector<GeoDataPlacema
 
     m_modelMutex.lock();
     int start = m_placemarkContainer.size();
+    int count = 0;
     bool distanceCompare = m_marbleModel->planet() != 0;
     for( int i=0; i<result.size(); ++i ) {
         bool same = false;
@@ -118,9 +119,10 @@ void SearchRunnerManager::Private::addSearchResult( const QVector<GeoDataPlacema
         }
         if ( !same ) {
             m_placemarkContainer.append( result[i] );
+            ++count;
         }
     }
-    m_model.addPlacemarks( start, result.size() );
+    m_model.addPlacemarks( start, count );
     m_modelMutex.unlock();
     emit q->searchResultChanged( &m_model );
     emit q->searchResultChanged( m_placemarkContainer );
@@ -217,4 +219,4 @@ QVector<GeoDataPlacemark *> SearchRunnerManager::searchPlacemarks( const QString
 
 }
 
-#include "SearchRunnerManager.moc"
+#include "moc_SearchRunnerManager.cpp"

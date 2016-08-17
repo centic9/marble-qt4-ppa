@@ -21,6 +21,8 @@
 
 #include "MarbleDebug.h"
 
+#include <QDataStream>
+
 
 namespace Marble
 {
@@ -51,7 +53,7 @@ GeoDataGeometry::~GeoDataGeometry()
         delete d;
 }
 
-void  GeoDataGeometry::detach()
+void GeoDataGeometry::detach()
 {
 #if QT_VERSION < 0x050000
     if(d->ref == 1)
@@ -69,19 +71,14 @@ void  GeoDataGeometry::detach()
     d->ref.ref();
 }
 
-GeoDataGeometryPrivate* GeoDataGeometry::p() const
-{
-    return static_cast<GeoDataGeometryPrivate*>(d);
-}
-
 const char* GeoDataGeometry::nodeType() const
 {
-    return p()->nodeType();
+    return d->nodeType();
 }
 
 EnumGeometryId GeoDataGeometry::geometryId() const
 {
-    return p()->geometryId();
+    return d->geometryId();
 }
 
 GeoDataGeometry& GeoDataGeometry::operator=( const GeoDataGeometry& other )

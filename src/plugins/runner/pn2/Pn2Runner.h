@@ -12,6 +12,10 @@
 
 #include "ParsingRunner.h"
 
+#include <QDataStream>
+
+class QDataStream;
+
 namespace Marble
 {
 
@@ -32,6 +36,15 @@ signals:
 
 public slots:
 
+protected:
+    void parseForVersion1( const QString &fileName, DocumentRole role );
+    void parseForVersion2( const QString &fileName, DocumentRole role );
+
+private:
+    QDataStream m_stream;
+    quint8 m_fileHeaderVersion;
+    quint32 m_fileHeaderPolygons;
+    bool m_isMapColorField;       // Whether the file contains color indexes
 };
 
 }

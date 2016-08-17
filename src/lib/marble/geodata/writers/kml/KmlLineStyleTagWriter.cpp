@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "KmlLineStyleTagWriter.h"
@@ -31,10 +31,14 @@ KmlLineStyleTagWriter::KmlLineStyleTagWriter() : KmlColorStyleTagWriter( kml::km
 bool KmlLineStyleTagWriter::writeMid( const GeoNode *node, GeoWriter& writer ) const
 {
     const GeoDataLineStyle *style = static_cast<const GeoDataLineStyle*>( node );
-
-    writer.writeElement( "width", QString::number( style->width() ) );
-
+    writer.writeOptionalElement( "width", style->width(), 1.0f );
     return true;
+}
+
+bool KmlLineStyleTagWriter::isEmpty( const GeoNode *node ) const
+{
+    const GeoDataLineStyle *style = static_cast<const GeoDataLineStyle*>( node );
+    return style->width() == 1.0;
 }
 
 }

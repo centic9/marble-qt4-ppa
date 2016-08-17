@@ -5,18 +5,17 @@ if(MSVC)
   set(marble_SRCS ${marble_SRCS} marble.qrc)
 endif(MSVC)
 
-if(MINGW AND QT4_FOUND)
+if(MINGW AND QT4BUILD)
    QT4_ADD_RESOURCES2(marble_SRCS marble.qrc)
-endif(MINGW AND QT4_FOUND)
+endif(MINGW AND QT4BUILD)
 
 qt_add_resources(marble_SRCS marble.qrc)
 
 qt_wrap_ui(marble_SRCS ${marble_UI})
-marble_qt4_automoc(${marble_SRCS})
 
 add_library (marbleui STATIC ${marble_SRCS})
 
-if( QT4_FOUND )
+if( QT4BUILD )
 target_link_libraries (
   marbleui
   ${QT_QTCORE_LIBRARY}
@@ -27,7 +26,7 @@ target_link_libraries (
   ${QT_QTNETWORK_LIBRARY}
   ${QT_QTSCRIPT_LIBRARY}
   ${QT_QTMAIN_LIBRARY}
-  marblewidget)
+  ${MARBLEWIDGET})
 else()
 target_link_libraries (
     marbleui
@@ -38,7 +37,7 @@ target_link_libraries (
     ${Qt5Network_LIBRARIES}
     ${Qt5WebKitWidgets_LIBRARIES}
     ${Qt5WebKit_LIBRARIES}
-    marblewidget)
+    ${MARBLEWIDGET})
 endif()
 
 if(WIN32)

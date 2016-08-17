@@ -36,7 +36,7 @@ class GeoDataLabelStylePrivate;
 class GEODATA_EXPORT GeoDataLabelStyle : public GeoDataColorStyle
 {
   public:
-    enum Alignment{Corner, Center /*, Left, Right, Below  */};
+    enum Alignment{Corner, Center, Right /*, Left, Below  */};
 
     /// Construct a new GeoDataLabelStyle
     GeoDataLabelStyle();
@@ -91,6 +91,12 @@ class GEODATA_EXPORT GeoDataLabelStyle : public GeoDataColorStyle
      * @return  the current font
      */
     QFont font() const;
+
+    /**
+     * @brief Return the scaled font of the label
+     * @return  the scaled font
+     */
+    QFont scaledFont() const;
 
     /**
      * @brief Return true if the text of the label should glow, false otherwise

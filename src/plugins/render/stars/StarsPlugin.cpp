@@ -29,6 +29,7 @@
 #include "AbstractFloatItem.h"
 #include "GeoPainter.h"
 #include "Planet.h"
+#include "PlanetFactory.h"
 #include "SunLocator.h"
 #include "ViewportParams.h"
 
@@ -242,7 +243,7 @@ void StarsPlugin::setSettings( const QHash<QString, QVariant> &settings )
     m_renderPlanet.clear();
     const QString renderPlanet = readSetting<QString>( settings, "renderPlanet", "" );
     const QStringList renderStates = renderPlanet.split(QChar('|'));
-    foreach(const QString state, renderStates) {
+    foreach(const QString &state, renderStates) {
         const QStringList stateList = state.split(QChar(':'));
         if (stateList.size() == 2)
             m_renderPlanet[stateList[0]] = (bool)stateList[1].toInt();
@@ -785,8 +786,8 @@ bool StarsPlugin::render( GeoPainter *painter, ViewportParams *viewport,
 
     QString planetId = marbleModel()->planetId();
     const bool doRender = !viewport->mapCoversViewport() &&
-                             viewport->projection() == Spherical &&
-                             planetId == "earth"; // So far displaying stars is only supported on earth.
+                             ( (viewport->projection() == Spherical || viewport->projection() == VerticalPerspective) &&
+                             planetId == "earth" ); // So far displaying stars is only supported on earth.
 
     if ( doRender != m_doRender ) {
         if ( doRender ) {
@@ -809,7 +810,7 @@ bool StarsPlugin::render( GeoPainter *painter, ViewportParams *viewport,
                 dateTime.time().hour(), dateTime.time().minute(),
                 (double)dateTime.time().second());
     QString const pname = planetId.at(0).toUpper() + planetId.right(planetId.size() - 1);
-    QByteArray const name = pname.toLatin1();
+    QByteArray name = pname.toLatin1();
     sys.setCentralBody( name.data() );
 
     Vec3 skyVector = sys.getPlanetocentric (0.0, 0.0);
@@ -1241,7 +1242,7 @@ bool StarsPlugin::render( GeoPainter *painter, ViewportParams *viewport,
 
                     // It's labels' time!
                     if (m_viewSolarSystemLabel)
-                        painter->drawText(x+deltaX, y+deltaY, Planet("moon").name());
+                        painter->drawText(x+deltaX, y+deltaY, PlanetFactory::localizedName("moon"));
                 }
             }
         }
@@ -1322,7 +1323,7 @@ void StarsPlugin::renderPlanet(const QString &planetId,
 
         // It's labels' time!
         if (m_viewSolarSystemLabel)
-            painter->drawText(x+deltaX, y+deltaY, Planet(planetId).name());
+            painter->drawText(x+deltaX, y+deltaY, PlanetFactory::localizedName(planetId));
     }
 }
 
@@ -1516,4 +1517,4 @@ bool StarsPlugin::eventFilter( QObject *object, QEvent *e )
 
 Q_EXPORT_PLUGIN2( StarsPlugin, Marble::StarsPlugin )
 
-#include "StarsPlugin.moc"
+#include "moc_StarsPlugin.cpp"

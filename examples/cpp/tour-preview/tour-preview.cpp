@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2014      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2014      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 /**
@@ -19,6 +19,7 @@
 #include <GeoDataLineString.h>
 #include <marble/RenderPlugin.h>
 #include <marble/MarbleModel.h>
+#include <marble/routing/Route.h>
 #include <marble/routing/RoutingManager.h>
 #include <marble/routing/RoutingModel.h>
 #include <marble/TourPlayback.h>

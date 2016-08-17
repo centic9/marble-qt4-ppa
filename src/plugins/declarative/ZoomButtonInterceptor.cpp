@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "ZoomButtonInterceptor.h"
@@ -102,4 +102,4 @@ ZoomButtonInterceptor::~ZoomButtonInterceptor()
     delete d;
 }
 
-#include "ZoomButtonInterceptor.moc"
+#include "moc_ZoomButtonInterceptor.cpp"

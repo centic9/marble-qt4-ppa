@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_ROUTINGMANAGER_H
@@ -27,7 +27,6 @@ class MarbleModel;
 class GeoDataDocument;
 class GeoDataFolder;
 class AlternativeRoutesModel;
-class AutoNavigation;
 class RoutingProfilesModel;
 
 /**
@@ -37,6 +36,8 @@ class RoutingProfilesModel;
 class MARBLE_EXPORT RoutingManager : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY( State state READ state NOTIFY stateChanged )
+    Q_PROPERTY( bool guidanceModeEnabled READ guidanceModeEnabled WRITE setGuidanceModeEnabled NOTIFY guidanceModeEnabledChanged )
 
 public:
     enum State {
@@ -71,19 +72,16 @@ public:
       */
     AlternativeRoutesModel* alternativeRoutesModel();
 
-    // This is a temporary location for AutoNavigation. The code would be refactored soon.
-    void setAutoNavigation( AutoNavigation * adjustNavigation );
-
-    /**
-     * returns the instance of AutoNavigation
-     * This is a temporary location for AutoNavigation. The code would be refactored soon.
-     */
-    const AutoNavigation* adjustNavigation() const;
-
     /**
       * Returns the current route request
       */
     RouteRequest* routeRequest();
+
+    /**
+     * @brief Returns whether a route is being downloaded
+     * @return
+     */
+    State state() const;
 
     /**
       * Saves the current route request and the current route to disk
@@ -197,8 +195,14 @@ Q_SIGNALS:
 
     void routeRetrieved( GeoDataDocument* route );
 
+    void guidanceModeEnabledChanged( bool enabled );
+
 private:
     Q_PRIVATE_SLOT( d, void addRoute( GeoDataDocument* route ) )
+
+    Q_PRIVATE_SLOT( d, void routingFinished() )
+
+    Q_PRIVATE_SLOT( d, void setCurrentRoute( GeoDataDocument *route ) )
 
     Q_PRIVATE_SLOT( d, void recalculateRoute( bool deviated ) )
 

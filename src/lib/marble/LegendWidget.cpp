@@ -16,7 +16,11 @@
 
 using namespace Marble;
 // Ui
+#ifdef MARBLE_NO_WEBKIT
+#include "ui_NullLegendWidget.h"
+#else
 #include "ui_LegendWidget.h"
+#endif
 
 #include "MarbleLegendBrowser.h"
 
@@ -60,4 +64,4 @@ void LegendWidget::setMarbleModel( MarbleModel *model )
 
 }
 
-#include "LegendWidget.moc"
+#include "moc_LegendWidget.cpp"

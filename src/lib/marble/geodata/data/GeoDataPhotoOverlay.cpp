@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2013      Mohammed Nafees  <nafees.technocool@gmail.com>
 //
 
@@ -49,6 +49,7 @@ GeoDataPhotoOverlay::GeoDataPhotoOverlay( const Marble::GeoDataPhotoOverlay &oth
 
 GeoDataPhotoOverlay &GeoDataPhotoOverlay::operator=( const GeoDataPhotoOverlay &other )
 {
+    GeoDataOverlay::operator=( other );
     *d = *other.d;
     return *this;
 }

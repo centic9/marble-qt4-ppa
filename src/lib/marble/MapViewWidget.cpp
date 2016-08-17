@@ -25,6 +25,8 @@
 #include "MapThemeSortFilterProxyModel.h"
 #include "GeoSceneDocument.h"
 #include "GeoSceneHead.h"
+#include "MapViewItemDelegate.h"
+#include "CelestialSortFilterProxyModel.h"
 
 // Qt
 #include <QResizeEvent>
@@ -48,138 +50,6 @@ using namespace Marble;
 namespace Marble
 {
 
-class MapViewItemDelegate : public QStyledItemDelegate
-{
-public:
-    MapViewItemDelegate( QListView* view );
-    void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-    QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-
-private:
-    static QString text( const QModelIndex &index );
-    QListView* m_view;
-    QIcon m_bookmarkIcon;
-};
-
-class CelestialSortFilterProxyModel : public QSortFilterProxyModel
-{
-public:
-    CelestialSortFilterProxyModel()
-    {
-        setupPriorities();
-        setupMoonsList();
-        setupDwarfsList();
-    }
-    ~CelestialSortFilterProxyModel() {}
-
-    // A small trick to change names for dwarfs and moons
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const
-    {
-        QVariant var = QSortFilterProxyModel::data(index, role);
-        if (role == Qt::DisplayRole && index.column() == 0) {
-            QString newOne = var.toString();
-            if (newOne == tr("Moon")) {
-                return QString("  " + tr("Moon"));
-            } else if (m_moons.contains(newOne.toLower())) {
-                return QString("  "+newOne+" (" + tr("moon") + ')');
-            } else if (m_dwarfs.contains(newOne.toLower())) {
-                return QString(newOne+ " (" + tr("dwarf planet") + ')');
-            }
-            return newOne;
-        } else {
-            return var;
-        }
-    }
-
-private:
-    // TODO: create priority on the model side (Planet Class) by taking the distance to the "home planet/home star" into account
-    void setupPriorities()
-    {
-        // here we will set m_priority for default order
-        int prefix = 100;
-
-        m_priority["sun"] = prefix;
-        m_priority["mercury"] = prefix--;
-        m_priority["venus"] = prefix--;
-        m_priority["earth"] = prefix--;
-        m_priority["moon"] = prefix--;
-        m_priority["mars"] = prefix--;
-
-        m_priority["jupiter"] = prefix--;
-        // Moons of Jupiter
-        m_priority["io"] = prefix--;
-        m_priority["europa"] = prefix--;
-        m_priority["ganymede"] = prefix--;
-        m_priority["callisto"] = prefix--;
-
-        m_priority["saturn"] = prefix--;
-        // Moons of Saturn
-        m_priority["mimas"] = prefix--;
-        m_priority["enceladus"] = prefix--;
-        m_priority["thetys"] = prefix--;
-        m_priority["dione"] = prefix--;
-        m_priority["rhea"] = prefix--;
-        m_priority["titan"] = prefix--;
-        m_priority["iapetus"] = prefix--;
-
-        m_priority["uranus"] = prefix--;
-        m_priority["neptune"] = prefix--;
-        m_priority["pluto"] = prefix--;
-        m_priority["ceres"] = prefix--;
-    }
-
-    void setupMoonsList()
-    {
-        m_moons.push_back("moon");
-        m_moons.push_back("europa");
-        m_moons.push_back("ganymede");
-        m_moons.push_back("callisto");
-        m_moons.push_back("mimas");
-        m_moons.push_back("enceladus");
-        m_moons.push_back("thetys");
-        m_moons.push_back("dione");
-        m_moons.push_back("rhea");
-        m_moons.push_back("titan");
-        m_moons.push_back("iapetus");
-    }
-
-    void setupDwarfsList()
-    {
-        m_dwarfs.push_back("pluto");
-        m_dwarfs.push_back("ceres");
-    }
-
-protected:
-    bool lessThan(const QModelIndex &left, const QModelIndex &right) const {
-        const QString nameLeft = sourceModel()->index(left.row(), 1).data().toString();
-        const QString nameRight = sourceModel()->index(right.row(), 1).data().toString();
-        const QString first = nameLeft.toLower();
-        const QString second = nameRight.toLower();
-
-        // both are in the list
-        if (m_priority.contains(first) && m_priority.contains(second)) {
-            return m_priority[first] > m_priority[second];
-        }
-
-        // only left in the list
-        if (m_priority.contains(first) && !m_priority.contains(second)) {
-            return true;
-        }
-
-        // only right in the list
-        if (!m_priority.contains(first) && m_priority.contains(second)) {
-            return false;
-        }
-
-        return QSortFilterProxyModel::lessThan(left, right);
-    }
-
-private:
-    QMap<QString, int> m_priority;
-    QList<QString> m_moons;
-    QList<QString> m_dwarfs;
-};
-
 class MapViewWidget::Private {
  public:
     Private( MapViewWidget *parent )
@@ -190,10 +60,16 @@ class MapViewWidget::Private {
           m_toolBar( 0 ),
           m_globeViewButton( 0 ),
           m_mercatorViewButton( 0 ),
-          m_popupMenu( 0 ),
+          m_popupMenuFlat( 0 ),
           m_flatViewAction( 0 ),
           m_mercatorViewAction( 0 ),
-          m_celestialBodyAction( 0 )
+          m_celestialBodyAction( 0 ),
+          m_gnomonicViewAction( 0 ),
+          m_stereographicViewAction( 0 ),
+          m_lambertAzimuthalViewAction( 0 ),
+          m_azimuthalEquidistantViewAction( 0 ),
+          m_verticalPerspectiveViewAction( 0 ),
+          m_globeViewAction( 0 )
     {
         m_mapSortProxy.setDynamicSortFilter( true );
         m_celestialListProxy.setDynamicSortFilter( true );
@@ -238,6 +114,12 @@ class MapViewWidget::Private {
         m_globeViewButton->setCheckable(true);
         m_globeViewButton->setChecked(false);
 
+        m_globeViewAction = new QAction( QIcon(":/icons/map-globe.png"),
+                                             tr( "Spherical view" ),
+                                             m_globeViewButton );
+        m_globeViewAction->setCheckable( true );
+        m_globeViewAction->setChecked( false );
+
         m_mercatorViewButton = new QToolButton;
         m_mercatorViewButton->setIcon( QIcon(":/icons/map-mercator.png") );
         m_mercatorViewButton->setToolTip( tr("Mercator View") );
@@ -245,23 +127,59 @@ class MapViewWidget::Private {
         m_mercatorViewButton->setChecked(false);
         m_mercatorViewButton->setPopupMode(QToolButton::MenuButtonPopup);
 
-        m_popupMenu = new QMenu;
+        m_popupMenuFlat = new QMenu;
 
         m_mercatorViewAction = new QAction( QIcon(":/icons/map-mercator.png"),
                                               tr("Mercator View"),
-                                              m_popupMenu );
+                                              m_popupMenuFlat );
         m_mercatorViewAction->setCheckable(true);
         m_mercatorViewAction->setChecked(false);
 
         m_flatViewAction = new QAction( QIcon(":/icons/map-flat.png"),
                                         tr("Flat View"),
-                                        m_popupMenu );
+                                        m_popupMenuFlat );
         m_flatViewAction->setCheckable(true);
         m_flatViewAction->setChecked(false);
 
-        m_popupMenu->addAction(m_mercatorViewAction);
-        m_popupMenu->addAction(m_flatViewAction);
-        m_mercatorViewButton->setMenu(m_popupMenu);
+        m_gnomonicViewAction = new QAction( QIcon(":/icons/map-gnomonic.png"),
+                                            tr( "Gnomonic view" ),
+                                            m_popupMenuFlat);
+        m_gnomonicViewAction->setCheckable( true );
+        m_gnomonicViewAction->setChecked( false );
+
+        m_stereographicViewAction = new QAction( QIcon(":/icons/map-globe.png"),
+                                            tr( "Stereographic view" ),
+                                            m_popupMenuFlat);
+        m_stereographicViewAction->setCheckable( true );
+        m_stereographicViewAction->setChecked( false );
+
+        m_lambertAzimuthalViewAction = new QAction( QIcon(":/icons/map-globe.png"),
+                                            tr( "Lambert Azimuthal Equal-Area view" ),
+                                            m_popupMenuFlat);
+        m_lambertAzimuthalViewAction->setCheckable( true );
+        m_lambertAzimuthalViewAction->setChecked( false );
+
+        m_azimuthalEquidistantViewAction = new QAction( QIcon(":/icons/map-globe.png"),
+                                            tr( "Azimuthal Equidistant view" ),
+                                            m_popupMenuFlat);
+        m_azimuthalEquidistantViewAction->setCheckable( true );
+        m_azimuthalEquidistantViewAction->setChecked( false );
+
+        m_verticalPerspectiveViewAction = new QAction( QIcon(":/icons/map-globe.png"),
+                                            tr( "Perspective Globe view" ),
+                                            m_popupMenuFlat);
+        m_verticalPerspectiveViewAction->setCheckable( true );
+        m_verticalPerspectiveViewAction->setChecked( false );
+
+
+        m_popupMenuFlat->addAction(m_mercatorViewAction);
+        m_popupMenuFlat->addAction(m_flatViewAction);
+        m_popupMenuFlat->addAction(m_gnomonicViewAction);
+        m_popupMenuFlat->addAction(m_stereographicViewAction);
+        m_popupMenuFlat->addAction(m_lambertAzimuthalViewAction);
+        m_popupMenuFlat->addAction(m_azimuthalEquidistantViewAction);
+        m_popupMenuFlat->addAction(m_verticalPerspectiveViewAction);
+        m_mercatorViewButton->setMenu(m_popupMenuFlat);
 
         m_toolBar->addWidget(m_globeViewButton);
         m_toolBar->addWidget(m_mercatorViewButton);
@@ -278,6 +196,18 @@ class MapViewWidget::Private {
                          q, SLOT(mercatorViewRequested()));
         QObject::connect(m_flatViewAction, SIGNAL(triggered()),
                          q, SLOT(flatViewRequested()));
+        QObject::connect(m_gnomonicViewAction, SIGNAL(triggered()),
+                         q, SLOT(gnomonicViewRequested()));
+        QObject::connect(m_stereographicViewAction, SIGNAL(triggered()),
+                         q, SLOT(stereographicViewRequested()));
+        QObject::connect(m_lambertAzimuthalViewAction, SIGNAL(triggered()),
+                         q, SLOT(lambertAzimuthalViewRequested()));
+        QObject::connect(m_azimuthalEquidistantViewAction, SIGNAL(triggered()),
+                         q, SLOT(azimuthalEquidistantViewRequested()));
+        QObject::connect(m_verticalPerspectiveViewAction, SIGNAL(triggered()),
+                         q, SLOT(verticalPerspectiveViewRequested()));
+        QObject::connect(m_globeViewAction, SIGNAL(triggered()),
+                         q, SLOT(globeViewRequested()));
 
         applyReducedLayout();
     }
@@ -320,10 +250,16 @@ class MapViewWidget::Private {
     QToolBar *m_toolBar;
     QToolButton *m_globeViewButton;
     QToolButton *m_mercatorViewButton;
-    QMenu *m_popupMenu;
+    QMenu *m_popupMenuFlat;
     QAction *m_flatViewAction;
     QAction *m_mercatorViewAction;
     QAction *m_celestialBodyAction;
+    QAction *m_gnomonicViewAction;
+    QAction *m_stereographicViewAction;
+    QAction *m_lambertAzimuthalViewAction;
+    QAction *m_azimuthalEquidistantViewAction;
+    QAction *m_verticalPerspectiveViewAction;
+    QAction *m_globeViewAction;
 };
 
 MapViewWidget::MapViewWidget( QWidget *parent, Qt::WindowFlags f )
@@ -487,21 +423,99 @@ void MapViewWidget::setProjection( Projection projection )
         switch (projection) {
         case Marble::Spherical:
             d->m_globeViewButton->setChecked(true);
+            d->m_globeViewAction->setChecked(true);
             d->m_mercatorViewButton->setChecked(false);
             d->m_mercatorViewAction->setChecked(false);
             d->m_flatViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
             break;
         case Marble::Mercator:
             d->m_mercatorViewButton->setChecked(true);
             d->m_mercatorViewAction->setChecked(true);
             d->m_globeViewButton->setChecked(false);
             d->m_flatViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
             break;
         case Marble::Equirectangular:
             d->m_flatViewAction->setChecked(true);
             d->m_mercatorViewButton->setChecked(true);
             d->m_globeViewButton->setChecked(false);
             d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
+            break;
+        case Marble::Gnomonic:
+            d->m_flatViewAction->setChecked(false);
+            d->m_mercatorViewButton->setChecked(true);
+            d->m_globeViewButton->setChecked(false);
+            d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(true);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
+            break;
+        case Marble::Stereographic:
+            d->m_flatViewAction->setChecked(false);
+            d->m_mercatorViewButton->setChecked(true);
+            d->m_globeViewButton->setChecked(false);
+            d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(true);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
+            break;
+        case Marble::LambertAzimuthal:
+            d->m_flatViewAction->setChecked(false);
+            d->m_mercatorViewButton->setChecked(true);
+            d->m_globeViewButton->setChecked(false);
+            d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(true);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
+            break;
+        case Marble::AzimuthalEquidistant:
+            d->m_flatViewAction->setChecked(false);
+            d->m_mercatorViewButton->setChecked(true);
+            d->m_globeViewButton->setChecked(false);
+            d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(true);
+            d->m_verticalPerspectiveViewAction->setChecked(false);
+            break;
+        case Marble::VerticalPerspective:
+            d->m_flatViewAction->setChecked(false);
+            d->m_mercatorViewButton->setChecked(true);
+            d->m_globeViewButton->setChecked(false);
+            d->m_mercatorViewAction->setChecked(false);
+            d->m_gnomonicViewAction->setChecked(false);
+            d->m_globeViewAction->setChecked(false);
+            d->m_stereographicViewAction->setChecked(false);
+            d->m_lambertAzimuthalViewAction->setChecked(false);
+            d->m_azimuthalEquidistantViewAction->setChecked(false);
+            d->m_verticalPerspectiveViewAction->setChecked(true);
             break;
         }
     }
@@ -520,6 +534,31 @@ void MapViewWidget::flatViewRequested()
 void MapViewWidget::mercatorViewRequested()
 {
     emit projectionChanged(Marble::Mercator);
+}
+
+void MapViewWidget::gnomonicViewRequested()
+{
+    emit projectionChanged(Marble::Gnomonic);
+}
+
+void MapViewWidget::stereographicViewRequested()
+{
+    emit projectionChanged(Marble::Stereographic);
+}
+
+void MapViewWidget::lambertAzimuthalViewRequested()
+{
+    emit projectionChanged(Marble::LambertAzimuthal);
+}
+
+void MapViewWidget::azimuthalEquidistantViewRequested()
+{
+    emit projectionChanged(Marble::AzimuthalEquidistant);
+}
+
+void MapViewWidget::verticalPerspectiveViewRequested()
+{
+    emit projectionChanged(Marble::VerticalPerspective);
 }
 
 void MapViewWidget::Private::celestialBodySelected( int comboIndex )
@@ -659,84 +698,6 @@ bool MapViewWidget::Private::isCurrentFavorite()
     return isFavorite;
 }
 
-MapViewItemDelegate::MapViewItemDelegate( QListView *view ) :
-    m_view( view ), m_bookmarkIcon( ":/icons/bookmarks.png" )
-{
-    // nothing to do
 }
 
-void MapViewItemDelegate::paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const
-{
-    QStyleOptionViewItemV4 styleOption = option;
-    initStyleOption( &styleOption, index );
-    styleOption.text = QString();
-    styleOption.icon = QIcon();
-
-    bool const selected = styleOption.state & QStyle::State_Selected;
-    bool const active = styleOption.state & QStyle::State_Active;
-    bool const hover = styleOption.state & QStyle::State_MouseOver;
-    QPalette::ColorGroup const colorGroup = active ? QPalette::Active : QPalette::Inactive;
-    if ( selected || hover ) {
-        styleOption.features &= ~QStyleOptionViewItemV2::Alternate;
-        QPalette::ColorRole colorRole = selected ? QPalette::Highlight : QPalette::Midlight;
-        painter->fillRect( styleOption.rect, styleOption.palette.color( colorGroup, colorRole ) );
-    }
-    QStyle* style = styleOption.widget ? styleOption.widget->style() : QApplication::style();
-    style->drawControl( QStyle::CE_ItemViewItem, &styleOption, painter, styleOption.widget );
-
-    QRect const rect = styleOption.rect;
-    QSize const iconSize = styleOption.decorationSize;
-    QRect const iconRect( rect.topLeft(), iconSize );
-    QIcon const icon = index.data( Qt::DecorationRole ).value<QIcon>();
-    painter->drawPixmap( iconRect, icon.pixmap( iconSize ) );
-
-    int const padding = 5;
-    QString const name = index.data().toString();
-    const bool isFavorite = QSettings().contains( "Favorites/" + name );
-    QSize const bookmarkSize( 16, 16 );
-    QRect bookmarkRect( iconRect.bottomRight(), bookmarkSize );
-    bookmarkRect.translate( QPoint( -bookmarkSize.width() - padding, -bookmarkSize.height() - padding ) );
-    QIcon::Mode mode = isFavorite ? QIcon::Normal : QIcon::Disabled;
-    painter->drawPixmap( bookmarkRect, m_bookmarkIcon.pixmap( bookmarkSize, mode ) );
-
-    QTextDocument document;
-    document.setTextWidth( rect.width() - iconSize.width() - padding );
-    document.setDefaultFont( styleOption.font );
-    document.setHtml( text( index ) );
-
-    QRect textRect = QRect( iconRect.topRight(), QSize( document.textWidth() - padding, rect.height() - padding ) );
-    painter->save();
-    painter->translate( textRect.topLeft() );
-    painter->setClipRect( textRect.translated( -textRect.topLeft() ) );
-    QAbstractTextDocumentLayout::PaintContext paintContext;
-    paintContext.palette = styleOption.palette;
-    QPalette::ColorRole const role = selected && active ? QPalette::HighlightedText : QPalette::Text;
-    paintContext.palette.setColor( QPalette::Text, styleOption.palette.color( colorGroup, role ) );
-    document.documentLayout()->draw( painter, paintContext );
-    painter->restore();
-}
-
-QSize MapViewItemDelegate::sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const
-{
-    if ( index.column() == 0 ) {
-        QSize const iconSize = option.decorationSize;
-        QTextDocument doc;
-        doc.setDefaultFont( option.font );
-        doc.setTextWidth( m_view->width() - iconSize.width() - 10 );
-        doc.setHtml( text( index ) );
-        return QSize( iconSize.width() + doc.size().width(), iconSize.height() );
-    }
-
-    return QSize();
-}
-
-QString MapViewItemDelegate::text( const QModelIndex &index )
-{
-    QString const title = index.data().toString();
-    QString const description = index.data( Qt::UserRole+2 ).toString();
-    return QString("<p><b>%1</b></p>%2").arg( title ).arg( description );
-}
-
-}
-
-#include "MapViewWidget.moc"
+#include "moc_MapViewWidget.cpp"

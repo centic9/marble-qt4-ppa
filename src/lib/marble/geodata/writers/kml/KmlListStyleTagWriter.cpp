@@ -6,7 +6,7 @@
 // the source code.
 //
 // Copyright 2012      Mayank Madan <maddiemadan@gmail.com>
-// Copyright 2013      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2013      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "KmlListStyleTagWriter.h"
@@ -29,6 +29,12 @@ bool KmlListStyleTagWriter::write( const GeoNode *node,
                                    GeoWriter& writer ) const
 {
     const GeoDataListStyle *listStyle = static_cast<const GeoDataListStyle*>( node );
+    bool const isEmpty = listStyle->listItemType() == GeoDataListStyle::Check &&
+            listStyle->backgroundColor() == QColor( Qt::white ) &&
+            listStyle->itemIconList().isEmpty();
+    if ( isEmpty ) {
+        return true;
+    }
     writer.writeStartElement( kml::kmlTag_ListStyle );
 
     QString const itemType = itemTypeToString( listStyle->listItemType() );

@@ -9,15 +9,21 @@
 //
 
 #include "PlaybackAnimatedUpdateItem.h"
+
+#include "GeoDataAnimatedUpdate.h"
+#include "GeoDataDocument.h"
+#include "GeoDataPlacemark.h"
 #include "GeoDataTypes.h"
 
 #include <QString>
 
 namespace Marble
 {
-PlaybackAnimatedUpdateItem::PlaybackAnimatedUpdateItem( const GeoDataAnimatedUpdate* animatedUpdate )
+PlaybackAnimatedUpdateItem::PlaybackAnimatedUpdateItem( GeoDataAnimatedUpdate* animatedUpdate )
 {
     m_animatedUpdate = animatedUpdate;
+    m_rootDocument = rootDocument( m_animatedUpdate );
+    m_playing = false;
 }
 
 const GeoDataAnimatedUpdate* PlaybackAnimatedUpdateItem::animatedUpdate() const
@@ -32,30 +38,93 @@ double PlaybackAnimatedUpdateItem::duration() const
 
 void PlaybackAnimatedUpdateItem::play()
 {
-    if ( m_animatedUpdate->update() && m_animatedUpdate->update()->change() ) {
+    if( m_playing ){
+        return;
+    }
+    m_playing = true;
+
+    if ( !m_rootDocument || !m_animatedUpdate->update() ) {
+        return;
+    }
+
+    // Apply updates of elements
+    if ( m_animatedUpdate->update()->change() ) {
         QVector<GeoDataPlacemark*> placemarkList = m_animatedUpdate->update()->change()->placemarkList();
         for( int i = 0; i < placemarkList.size(); i++ ){
             GeoDataPlacemark* placemark = placemarkList.at( i );
             QString targetId = placemark->targetId();
+            if( targetId.isEmpty() ) {
+                continue;
+            }
             if( placemark->isBalloonVisible() ){
-                GeoDataDocument* document = rootDocument( placemark );
-                GeoDataPlacemark* placemarkFromDocument = findPlacemark( document, targetId );
-                if( placemarkFromDocument ){
-                    emit balloonShown( placemarkFromDocument );
+                GeoDataFeature* feature = findFeature( m_rootDocument, targetId );
+                if( feature && feature->nodeType() == GeoDataTypes::GeoDataPlacemarkType ){
+                    emit balloonShown( static_cast<GeoDataPlacemark*>( feature ) );
                 }
             } else {
                 emit balloonHidden();
             }
         }
     }
+
+    // Create new elements
+    if( m_animatedUpdate->update()->create() ){
+        for( int index = 0; index < m_animatedUpdate->update()->create()->size(); ++index ) {
+            GeoDataFeature* child = m_animatedUpdate->update()->create()->child( index );
+            if( child &&
+                    ( child->nodeType() == GeoDataTypes::GeoDataDocumentType ||
+                      child->nodeType() == GeoDataTypes::GeoDataFolderType ) ) {
+                GeoDataContainer *addContainer = static_cast<GeoDataContainer*>( child );
+                QString targetId = addContainer->targetId();
+                GeoDataFeature* feature = findFeature( m_rootDocument, targetId );
+                if( feature &&
+                        ( feature->nodeType() == GeoDataTypes::GeoDataDocumentType ||
+                          feature->nodeType() == GeoDataTypes::GeoDataFolderType ) ) {
+                    GeoDataContainer* container = static_cast<GeoDataContainer*>( feature );
+                    for( int i = 0; i < addContainer->size(); ++i ) {
+                        emit added( container, addContainer->child( i ), -1 );
+                        if( addContainer->child( i )->nodeType() == GeoDataTypes::GeoDataPlacemarkType )
+                        {
+                            GeoDataPlacemark *placemark = static_cast<GeoDataPlacemark*>( addContainer->child( i ) );
+                            if( placemark->isBalloonVisible() ) {
+                                emit balloonShown( placemark );
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    // Delete elements
+    if( m_animatedUpdate->update()->getDelete() ){
+        for( int index = 0; index < m_animatedUpdate->update()->getDelete()->size(); ++index ) {
+            GeoDataFeature* child = m_animatedUpdate->update()->getDelete()->child( index );
+            QString targetId = child->targetId();
+            if( targetId.isEmpty() ) {
+                continue;
+            }
+            GeoDataFeature* feature = findFeature( m_rootDocument, targetId );
+            if( feature && canDelete( feature->nodeType() ) ) {
+                m_deletedObjects.append( feature );
+                emit removed( feature );
+                if( feature->nodeType() == GeoDataTypes::GeoDataPlacemarkType )
+                {
+                    GeoDataPlacemark *placemark = static_cast<GeoDataPlacemark*>( feature );
+                    if( placemark->isBalloonVisible() ) {
+                        emit balloonHidden();
+                    }
+                }
+            }
+        }
+    }
 }
 
-GeoDataPlacemark* PlaybackAnimatedUpdateItem::findPlacemark( GeoDataFeature* feature, const QString& targetId ) const
+GeoDataFeature* PlaybackAnimatedUpdateItem::findFeature(GeoDataFeature* feature, const QString& id ) const
 {
-    if ( feature && feature->nodeType() == GeoDataTypes::GeoDataPlacemarkType ) {
-        if( static_cast<GeoDataPlacemark*>( feature )->id() == targetId ){
-            return static_cast<GeoDataPlacemark*>( feature );
-        }
+    if ( feature && feature->id() == id ){
+        return feature;
     }
 
     GeoDataContainer *container = dynamic_cast<GeoDataContainer*>( feature );
@@ -63,16 +132,16 @@ GeoDataPlacemark* PlaybackAnimatedUpdateItem::findPlacemark( GeoDataFeature* fea
         QVector<GeoDataFeature*>::Iterator end = container->end();
         QVector<GeoDataFeature*>::Iterator iter = container->begin();
         for( ; iter != end; ++iter ){
-            GeoDataPlacemark *placemark = findPlacemark( *iter, targetId );
-            if ( placemark ) {
-                return placemark;
+            GeoDataFeature *foundFeature = findFeature( *iter, id );
+            if ( foundFeature ){
+                return foundFeature;
             }
         }
     }
     return 0;
 }
 
-GeoDataDocument* PlaybackAnimatedUpdateItem::rootDocument( GeoDataObject* object ) const
+GeoDataDocument *PlaybackAnimatedUpdateItem::rootDocument( GeoDataObject* object ) const
 {
     if( !object || !object->parent() ){
         GeoDataDocument* document = dynamic_cast<GeoDataDocument*>( object );
@@ -91,14 +160,93 @@ void PlaybackAnimatedUpdateItem::pause()
 void PlaybackAnimatedUpdateItem::seek( double position )
 {
     Q_UNUSED( position );
-    //do nothing
+    play();
 }
 
 void PlaybackAnimatedUpdateItem::stop()
 {
-    //do nothing
+    if( !m_playing ){
+        return;
+    }
+    m_playing = false;
+
+    if ( m_animatedUpdate->update()->change() ) {
+        QVector<GeoDataPlacemark*> placemarkList = m_animatedUpdate->update()->change()->placemarkList();
+        for( int i = 0; i < placemarkList.size(); i++ ){
+            GeoDataPlacemark* placemark = placemarkList.at( i );
+            QString targetId = placemark->targetId();
+            if( targetId.isEmpty() ) {
+                continue;
+            }
+            GeoDataFeature* feature = findFeature( m_rootDocument, targetId );
+            if( placemark->isBalloonVisible() ){
+                if( feature && feature->nodeType() == GeoDataTypes::GeoDataPlacemarkType ){
+                    emit balloonHidden();
+                }
+            } else {
+                emit balloonShown( static_cast<GeoDataPlacemark*>( feature ) );
+            }
+        }
+    }
+
+    if( m_animatedUpdate->update()->create() ){
+        for( int index = 0; index < m_animatedUpdate->update()->create()->size(); ++index ) {
+            GeoDataFeature* feature = m_animatedUpdate->update()->create()->child( index );
+            if( feature &&
+                    ( feature->nodeType() == GeoDataTypes::GeoDataDocumentType ||
+                      feature->nodeType() == GeoDataTypes::GeoDataFolderType ) ) {
+                GeoDataContainer* container = static_cast<GeoDataContainer*>( feature );
+                for( int i = 0; i < container->size(); ++i ) {
+
+                    emit removed( container->child( i ) );
+                    if( container->child( i )->nodeType() == GeoDataTypes::GeoDataPlacemarkType )
+                    {
+                        GeoDataPlacemark *placemark = static_cast<GeoDataPlacemark*>( container->child( i ) );
+                        if( placemark->isBalloonVisible() ) {
+                            emit balloonHidden();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    foreach( GeoDataFeature* feature, m_deletedObjects ) {
+        if( feature->targetId().isEmpty() ) {
+            continue;
+        }
+        GeoDataFeature* target = findFeature( m_rootDocument, feature->targetId() );
+        if ( target ) {
+            /** @todo Do we have to note the original row position and restore it? */
+            Q_ASSERT( dynamic_cast<GeoDataContainer*>( target ) );
+            emit added( static_cast<GeoDataContainer*>( target ), feature, -1 );
+            if( feature->nodeType() == GeoDataTypes::GeoDataPlacemarkType )
+            {
+                GeoDataPlacemark *placemark = static_cast<GeoDataPlacemark*>( feature );
+                if( placemark->isBalloonVisible() ) {
+                    emit balloonShown( placemark );
+                }
+            }
+        } // else the root document was modified in an unfortunate way and we cannot restore it at this point
+    }
+    m_deletedObjects.clear();
+}
+
+bool PlaybackAnimatedUpdateItem::isApplied() const
+{
+    return m_playing;
+}
+
+bool PlaybackAnimatedUpdateItem::canDelete(const char *nodeType) const
+{
+    return  nodeType == GeoDataTypes::GeoDataDocumentType ||
+            nodeType == GeoDataTypes::GeoDataFolderType ||
+            nodeType == GeoDataTypes::GeoDataGroundOverlayType ||
+            nodeType == GeoDataTypes::GeoDataPlacemarkType ||
+            nodeType == GeoDataTypes::GeoDataScreenOverlayType ||
+            nodeType == GeoDataTypes::GeoDataPhotoOverlayType;
 }
 
 }
 
-#include "PlaybackAnimatedUpdateItem.moc"
+#include "moc_PlaybackAnimatedUpdateItem.cpp"

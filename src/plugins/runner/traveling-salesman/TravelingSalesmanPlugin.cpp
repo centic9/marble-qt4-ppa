@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "TravelingSalesmanPlugin.h"
@@ -34,4 +34,4 @@ MarbleAbstractRunner* TravelingSalesmanPlugin::newRunner() const
 
 Q_EXPORT_PLUGIN2( TravelingSalesmanPlugin, Marble::TravelingSalesmanPlugin )
 
-#include "TravelingSalesmanPlugin.moc"
+#include "moc_TravelingSalesmanPlugin.cpp"

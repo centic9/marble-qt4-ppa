@@ -14,6 +14,7 @@
 #include "GeoDataPlacemark.h"
 
 #include <QFile>
+#include <QDataStream>
 
 namespace Marble
 {
@@ -113,4 +114,4 @@ void CacheRunner::parseFile( const QString &fileName, DocumentRole role = Unknow
 
 }
 
-#include "CacheRunner.moc"
+#include "moc_CacheRunner.cpp"

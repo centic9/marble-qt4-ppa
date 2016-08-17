@@ -12,28 +12,37 @@
 #define PLAYBACKANIMATEDUPDATEITEM_H
 
 #include "PlaybackItem.h"
-#include "GeoDataAnimatedUpdate.h"
-#include "GeoDataDocument.h"
-#include "GeoDataPlacemark.h"
 
 namespace Marble
 {
+
+class GeoDataAnimatedUpdate;
+class GeoDataDocument;
+class GeoDataFeature;
+class GeoDataObject;
+
 class PlaybackAnimatedUpdateItem : public PlaybackItem
 {
     Q_OBJECT
 public:
-    PlaybackAnimatedUpdateItem( const GeoDataAnimatedUpdate* animatedUpdate );
+    PlaybackAnimatedUpdateItem( GeoDataAnimatedUpdate *animatedUpdate );
     const GeoDataAnimatedUpdate* animatedUpdate() const;
     double duration() const;
     void play();
     void pause();
-    void seek( double position );
+    void seek( double );
     void stop();
+    bool isApplied() const;
 
 private:
-    GeoDataDocument* rootDocument( GeoDataObject* ) const;
-    GeoDataPlacemark* findPlacemark( GeoDataFeature*, const QString& ) const;
-    const GeoDataAnimatedUpdate* m_animatedUpdate;
+    bool canDelete( const char* nodeType ) const;
+    GeoDataDocument* rootDocument( GeoDataObject *object ) const;
+    GeoDataFeature* findFeature( GeoDataFeature* feature, const QString& id ) const;
+    GeoDataAnimatedUpdate* m_animatedUpdate;
+    QList<GeoDataFeature*> m_deletedObjects;
+    GeoDataDocument* m_rootDocument;
+    bool m_playing;
 };
+
 }
 #endif

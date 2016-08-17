@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2014      Calin-Cristian Cruceru   <crucerucalincristian@gmail.com
+// Copyright 2014      Calin Cruceru   <crucerucalincristian@gmail.com
 //
 
 #ifndef SCENEGRAPHICTYPES_H
@@ -19,11 +19,12 @@ namespace Marble
  * interact with using the annotate plugin.
  */
 
-namespace SceneGraphicTypes
+namespace SceneGraphicsTypes
 {
     extern const char *SceneGraphicAreaAnnotation;
     extern const char *SceneGraphicGroundOverlay;
-    extern const char *SceneGraphicPlacemark;
+    extern const char *SceneGraphicTextAnnotation;
+    extern const char *SceneGraphicPolylineAnnotation;
 }
 
 }

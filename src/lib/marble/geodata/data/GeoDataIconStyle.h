@@ -25,6 +25,11 @@ namespace Marble
 {
 
 class GeoDataIconStylePrivate;
+class RemoteIconLoader;
+
+// Limits for the user in case of scaling the icon too much
+static const QSize s_maximumIconSize = QSize( 100, 100 );
+static const QSize s_minimumIconSize = QSize( 10, 10 );
 
 class GEODATA_EXPORT GeoDataIconStyle : public GeoDataColorStyle
 {
@@ -46,6 +51,12 @@ class GEODATA_EXPORT GeoDataIconStyle : public GeoDataColorStyle
     void setIcon( const QImage& icon );
     QImage icon() const;
 
+    /**
+     * @brief Returns a scaled version of label icon
+     * @return  the scaled icon
+     */
+    QImage scaledIcon() const;
+
     void setIconPath( const QString& filename );
     QString iconPath() const;
 
@@ -57,6 +68,8 @@ class GEODATA_EXPORT GeoDataIconStyle : public GeoDataColorStyle
 
     int heading() const;
     void setHeading( int heading );
+    
+    RemoteIconLoader *remoteIconLoader() const;
 
     /*
      * Serializable methods

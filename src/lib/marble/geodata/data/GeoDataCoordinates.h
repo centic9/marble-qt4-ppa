@@ -8,6 +8,7 @@
 // Copyright 2006-2007 Torsten Rahn <tackat@kde.org>
 // Copyright 2007-2008 Inge Wallin  <ingwa@kde.org>
 // Copyright 2008      Patrick Spendrin <ps_ml@gmx.de>
+// Copyright 2015      Alejandro Garcia Montoro <alejandro.garciamontoro@gmail.com>
 //
 
 
@@ -18,6 +19,7 @@
 #include <QMetaType>
 #include <QVector>
 #include <QString>
+#include <QHash>
 
 #include <cmath>
 
@@ -221,6 +223,35 @@ class GEODATA_EXPORT GeoDataCoordinates
     void setAltitude( const qreal altitude );
 
     /**
+    * @brief retrieves the UTM zone of the GeoDataCoordinates object.
+    * If the point is located on one of the poles (latitude < 80S or
+    * latitude > 84N) there is no UTM zone associated; in this case,
+    * 0 is returned.
+    * @return UTM zone.
+    */
+    int utmZone() const;
+
+    /**
+    * @brief retrieves the UTM easting of the GeoDataCoordinates object,
+    * in meters.
+    * @return UTM easting
+    */
+    qreal utmEasting() const;
+
+    /**
+    * @brief retrieves the UTM latitude band of the GeoDataCoordinates object
+    * @return UTM latitude band
+    */
+    QString utmLatitudeBand() const;
+
+    /**
+    * @brief retrieves the UTM northing of the GeoDataCoordinates object,
+    * in meters
+    * @return UTM northing
+    */
+    qreal utmNorthing() const;
+
+    /**
     * @brief return the detail flag
     * detail range: 0 for most important points, 5 for least important
     */
@@ -231,6 +262,15 @@ class GEODATA_EXPORT GeoDataCoordinates
     * @param det detail
     */
     void setDetail( const int det );
+
+    /**
+     * @brief Rotates one coordinate around another.
+     * @param axis The coordinate that serves as a rotation axis
+     * @param angle Rotation angle
+     * @param unit Unit of the result
+     * @return The coordinate rotated in anticlockwise direction
+     */
+    GeoDataCoordinates rotateAround( const GeoDataCoordinates &axis, qreal angle, Unit unit = Radian ) const;
 
     /**
      * @brief Returns the bearing (true bearing, the angle between the line defined
@@ -384,6 +424,11 @@ class GEODATA_EXPORT GeoDataCoordinates
     static GeoDataCoordinates::Notation s_notation;
     static const GeoDataCoordinates null;
 };
+
+inline uint qHash(const GeoDataCoordinates& coordinates ) {
+    return qHash( coordinates.toString() );
+}
+
 
 }
 

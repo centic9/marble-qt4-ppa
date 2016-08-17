@@ -13,6 +13,10 @@ FILE (GLOB BITMAP_FILES bitmaps/*.png)
 install (FILES ${BITMAP_FILES}
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps)
 
+FILE (GLOB BITMAP_EDITARROW_FILES bitmaps/editarrows/*.png)
+install (FILES ${BITMAP_EDITARROW_FILES}
+DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps/editarrows)
+
 FILE (GLOB BITMAP_POI_FILES bitmaps/poi/*.png)
 install (FILES ${BITMAP_POI_FILES}
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps/poi)
@@ -104,6 +108,36 @@ install (FILES
 maps/earth/openstreetmap/openstreetmap.dgml
 maps/earth/openstreetmap/openstreetmap-preview.png
 maps/earth/openstreetmap/legend.html
+maps/earth/openstreetmap/tour.kml
+"maps/earth/openstreetmap/Alcatraz.jpg"
+"maps/earth/openstreetmap/Brasilia.jpg"
+"maps/earth/openstreetmap/Church of the Holy Sepulchre.jpg"
+"maps/earth/openstreetmap/Death Valley.jpg"
+"maps/earth/openstreetmap/Desert breath.jpg"
+"maps/earth/openstreetmap/Disneyland.jpg"
+"maps/earth/openstreetmap/Dunnottar Castle.jpg"
+"maps/earth/openstreetmap/Eiffel Tower.jpg"
+"maps/earth/openstreetmap/Kheops Pyramid.jpg"
+"maps/earth/openstreetmap/Klyuchevskaya Sopka.jpg"
+"maps/earth/openstreetmap/Maree Man.jpg"
+"maps/earth/openstreetmap/Moscow Kremlin.jpg"
+"maps/earth/openstreetmap/Nazca Lines.jpg"
+"maps/earth/openstreetmap/Palace Het Loo.jpg"
+"maps/earth/openstreetmap/Palm Jebel Ali.png"
+"maps/earth/openstreetmap/Palm Jumeirah.jpg"
+"maps/earth/openstreetmap/Russell Square.jpg"
+"maps/earth/openstreetmap/Santorini.jpg"
+"maps/earth/openstreetmap/Shuttle Landing Facility.jpg"
+"maps/earth/openstreetmap/Sofievka.jpg"
+"maps/earth/openstreetmap/Spiral Jetty.png"
+"maps/earth/openstreetmap/Stonehenge.jpg"
+"maps/earth/openstreetmap/St Peter's Basilica.jpg"
+"maps/earth/openstreetmap/Sydney Opera House.jpg"
+"maps/earth/openstreetmap/Taj Mahal.jpg"
+"maps/earth/openstreetmap/Taranaki.jpg"
+"maps/earth/openstreetmap/The Great Wall of China.jpg"
+"maps/earth/openstreetmap/The World.jpg"
+"maps/earth/openstreetmap/Vesuvius.jpg"
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/openstreetmap)
 
 FILE(GLOB OSM_LEGEND_ICONS maps/earth/openstreetmap/legend/*.png)
@@ -205,10 +239,6 @@ weather/wind-arrows.svgz
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/weather)
 
 install (FILES
-licenses/lgpl2.txt
-DESTINATION ${MARBLE_DATA_INSTALL_PATH}/licenses)
-
-install (FILES
 mwdbii/DATELINE.PNT
 mwdbii/PCOAST.PNT
 mwdbii/PDIFFBORDER.PNT
@@ -244,12 +274,12 @@ else(MOBILE)
 endif(MOBILE)
 
 if(NOT APPLE AND NOT WIN32)
-  install (FILES icons/hi128-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/128x128/apps/ RENAME marble.png)
-  install (FILES icons/hi64-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/64x64/apps/ RENAME marble.png)
-  install (FILES icons/hi48-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/48x48/apps/ RENAME marble.png)
-  install (FILES icons/hi32-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/32x32/apps/ RENAME marble.png)
-  install (FILES icons/hi22-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/22x22/apps/ RENAME marble.png)
-  install (FILES icons/hi16-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/16x16/apps/ RENAME marble.png)
+  install (FILES icons/128-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/128x128/apps/ RENAME marble.png)
+  install (FILES icons/64-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/64x64/apps/ RENAME marble.png)
+  install (FILES icons/48-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/48x48/apps/ RENAME marble.png)
+  install (FILES icons/32-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/32x32/apps/ RENAME marble.png)
+  install (FILES icons/22-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/22x22/apps/ RENAME marble.png)
+  install (FILES icons/16-apps-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/16x16/apps/ RENAME marble.png)
 endif(NOT APPLE AND NOT WIN32 )
 
 FILE (GLOB AUDIO_FILES audio/*.ogg)

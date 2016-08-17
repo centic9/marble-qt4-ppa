@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "Route.h"
@@ -25,10 +25,10 @@ Route::Route() :
 void Route::addRouteSegment( const RouteSegment &segment )
 {
     if ( segment.isValid() ) {
-        m_bounds = m_bounds.isEmpty() ? segment.bounds() : m_bounds.united( segment.bounds() );
+        m_bounds = m_bounds.united( segment.bounds() );
         m_distance += segment.distance();
         m_path << segment.path();
-        if ( segment.maneuver().position().longitude() != 0.0 || segment.maneuver().position().latitude() != 0.0 ) {
+        if ( segment.maneuver().position().isValid() ) {
             m_turnPoints << segment.maneuver().position();
         }
         if ( segment.maneuver().hasWaypoint() ) {

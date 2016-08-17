@@ -24,11 +24,6 @@
 #include <QSizePolicy>
 #include <QNetworkProxy>
 #include <QMetaMethod>
-
-#ifdef MARBLE_DBUS
-#include <QDBusConnection>
-#endif
-
 #include "DataMigration.h"
 #include "FpsLayer.h"
 #include "FileManager.h"
@@ -167,13 +162,6 @@ void MarbleWidgetPrivate::construct()
     dataMigration->exec();
     delete dataMigration;
 
-#ifdef MARBLE_DBUS
-    QDBusConnection::sessionBus().registerObject( "/MarbleWidget", m_widget,
-                                                  QDBusConnection::ExportAllSlots
-                                                  | QDBusConnection::ExportAllSignals
-                                                  | QDBusConnection::ExportAllProperties );
-#endif
-
     // Widget settings
     m_widget->setMinimumSize( 200, 300 );
     m_widget->setFocusPolicy( Qt::WheelFocus );
@@ -251,6 +239,11 @@ void MarbleWidgetPrivate::construct()
     m_widget->setMouseTracking( true );
 
     map()->addLayer( &m_customPaintLayer );
+
+    m_widget->connect( m_inputhandler, SIGNAL(mouseClickGeoPosition(qreal,qreal,GeoDataCoordinates::Unit)),
+                       m_widget, SIGNAL(highlightedPlacemarksChanged(qreal,qreal,GeoDataCoordinates::Unit)) );
+    m_widget->setHighlightEnabled( true );
+
 }
 
 void MarbleWidgetPrivate::setInputHandler()
@@ -357,7 +350,7 @@ int  MarbleWidget::maximumZoom() const
     return d->maximumZoom();
 }
 
-QVector<const GeoDataPlacemark*> MarbleWidget::whichFeatureAt( const QPoint &curpos ) const
+QVector<const GeoDataFeature*> MarbleWidget::whichFeatureAt( const QPoint &curpos ) const
 {
     return d->map()->whichFeatureAt( curpos );
 }
@@ -395,6 +388,19 @@ RenderStatus MarbleWidget::renderStatus() const
 RenderState MarbleWidget::renderState() const
 {
     return d->map()->renderState();
+}
+
+void MarbleWidget::setHighlightEnabled(bool enabled)
+{
+    if ( enabled ) {
+        connect( this, SIGNAL(highlightedPlacemarksChanged(qreal,qreal,GeoDataCoordinates::Unit)),
+                 d->map(), SIGNAL(highlightedPlacemarksChanged(qreal, qreal, GeoDataCoordinates::Unit)),
+                 Qt::UniqueConnection );
+    }
+    else {
+        disconnect( this, SIGNAL(highlightedPlacemarksChanged(qreal,qreal,GeoDataCoordinates::Unit)),
+                 d->map(), SIGNAL(highlightedPlacemarksChanged(qreal,qreal,GeoDataCoordinates::Unit)) );
+    }
 }
 
 bool MarbleWidget::showOverviewMap() const
@@ -1230,4 +1236,4 @@ PopupLayer *MarbleWidget::popupLayer()
 
 }
 
-#include "MarbleWidget.moc"
+#include "moc_MarbleWidget.cpp"

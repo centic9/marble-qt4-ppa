@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2014      Calin-Cristian Cruceru   <crucerucalincristian@gmail.com
+// Copyright 2014      Calin Cruceru <crucerucalincristian@gmail.com
 //
 
 
@@ -15,11 +15,12 @@
 namespace Marble
 {
 
-namespace SceneGraphicTypes
+namespace SceneGraphicsTypes
 {
     const char *SceneGraphicAreaAnnotation = "SceneGraphicAreaAnnotation";
 	const char *SceneGraphicGroundOverlay = "SceneGraphicGroundOverlay";
-	const char *SceneGraphicPlacemark = "SceneGraphicPlacemark";
+	const char *SceneGraphicTextAnnotation = "SceneGraphicTextAnnotation";
+    const char *SceneGraphicPolylineAnnotation = "SceneGraphicPolylineAnnotation";
 }
 
 }

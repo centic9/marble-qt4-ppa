@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2013      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
@@ -236,7 +236,7 @@ QString OsmDatabase::formatDistance( const GeoDataCoordinates &a, const GeoDataC
     int precision = 0;
     QString distanceUnit = QLatin1String( "m" );
 
-    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() == MarbleLocale::MetricSystem ) {
+    if ( MarbleGlobal::getInstance()->locale()->measurementSystem() == MarbleLocale::ImperialSystem ) {
         precision = 1;
         distanceUnit = "mi";
         distance *= METER2KM;

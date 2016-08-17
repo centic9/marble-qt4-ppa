@@ -238,6 +238,7 @@ QVector<GeoDataFeature*> GeoDataContainer::featureList() const
  */
 GeoDataFeature* GeoDataContainer::child( int i )
 {
+    detach();
     return p()->m_vector.at(i);
 }
 
@@ -264,9 +265,14 @@ int GeoDataContainer::childPosition( const GeoDataFeature* object ) const
 
 void GeoDataContainer::insert( GeoDataFeature *other, int index )
 {
+    insert( index, other );
+}
+
+void GeoDataContainer::insert( int index, GeoDataFeature *feature )
+{
     detach();
-    other->setParent(this);
-    p()->m_vector.insert( index, other );
+    feature->setParent(this);
+    p()->m_vector.insert( index, feature );
 }
 
 void GeoDataContainer::append( GeoDataFeature *other )
@@ -330,11 +336,13 @@ void GeoDataContainer::clear()
 
 QVector<GeoDataFeature*>::Iterator GeoDataContainer::begin()
 {
+    detach();
     return p()->m_vector.begin();
 }
 
 QVector<GeoDataFeature*>::Iterator GeoDataContainer::end()
 {
+    detach();
     return p()->m_vector.end();
 }
 

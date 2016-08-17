@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "GeoDataOverlay.h"
@@ -53,6 +53,7 @@ GeoDataOverlay::GeoDataOverlay( const GeoDataOverlay &other ) :
 
 GeoDataOverlay &GeoDataOverlay::operator=( const GeoDataOverlay &other )
 {
+    GeoDataFeature::operator=( other );
     *d = *other.d;
     return *this;
 }
@@ -93,6 +94,7 @@ void GeoDataOverlay::setIcon( const QImage &icon )
 void GeoDataOverlay::setIconFile( const QString &path )
 {
     d->m_iconPath = path;
+    d->m_image = QImage( path );
 }
 
 QString GeoDataOverlay::iconFile() const

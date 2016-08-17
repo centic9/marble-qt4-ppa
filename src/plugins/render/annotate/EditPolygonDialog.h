@@ -5,18 +5,18 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2014      Calin-Cristian Cruceru <crucerucalincristian@gmail.com>
+// Copyright 2014      Calin Cruceru <crucerucalincristian@gmail.com>
 //
 
 #ifndef MARBLE_EDITPOLYGONDIALOG_H
 #define MARBLE_EDITPOLYGONDIALOG_H
-
 
 #include <QDialog>
 #include <QColor>
 
 #include "MarbleGlobal.h"
 #include "GeoDataPlacemark.h"
+
 
 namespace Marble {
 
@@ -33,13 +33,19 @@ public:
     EditPolygonDialog( GeoDataPlacemark *placemark, QWidget *parent = 0 );
     ~EditPolygonDialog();
 
-private slots:
+public slots:
+    void handleAddingNode( const GeoDataCoordinates &node );
+    void handleItemMoving( GeoDataPlacemark *item );
     void updatePolygon();
-    void updateLinesDialog( const QColor &color );
-    void updatePolyDialog( const QColor &color );
 
 signals:
     void polygonUpdated( GeoDataFeature *feature );
+
+private slots:
+    void updateLinesDialog( const QColor &color );
+    void updatePolyDialog( const QColor &color );
+    void checkFields();
+    void restoreInitial( int result );
 
 private:
     class Private;

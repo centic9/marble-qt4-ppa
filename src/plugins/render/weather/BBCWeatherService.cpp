@@ -61,7 +61,15 @@ void BBCWeatherService::getAdditionalItems( const GeoDataLatLonAltBox& box,
                                             qint32 number )
 {
     if ( !m_parsingStarted ) {
-        setupList();
+        m_parsingStarted = true;
+
+        m_parser = new StationListParser( this );
+        m_parser->setPath( MarbleDirs::path( "weather/bbc-stations.xml" ) );
+        connect( m_parser, SIGNAL(finished()),
+                 this,     SLOT(fetchStationList()) );
+        if ( m_parser->wait( 100 ) ) {
+            m_parser->start( QThread::IdlePriority );
+        }
     }
 
     m_itemGetter->setSchedule( box, number );
@@ -103,23 +111,9 @@ void BBCWeatherService::createItem( BBCStation station )
     item->setCoordinate( station.coordinate() );
     item->setPriority( station.priority() );
     item->setStationName( station.name() );
-    item->setTarget( "earth" );
 
     emit requestedDownload( item->observationUrl(), "bbcobservation", item );
     emit requestedDownload( item->forecastUrl(),    "bbcforecast",    item );
 }
 
-void BBCWeatherService::setupList()
-{
-    m_parsingStarted = true;
-
-    m_parser = new StationListParser( this );
-    m_parser->setPath( MarbleDirs::path( "weather/bbc-stations.xml" ) );
-    connect( m_parser, SIGNAL(finished()),
-             this,     SLOT(fetchStationList()) );
-    if ( m_parser->wait( 100 ) ) {
-        m_parser->start( QThread::IdlePriority );
-    }
-}
-
-#include "BBCWeatherService.moc"
+#include "moc_BBCWeatherService.cpp"

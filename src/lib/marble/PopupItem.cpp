@@ -7,17 +7,22 @@
 //
 // Copyright 2012   Torsten Rahn      <tackat@kde.org>
 // Copyright 2013   Mohammed Nafees   <nafees.technocool@gmail.com>
-// Copyright 2012   Dennis Nienhüser  <earthwings@gentoo.org>
+// Copyright 2012   Dennis Nienhüser  <nienhueser@kde.org>
 // Copyright 2012   Illya Kovalevskyy <illya.kovalevskyy@gmail.com>
 //
 
 #include "PopupItem.h"
 #include "MarbleWidget.h"
-#include "MarbleWebView.h"
 
-#include <QPointer>
+#ifdef MARBLE_NO_WEBKIT
+#include "NullMarbleWebView.h"
+#else
 #include <QWebView>
 #include <QWebHistory>
+#include "MarbleWebView.h"
+#endif
+
+#include <QPointer>
 #include <QPrinter>
 #include <QPrintDialog>
 #include <QMouseEvent>
@@ -30,6 +35,7 @@
 #include <QKeyEvent>
 #include <QClipboard>
 #include <qdrawutil.h>
+#include <QPainter>
 
 namespace Marble
 {
@@ -62,7 +68,9 @@ PopupItem::PopupItem( QObject* parent ) :
     QPalette palette = m_ui.webView->palette();
     palette.setBrush(QPalette::Base, Qt::transparent);
     m_ui.webView->setPalette(palette);
+#ifndef MARBLE_NO_WEBKIT
     m_ui.webView->page()->setPalette(palette);
+#endif
     m_ui.webView->setAttribute(Qt::WA_OpaquePaintEvent, false);
     m_ui.webView->setUrl( QUrl( "about:blank" ) );
 
@@ -70,8 +78,10 @@ PopupItem::PopupItem( QObject* parent ) :
     connect( m_ui.webView, SIGNAL(urlChanged(QUrl)), this, SLOT(updateBackButton()) );
     connect( m_ui.hideButton, SIGNAL(clicked()), this, SIGNAL(hide()) );
 
+#ifndef MARBLE_NO_WEBKIT
     // Update the popupitem on changes while loading the webpage
     connect( m_ui.webView->page(), SIGNAL(repaintRequested(QRect)), this, SLOT(requestUpdate()) );
+#endif
 }
 
 PopupItem::~PopupItem()
@@ -97,7 +107,9 @@ void PopupItem::setUrl( const QUrl &url )
     QPalette palette = m_ui.webView->palette();
     palette.setBrush(QPalette::Base, Qt::transparent);
     m_ui.webView->setPalette(palette);
+#ifndef MARBLE_NO_WEBKIT
     m_ui.webView->page()->setPalette(palette);
+#endif
     m_ui.webView->setAttribute(Qt::WA_OpaquePaintEvent, false);
 
     requestUpdate();
@@ -107,7 +119,9 @@ void PopupItem::setContent( const QString &html, const QUrl &baseUrl )
 {
     m_content = html;
     m_baseUrl = baseUrl;
+#ifndef MARBLE_NO_WEBKIT
     m_ui.webView->setHtml( html, baseUrl );
+#endif
 
     requestUpdate();
 }
@@ -330,7 +344,9 @@ void PopupItem::clearHistory()
 {
     m_content.clear();
     m_ui.webView->setUrl( QUrl( "about:blank" ) );
+#ifndef MARBLE_NO_WEBKIT
     m_ui.webView->history()->clear();
+#endif
 }
 
 void PopupItem::requestUpdate()
@@ -342,6 +358,7 @@ void PopupItem::requestUpdate()
 void PopupItem::printContent() const
 {
 #ifndef QT_NO_PRINTER
+#ifndef MARBLE_NO_WEBKIT
     QPrinter printer;
     QPointer<QPrintDialog> dialog = new QPrintDialog(&printer);
     if (dialog->exec() == QPrintDialog::Accepted) {
@@ -349,25 +366,30 @@ void PopupItem::printContent() const
     }
     delete dialog;
 #endif
+#endif
 }
 
 void PopupItem::updateBackButton()
 {
+#ifndef MARBLE_NO_WEBKIT
     bool const hasHistory = m_ui.webView->history()->count() > 1;
     bool const previousIsHtml = !m_content.isEmpty() && m_ui.webView->history()->currentItemIndex() == 1;
     bool const atStart = m_ui.webView->history()->currentItemIndex() <= 1;
     bool const currentIsHtml = m_ui.webView->url() == QUrl( "about:blank" );
     m_ui.goBackButton->setVisible( hasHistory && !currentIsHtml && ( previousIsHtml || !atStart ) );
+#endif
 }
 
 void PopupItem::goBack()
 {
+#ifndef MARBLE_NO_WEBKIT
     if ( m_ui.webView->history()->currentItemIndex() == 1 && !m_content.isEmpty() ) {
         m_ui.webView->setHtml( m_content, m_baseUrl );
     } else {
         m_ui.webView->back();
     }
     updateBackButton();
+#endif
 }
 
 QPixmap PopupItem::pixmap( const QString &imageId ) const
@@ -389,4 +411,4 @@ QPixmap PopupItem::pixmap( const QString &imageId ) const
 
 }
 
-#include "PopupItem.moc"
+#include "moc_PopupItem.cpp"

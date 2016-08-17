@@ -36,6 +36,7 @@
 #include <QVector>
 
 #include "MarbleGlobal.h"
+#include "GeoDataCoordinates.h"
 
 class QItemSelectionModel;
 class QAbstractItemModel;
@@ -140,6 +141,7 @@ class MARBLE_EXPORT MarbleModel : public QObject
 
     GeoSceneDocument *mapTheme();
     const GeoSceneDocument *mapTheme() const;
+    void setMapTheme( GeoSceneDocument * document );
 
     /**
      * @brief Set a new map theme to use.
@@ -199,7 +201,7 @@ class MARBLE_EXPORT MarbleModel : public QObject
      * @param data the raw data to load
      * @param key the name to remove this raw data later
      */
-    void addGeoDataString( const QString& data, const QString& key = "data" );
+    void addGeoDataString( const QString& data, const QString& key = QLatin1String("data") );
 
     /**
      * @brief Remove the file or raw data from the treeModel
@@ -265,6 +267,11 @@ class MARBLE_EXPORT MarbleModel : public QObject
 
     QTextDocument * legend();
 
+    /**
+     * @brief Uses the given text document as the new content of the legend
+     * Any previous legend content is overwritten. MarbleModel takes ownership
+     * of the passed document.
+     */
     void setLegend( QTextDocument * document );
 
     bool workOffline() const;
@@ -280,8 +287,6 @@ class MARBLE_EXPORT MarbleModel : public QObject
      * @see setTrackedPlacemark(), trackedPlacemarkChanged()
      */
     const GeoDataPlacemark *trackedPlacemark() const;
-
-    void assignNewStyle( const QString &filePath, GeoDataStyle *style );
 
  public Q_SLOTS:
     void clearPersistentTileCache();
@@ -299,8 +304,6 @@ class MARBLE_EXPORT MarbleModel : public QObject
     void setTrackedPlacemark( const GeoDataPlacemark *placemark );
 
     void updateProperty( const QString &property, bool value );
-
-    void assignFillColors( const QString &filePath );
 
  Q_SIGNALS:
 
@@ -330,9 +333,11 @@ class MARBLE_EXPORT MarbleModel : public QObject
      * @see home(), setHome()
      */
     void homeChanged( const GeoDataCoordinates &newHomePoint );
-    
+
  private:
     Q_DISABLE_COPY( MarbleModel )
+
+    Q_PRIVATE_SLOT( d, void assignFillColors( const QString &filePath ) )
 
     void addDownloadPolicies( const GeoSceneDocument *mapTheme );
     MarbleModelPrivate  * const d;

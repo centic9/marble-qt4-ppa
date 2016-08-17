@@ -11,6 +11,8 @@
 
 #include "GeoDataPlacemark.h"
 #include "GeoDataExtendedData.h"
+#include "MarbleGlobal.h"
+#include "MarbleLocale.h"
 
 #include <QString>
 
@@ -18,30 +20,50 @@ namespace Marble
 {
 
 RoutingRunner::RoutingRunner( QObject *parent ) :
-    QObject( parent ),
-    m_model( 0 )
+    QObject( parent )
 {
-}
-
-void RoutingRunner::setModel( const MarbleModel *model )
-{
-    m_model = model;
-}
-
-const MarbleModel *RoutingRunner::model() const
-{
-    return m_model;
 }
 
 const QString RoutingRunner::lengthString(qreal length) const
 {
-    const QString result = "%1 %2";
-    QString unit = QLatin1String( "m" );
-    if (length >= 1000) {
-        length /= 1000.0;
-        unit = "km";
+    MarbleLocale::MeasurementSystem const measurementSystem = MarbleGlobal::getInstance()->locale()->measurementSystem();
+
+    int precision = 0;
+    QString distanceUnit = tr( "m" );
+
+    switch ( measurementSystem ) {
+    case MarbleLocale::ImperialSystem:
+        precision = 1;
+        distanceUnit = tr( "mi" );
+        length *= METER2KM * KM2MI;
+        if ( length < 0.1 ) {
+            length = 10 * qRound( length * 528 );
+            precision = 0;
+            distanceUnit = tr( "ft" );
+        }
+        break;
+    case MarbleLocale::MetricSystem:
+        if ( length >= 1000 ) {
+            length *= METER2KM;
+            distanceUnit = tr( "km" );
+            precision = 1;
+        } else if ( length >= 200 ) {
+            length = 50 * qRound( length / 50 );
+        } else if ( length >= 100 ) {
+            length = 25 * qRound( length / 25 );
+        } else {
+            length = 10 * qRound( length / 10 );
+        }
+        break;
+    case MarbleLocale::NauticalSystem: {
+        length *= METER2KM * KM2NM;
+        distanceUnit = tr( "nm" );
+        precision = length < 2.0 ? 2 : 1;
     }
-    return result.arg( length, 0, 'f', 1 ).arg( unit );
+        break;
+    }
+
+    return QString( "%1 %2" ).arg( length, 0, 'f', precision ).arg( distanceUnit );
 }
 
 const QString RoutingRunner::durationString(const QTime& duration) const
@@ -74,4 +96,4 @@ const GeoDataExtendedData RoutingRunner::routeData(qreal length, const QTime& du
 
 }
 
-#include "RoutingRunner.moc"
+#include "moc_RoutingRunner.cpp"

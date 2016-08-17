@@ -14,10 +14,10 @@
 #include "GeoSceneMap.h"
 #include "GeoSceneDocument.h"
 #include "GeoSceneTextureTile.h"
+#include "HttpDownloadManager.h"
 #include "Tile.h"
 #include "TileLoader.h"
 #include "TileLoaderHelper.h"
-#include "MarbleModel.h"
 #include "MarbleDebug.h"
 #include "MapThemeManager.h"
 #include "TileId.h"
@@ -31,9 +31,9 @@ namespace Marble
 class ElevationModelPrivate
 {
 public:
-    ElevationModelPrivate( ElevationModel *_q, MarbleModel *const model )
+    ElevationModelPrivate( ElevationModel *_q, HttpDownloadManager *downloadManager )
         : q( _q ),
-          m_tileLoader( model->downloadManager(), model->pluginManager() ),
+          m_tileLoader( downloadManager, 0 ),
           m_textureLayer( 0 )
     {
         m_cache.setMaxCost( 10 ); //keep 10 tiles in memory (~17MB)
@@ -71,9 +71,9 @@ public:
     QCache<TileId, const QImage> m_cache;
 };
 
-ElevationModel::ElevationModel( MarbleModel *const model )
-    : QObject( 0 ),
-      d( new ElevationModelPrivate( this, model ) )
+ElevationModel::ElevationModel( HttpDownloadManager *downloadManager, QObject *parent ) :
+    QObject( parent ),
+    d( new ElevationModelPrivate( this, downloadManager ) )
 {
     connect( &d->m_tileLoader, SIGNAL(tileCompleted(TileId,QImage)),
              this, SLOT(tileCompleted(TileId,QImage)) );
@@ -86,7 +86,7 @@ qreal ElevationModel::height( qreal lon, qreal lat ) const
         return invalidElevationData;
     }
 
-    const int tileZoomLevel = d->m_tileLoader.maximumTileLevel( *( d->m_textureLayer ) );
+    const int tileZoomLevel = TileLoader::maximumTileLevel( *( d->m_textureLayer ) );
     Q_ASSERT( tileZoomLevel == 9 );
 
     const int width = d->m_textureLayer->tileSize().width();
@@ -132,13 +132,12 @@ qreal ElevationModel::height( qreal lon, qreal lat ) const
 
         Q_ASSERT( 0 <= dx && dx <= 1 );
         Q_ASSERT( 0 <= dy && dy <= 1 );
-        unsigned int pixel;
-        pixel = image->pixel( x % width, y % height );
-        pixel -= 0xFF000000; //fully opaque
+        unsigned int pixel = image->pixel( x % width, y % height ) & 0xffff; // 16 valid bits
+        short int elevation = (short int) pixel; // and signed type, so just cast it
         //mDebug() << "(1-dx)" << (1-dx) << "(1-dy)" << (1-dy);
         if ( pixel != invalidElevationData ) { //no data?
             //mDebug() << "got at x" << x % width << "y" << y % height << "a height of" << pixel << "** RGB" << qRed(pixel) << qGreen(pixel) << qBlue(pixel);
-            ret += ( qreal )pixel * ( 1 - dx ) * ( 1 - dy );
+            ret += ( qreal )elevation * ( 1 - dx ) * ( 1 - dy );
             hasHeight = true;
         } else {
             //mDebug() << "no data at" <<  x % width << "y" << y % height;
@@ -165,7 +164,7 @@ QList<GeoDataCoordinates> ElevationModel::heightProfile( qreal fromLon, qreal fr
         return QList<GeoDataCoordinates>();
     }
 
-    const int tileZoomLevel = d->m_tileLoader.maximumTileLevel( *( d->m_textureLayer ) );
+    const int tileZoomLevel = TileLoader::maximumTileLevel( *( d->m_textureLayer ) );
     const int width = d->m_textureLayer->tileSize().width();
     const int numTilesX = TileLoaderHelper::levelToColumn( d->m_textureLayer->levelZeroColumns(), tileZoomLevel );
 
@@ -205,4 +204,4 @@ QList<GeoDataCoordinates> ElevationModel::heightProfile( qreal fromLon, qreal fr
 
 
 
-#include "ElevationModel.moc"
+#include "moc_ElevationModel.cpp"

@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "jobmanager.h"
@@ -53,7 +53,7 @@ void JobManager::setRegionsFile(const QString &filename)
 
     QDomElement root = xml.documentElement();
     QDomNodeList regions = root.elementsByTagName( "region" );
-    for ( unsigned int i = 0; i < regions.length(); ++i ) {
+    for ( int i = 0; i < int(regions.length()); ++i ) {
         Region region;
         QDomNode node = regions.item( i );
         if (!node.namedItem("continent").isNull()) {
@@ -133,4 +133,4 @@ void JobManager::addJob(const PendingJob &job)
     m_queue.addJob(countryJob);
 }
 
-#include "jobmanager.moc"
+#include "moc_jobmanager.cpp"

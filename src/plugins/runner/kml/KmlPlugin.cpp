@@ -47,7 +47,7 @@ QList<PluginAuthor> KmlPlugin::pluginAuthors() const
 {
     return QList<PluginAuthor>()
             << PluginAuthor( "Thibaut Gridel", "tgridel@free.fr" )
-            << PluginAuthor( "Dennis Nienhüser", "earthwings@gentoo.org" );
+            << PluginAuthor( "Dennis Nienhüser", "nienhueser@kde.org" );
 }
 
 QString KmlPlugin::fileFormatDescription() const
@@ -73,4 +73,4 @@ ParsingRunner* KmlPlugin::newRunner() const
 
 Q_EXPORT_PLUGIN2( KmlPlugin, Marble::KmlPlugin )
 
-#include "KmlPlugin.moc"
+#include "moc_KmlPlugin.cpp"

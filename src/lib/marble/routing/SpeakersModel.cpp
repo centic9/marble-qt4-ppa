@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "SpeakersModel.h"
@@ -233,4 +233,4 @@ int SpeakersModel::count() const
 
 }
 
-#include "SpeakersModel.moc"
+#include "moc_SpeakersModel.cpp"

@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010 Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010 Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2011 Thibaut Gridel <tgridel@free.fr>
 
 #ifndef MARBLE_RUNNERTASK_H
@@ -82,7 +82,7 @@ class RoutingTask : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-    RoutingTask( RoutingRunner *runner, RoutingRunnerManager *manager, const MarbleModel *model, const RouteRequest* routeRequest );
+    RoutingTask( RoutingRunner *runner, RoutingRunnerManager *manager, const RouteRequest* routeRequest );
 
     /**
      * @reimp

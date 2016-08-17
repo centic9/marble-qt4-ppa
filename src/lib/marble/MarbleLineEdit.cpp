@@ -9,7 +9,7 @@
 // as included in KDE 4.5. See there for its authors:
 // http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/klineedit_8cpp.html
 //
-// Copyright 2010,2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010,2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MarbleLineEdit.h"
@@ -123,7 +123,8 @@ void MarbleLineEdit::setDecorator(const QPixmap &decorator)
     QString const postfixDirection  = layoutDirection() == Qt::LeftToRight ? "right" : "left";
     QString styleSheet = QString( ":enabled { padding-%1: %2; %3}").arg( postfixDirection ).arg( padding ).arg( decoratorStyleSheet );
 
-    if ( !MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen ) {
+    bool const smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
+    if ( !smallScreen ) {
         setStyleSheet( styleSheet );
     }
 }
@@ -207,4 +208,4 @@ void MarbleLineEdit::resizeEvent( QResizeEvent * event )
 
 } // namespace Marble
 
-#include "MarbleLineEdit.moc"
+#include "moc_MarbleLineEdit.cpp"

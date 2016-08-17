@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "OSRMRunner.h"
@@ -17,7 +17,7 @@
 #include "GeoDataExtendedData.h"
 #include "routing/Maneuver.h"
 #include "routing/RouteRequest.h"
-#include "TinyWebBrowser.h"
+#include "HttpDownloadManager.h"
 
 #include <QString>
 #include <QVector>
@@ -82,7 +82,7 @@ void OSRMRunner::retrieveRoute( const RouteRequest *route )
     m_hintChecksum = invalidEntry;
 
     m_request = QNetworkRequest( QUrl( url ) );
-    m_request.setRawHeader( "User-Agent", TinyWebBrowser::userAgent( "Browser", "OSRMRunner" ) );
+    m_request.setRawHeader( "User-Agent", HttpDownloadManager::userAgent( "Browser", "OSRMRunner" ) );
 
     QEventLoop eventLoop;
 
@@ -301,4 +301,4 @@ GeoDataDocument *OSRMRunner::parse( const QByteArray &input ) const
 
 } // namespace Marble
 
-#include "OSRMRunner.moc"
+#include "moc_OSRMRunner.cpp"

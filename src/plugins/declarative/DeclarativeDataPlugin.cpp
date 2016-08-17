@@ -7,18 +7,17 @@
 //
 // Copyright 2012      Anton Chernov <chernov.anton.mail@gmail.com>
 // Copyright 2012      "LOTES TM" LLC <lotes.sis@gmail.com>
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "DeclarativeDataPlugin.h"
 #include "DeclarativeDataPluginModel.h"
-#include "MarbleDeclarativeWidget.h"
 #include "DeclarativeDataPluginItem.h"
 
 #include "MarbleDebug.h"
-#include "MarbleWidget.h"
 #include "MarbleModel.h"
 
+#include <QAbstractListModel>
 #include <QMetaObject>
 #include <QMetaProperty>
 #include <QScriptValue>
@@ -86,7 +85,6 @@ void DeclarativeDataPluginPrivate::addItem( DeclarativeDataPluginItem *item, con
 {
     if ( coordinates.isValid() ) {
         item->setCoordinate( coordinates );
-        item->setTarget( m_planet );
         QVariant const idValue = item->property( "identifier" );
         if ( idValue.isValid() && !idValue.toString().isEmpty() ) {
             item->setId( idValue.toString() );
@@ -389,4 +387,4 @@ QVariant DeclarativeDataPlugin::declarativeModel()
     return d->m_model;
 }
 
-#include "DeclarativeDataPlugin.moc"
+#include "moc_DeclarativeDataPlugin.cpp"

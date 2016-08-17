@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2012      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2012      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "MarbleDeclarativeObject.h"
@@ -56,4 +56,4 @@ bool MarbleDeclarativeObject::canExecute(const QString &program) const
     return false;
 }
 
-#include "MarbleDeclarativeObject.moc"
+#include "moc_MarbleDeclarativeObject.cpp"

@@ -27,7 +27,6 @@
 #include "GeoDataLookAt.h"
 #include "MarbleGlobal.h"             // types needed in all of marble.
 #include "marble_export.h"
-#include "GeoDataFolder.h"
 #include "RenderState.h"
 
 // Qt
@@ -42,6 +41,8 @@ class AbstractDataPluginItem;
 class AbstractFloatItem;
 class GeoDataLatLonAltBox;
 class GeoDataLatLonBox;
+class GeoDataFeature;
+class GeoDataPlacemark;
 class GeoPainter;
 class GeoSceneDocument;
 class LayerInterface;
@@ -49,13 +50,11 @@ class MarbleModel;
 class MarbleWidgetPopupMenu;
 class MarbleWidgetInputHandler;
 class MarbleWidgetPrivate;
-class Quaternion;
 class RenderPlugin;
 class RoutingLayer;
 class TextureLayer;
 class TileCoordsPyramid;
 class TileCreator;
-class GeoDataPlacemark;
 class ViewportParams;
 class PopupLayer;
 
@@ -409,7 +408,7 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
     /// @name Placemark management
     //@{
 
-    QVector<const GeoDataPlacemark*> whichFeatureAt( const QPoint& ) const;
+    QVector<const GeoDataFeature *> whichFeatureAt( const QPoint& ) const;
 
     //@}
 
@@ -599,6 +598,11 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
      */
     RenderState renderState() const;
 
+    /**
+     * Toggle whether regions are highlighted when user selects them
+     */
+    void setHighlightEnabled( bool enabled );
+
  public Q_SLOTS:
 
     /// @name Position management slots
@@ -766,13 +770,13 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
 
     /**
      * @brief Set a new map theme
-     * @param maptheme  The ID of the new maptheme. To ensure that a unique 
-     * identifier is being used the theme does NOT get represented by its 
+     * @param maptheme  The ID of the new maptheme. To ensure that a unique
+     * identifier is being used the theme does NOT get represented by its
      * name but the by relative location of the file that specifies the theme:
      *
-     * Example: 
-     *    maptheme = "earth/bluemarble/bluemarble.dgml" 
-     */
+     * Example:
+     *    maptheme = "earth/bluemarble/bluemarble.dgml"
+     */	
     void setMapThemeId( const QString& maptheme );
 
     /**
@@ -1055,6 +1059,8 @@ class MARBLE_EXPORT MarbleWidget : public QWidget
     void renderStatusChanged( RenderStatus status );
 
     void renderStateChanged( const RenderState &state );
+
+    void highlightedPlacemarksChanged( qreal lon, qreal lat, GeoDataCoordinates::Unit unit );
 
  protected:
     /**

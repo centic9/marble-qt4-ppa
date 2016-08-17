@@ -26,10 +26,13 @@
 #include <QScrollBar>
 #include <QStyle>
 #include <QStyleOptionButton>
-#include <QDesktopServices>
 #include <QRegExp>
+
+#ifndef MARBLE_NO_WEBKIT
 #include <QWebFrame>
 #include <QWebElement>
+#endif
+
 #include <QTextDocument>
 
 #include "GeoSceneDocument.h"
@@ -54,7 +57,7 @@ class MarbleLegendBrowserPrivate
     MarbleModel        *m_marbleModel;
     QMap<QString, bool>     m_checkBoxMap;
     QMap<QString, QPixmap>  m_symbolMap;
-    bool                 m_isLegendLoaded;
+    QString                 m_currentThemeId;
 #ifdef Q_WS_MAEMO_5
     bool m_suppressSelection;
 #endif // Q_WS_MAEMO_5
@@ -68,17 +71,18 @@ MarbleLegendBrowser::MarbleLegendBrowser( QWidget *parent )
     : MarbleWebView( parent ),
       d( new MarbleLegendBrowserPrivate )
 {
-    d->m_isLegendLoaded = false;
     d->m_marbleModel = 0;
 #ifdef Q_WS_MAEMO_5
     d->m_suppressSelection = false;
 #endif // Q_WS_MAEMO_5
 
+#ifndef MARBLE_NO_WEBKIT
     QWebFrame *frame = page()->mainFrame();
     connect(frame, SIGNAL(javaScriptWindowObjectCleared()),
             this, SLOT(injectCheckBoxChecker()));
     page()->setLinkDelegationPolicy( QWebPage::DelegateAllLinks );
     connect( this, SIGNAL(linkClicked(QUrl)), this, SLOT(openLinkExternally(QUrl)) );
+#endif
 }
 
 MarbleLegendBrowser::~MarbleLegendBrowser()
@@ -125,13 +129,16 @@ void MarbleLegendBrowser::initTheme()
     if ( isVisible() ) {
         loadLegend();
     }
-    else {
-        d->m_isLegendLoaded = false;
-    }
 }
 
 void MarbleLegendBrowser::loadLegend()
 {
+#ifndef MARBLE_NO_WEBKIT
+    if (d->m_currentThemeId != d->m_marbleModel->mapThemeId()) {
+        d->m_currentThemeId = d->m_marbleModel->mapThemeId();
+    } else {
+        return;
+    }
 
     // Read the html string.
     QString legendPath;
@@ -173,12 +180,15 @@ void MarbleLegendBrowser::loadLegend()
         QTextDocument *document = new QTextDocument(page()->mainFrame()->toHtml());
         d->m_marbleModel->setLegend( document );
     }
+#endif
 }
 
 void MarbleLegendBrowser::injectCheckBoxChecker()
 {
+#ifndef MARBLE_NO_WEBKIT
     QWebFrame *frame = page()->mainFrame();
     frame->addToJavaScriptWindowObject( "Marble", this );
+#endif
 }
 
 void MarbleLegendBrowser::openLinkExternally( const QUrl &url )
@@ -194,10 +204,8 @@ bool MarbleLegendBrowser::event( QEvent * event )
 {
     // "Delayed initialization": legend gets created only 
     if ( event->type() == QEvent::Show ) {
-        if ( !d->m_isLegendLoaded ) {
-            loadLegend();
-            return true;
-        }
+        loadLegend();
+        return true;
     }
 #ifdef Q_WS_MAEMO_5
     else if ( event->type() == QEvent::MouseButtonPress ) {
@@ -299,7 +307,7 @@ QString MarbleLegendBrowser::generateSectionsHtml()
              * This is only one way to handle checkbox changes we see, so
              * Marble.setCheckedProperty is a function that does it
              */
-            if(section->radio()!="") {
+            if(!section->radio().isEmpty()) {
                 checkBoxString = ""
                         "<label class=\"section-head\">"
                         "<input type=\"radio\" "
@@ -337,28 +345,28 @@ QString MarbleLegendBrowser::generateSectionsHtml()
             }
 
             // pixmap and text
-            QString path = "";
+            QString src;
+            QString styleDiv;
             int pixmapWidth = 24;
             int pixmapHeight = 12;
-            // NOTICE. There are some pixmaps without image, so we should
-            //         create just a plain rectangle with set color
             if (!item->icon()->pixmap().isEmpty()) {
-                path = MarbleDirs::path( item->icon()->pixmap() );
+                QString path = MarbleDirs::path( item->icon()->pixmap() );
                 const QPixmap oncePixmap(path);
                 pixmapWidth = oncePixmap.width();
                 pixmapHeight = oncePixmap.height();
-            }
-            QColor color = item->icon()->color();
-            QString styleDiv = "";
-            if (color != Qt::transparent) {
-                styleDiv = "width: " + QString::number(pixmapWidth) + "px; height: " +
-                                    QString::number(pixmapHeight) + "px; background-color: "
-                        + color.name() + ';';
-            } else {
+                src = QUrl::fromLocalFile( path ).toString();
                 styleDiv = "width: " + QString::number(pixmapWidth) + "px; height: " +
                         QString::number(pixmapHeight) + "px;";
             }
-            QString src = QUrl::fromLocalFile( path ).toString();
+
+
+            // NOTICE. There are some pixmaps without image, so we should
+            //         create just a plain rectangle with set color
+            QColor color = item->icon()->color();
+            if ( color.isValid() ) {
+                styleDiv = "width: " + QString::number(pixmapWidth) + "px; height: " +
+                        QString::number(pixmapHeight) + "px; background-color: " + color.name() + ';';
+            }
             QString html = ""
                     "<div class=\"legend-entry\">"
                     "  <label>" + checkBoxString +
@@ -376,6 +384,7 @@ QString MarbleLegendBrowser::generateSectionsHtml()
 
 void MarbleLegendBrowser::setCheckedProperty( const QString& name, bool checked )
 {
+#ifndef MARBLE_NO_WEBKIT
     QWebElement box = page()->mainFrame()->findFirstElement("input[name="+name+']');
     if (!box.isNull()) {
         if (checked != d->m_checkBoxMap[name]) {
@@ -385,10 +394,12 @@ void MarbleLegendBrowser::setCheckedProperty( const QString& name, bool checked 
     }
 
     update();
+#endif
 }
 
 void MarbleLegendBrowser::setRadioCheckedProperty( const QString& value, const QString& name , bool checked )
 {
+#ifndef MARBLE_NO_WEBKIT
     QWebElement box = page()->mainFrame()->findFirstElement("input[value="+value+']');
     QWebElementCollection boxes = page()->mainFrame()->findAllElements("input[name="+name+']');
     QString currentValue="";
@@ -405,8 +416,9 @@ void MarbleLegendBrowser::setRadioCheckedProperty( const QString& value, const Q
     }
 
     update();
+#endif
 }
 
 }
 
-#include "MarbleLegendBrowser.moc"
+#include "moc_MarbleLegendBrowser.cpp"

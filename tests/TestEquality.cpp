@@ -5,9 +5,9 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2014      Cruceru Calin-Cristian <crucerucalincristian@gmail.com>
-// Copyright 2014      Sanjiban Bairagya      <sanjiban22393@gmail.com>
-// Copyright 2014      Abhinav Gangwar        <abhgang@gmail.com>
+// Copyright 2014      Calin Cruceru     <crucerucalincristian@gmail.com>
+// Copyright 2014      Sanjiban Bairagya <sanjiban22393@gmail.com>
+// Copyright 2014      Abhinav Gangwar   <abhgang@gmail.com>
 //
 
 #include <QObject>
@@ -68,6 +68,8 @@
 #include <GeoDataNetworkLink.h>
 #include <GeoDataNetworkLinkControl.h>
 #include <GeoDataFolder.h>
+#include <GeoDataSchemaData.h>
+#include <GeoDataSimpleData.h>
 #include "TestUtils.h"
 
 using namespace Marble;
@@ -128,6 +130,8 @@ private slots:
     void networkLinkTest();
     void networkLinkControlTest();
     void folderTest();
+    void simpleDataTest();
+    void schemaDataTest();
 };
 
 
@@ -891,6 +895,23 @@ void TestEquality::polygonTest()
     QVERIFY( polygon1 != polygon2 );
 
     QCOMPARE( polygon1 == polygon2, false );
+
+    /* Prepare for unequality test */
+    polygon2.appendInnerBoundary(innerBoundary11);
+    QVERIFY( polygon1 == polygon2 );
+
+    /* Test for unequality: make sure polygon's coordinates are not equal */
+    polygon2.appendInnerBoundary(innerBoundary11);
+    coord111.set(100,1);
+    innerBoundary11.clear();
+    innerBoundary11.append(coord111);
+    innerBoundary11.append(coord112);
+    innerBoundary11.append(coord113);
+    innerBoundary11.setTessellate(true);
+    polygon1.appendInnerBoundary(innerBoundary11);
+
+    QVERIFY( polygon1 != polygon2 );
+    QCOMPARE( polygon1 == polygon2, false );
 }
 
 void TestEquality::latLonQuadTest()
@@ -1367,7 +1388,7 @@ void TestEquality::styleTest()
     style1.setListStyle( listStyle );
 
     style2.setIconStyle( iconStyle );
-    style2.setListStyle( listStyle );
+    style2.setLineStyle( lineStyle );
     style2.setLabelStyle( labelStyle );
     style2.setPolyStyle( polyStyle );
     style2.setBalloonStyle( balloon );
@@ -2294,6 +2315,58 @@ void TestEquality::folderTest()
     QCOMPARE( folder2, folder2 );
     QCOMPARE( folder1 != folder2, false );
     QVERIFY( folder1 == folder2 );
+}
+
+void TestEquality::simpleDataTest()
+{
+    GeoDataSimpleData simpleData1, simpleData2;
+    simpleData1.setName( "height" );
+    simpleData1.setData( "4.65" );
+
+    simpleData2.setName( "height" );
+    simpleData2.setData( "4.65" );
+
+    QCOMPARE( simpleData1, simpleData1 );
+    QCOMPARE( simpleData2, simpleData2 );
+    QCOMPARE( simpleData1 != simpleData2, false );
+    QVERIFY( simpleData1 == simpleData2 );
+
+    simpleData2.setData( "7.45" );
+
+    QCOMPARE( simpleData1, simpleData1 );
+    QCOMPARE( simpleData2, simpleData2 );
+    QCOMPARE( simpleData1 == simpleData2, false );
+    QVERIFY( simpleData1 != simpleData2 );
+}
+
+void TestEquality::schemaDataTest()
+{
+    GeoDataSimpleData simpleData1, simpleData2;
+    simpleData1.setName( "width" );
+    simpleData1.setData( "6.24" );
+
+    simpleData2.setName( "width" );
+    simpleData2.setData( "6.24" );
+
+    GeoDataSchemaData schemaData1, schemaData2;
+    schemaData1.setSchemaUrl( "dimensions" );
+    schemaData1.addSimpleData( simpleData1 );
+    schemaData1.addSimpleData( simpleData2 );
+    schemaData2.setSchemaUrl( "dimensions" );
+    schemaData2.addSimpleData( simpleData1 );
+    schemaData2.addSimpleData( simpleData2 );
+
+    QCOMPARE( schemaData1, schemaData1 );
+    QCOMPARE( schemaData2, schemaData2 );
+    QCOMPARE( schemaData1 != schemaData2, false );
+    QVERIFY( schemaData1 == schemaData2 );
+
+    schemaData2.setSchemaUrl( "some other id" );
+
+    QCOMPARE( schemaData1, schemaData1 );
+    QCOMPARE( schemaData2, schemaData2 );
+    QCOMPARE( schemaData1 == schemaData2, false );
+    QVERIFY( schemaData1 != schemaData2 );
 }
 
 QTEST_MAIN( TestEquality )

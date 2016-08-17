@@ -73,6 +73,11 @@ KineticModel::~KineticModel()
 
 }
 
+bool KineticModel::hasVelocity() const
+{
+    return !d_ptr->velocity.isNull();
+}
+
 int KineticModel::duration() const
 {
     return d_ptr->duration;
@@ -207,5 +212,5 @@ void KineticModel::update()
     d->timestamp.start();
 }
 
-#include "kineticmodel.moc"
+#include "moc_kineticmodel.cpp"
 

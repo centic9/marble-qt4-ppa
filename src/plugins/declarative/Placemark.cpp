@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2011      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2011      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #include "Placemark.h"
@@ -34,4 +34,4 @@ QString Placemark::name() const
     return m_placemark.name();
 }
 
-#include "Placemark.moc"
+#include "moc_Placemark.cpp"

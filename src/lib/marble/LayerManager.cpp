@@ -29,16 +29,6 @@
 namespace Marble
 {
 
-/**
-  * Returns true if the zValue of one is lower than that of two. Null must not be passed
-  * as parameter.
-  */
-bool zValueLessThan( const LayerInterface * const one, const LayerInterface * const two )
-{
-    Q_ASSERT( one && two );
-    return one->zValue() < two->zValue();
-}
-
 class LayerManager::Private
 {
  public:
@@ -120,7 +110,7 @@ QList<AbstractDataPluginItem *> LayerManager::whichItemAt( const QPoint& curpos 
 {
     QList<AbstractDataPluginItem *> itemList;
 
-    foreach( AbstractDataPlugin *plugin, d->m_dataPlugins ) {
+    foreach( auto *plugin, d->m_dataPlugins ) {
         itemList.append( plugin->whichItemAt( curpos ) );
     }
     return itemList;
@@ -141,11 +131,11 @@ void LayerManager::renderLayers( GeoPainter *painter, ViewportParams *viewport )
                     << "ORBIT" << "ALWAYS_ON_TOP" << "FLOAT_ITEM" << "USER_TOOLS";
 
     QStringList traceList;
-    foreach( const QString& renderPosition, renderPositions ) {
+    foreach( const auto& renderPosition, renderPositions ) {
         QList<LayerInterface*> layers;
 
         // collect all RenderPlugins of current renderPosition
-        foreach( RenderPlugin *renderPlugin, d->m_renderPlugins ) {
+        foreach( auto *renderPlugin, d->m_renderPlugins ) {
             if ( renderPlugin && renderPlugin->renderPosition().contains( renderPosition ) ) {
                 if ( renderPlugin->enabled() && renderPlugin->visible() ) {
                     if ( !renderPlugin->isInitialized() ) {
@@ -158,18 +148,21 @@ void LayerManager::renderLayers( GeoPainter *painter, ViewportParams *viewport )
         }
 
         // collect all internal LayerInterfaces of current renderPosition
-        foreach( LayerInterface *layer, d->m_internalLayers ) {
+        foreach( auto *layer, d->m_internalLayers ) {
             if ( layer && layer->renderPosition().contains( renderPosition ) ) {
                 layers.push_back( layer );
             }
         }
 
         // sort them according to their zValue()s
-        qSort( layers.begin(), layers.end(), zValueLessThan );
+        qSort( layers.begin(), layers.end(), [] ( const LayerInterface * const one, const LayerInterface * const two ) {
+            Q_ASSERT( one && two );
+            return one->zValue() < two->zValue();
+        } );
 
         // render the layers of the current renderPosition
         QTime timer;
-        foreach( LayerInterface *layer, layers ) {
+        foreach( auto *layer, layers ) {
             timer.start();
             layer->render( painter, viewport, renderPosition, 0 );
             d->m_renderState.addChild( layer->renderState() );
@@ -188,7 +181,7 @@ void LayerManager::renderLayers( GeoPainter *painter, ViewportParams *viewport )
         painter->setFont( QFont( "Sans Serif", 10, QFont::Bold ) );
 
         int i=0;
-        foreach ( const QString &text, traceList ) {
+        foreach ( const auto &text, traceList ) {
             painter->setPen( Qt::black );
             painter->drawText( QPoint(10,40+15*i), text );
             painter->setPen( Qt::white );
@@ -201,9 +194,9 @@ void LayerManager::renderLayers( GeoPainter *painter, ViewportParams *viewport )
 
 void LayerManager::Private::addPlugins()
 {
-    foreach ( const RenderPlugin *factory, m_model->pluginManager()->renderPlugins() ) {
+    foreach ( const auto *factory, m_model->pluginManager()->renderPlugins() ) {
         bool alreadyCreated = false;
-        foreach( const RenderPlugin* existing, m_renderPlugins ) {
+        foreach( const auto* existing, m_renderPlugins ) {
             if ( existing->nameId() == factory->nameId() ) {
                 alreadyCreated = true;
                 break;
@@ -271,4 +264,4 @@ RenderState LayerManager::renderState() const
 
 }
 
-#include "LayerManager.moc"
+#include "moc_LayerManager.cpp"

@@ -20,6 +20,7 @@
 #include <QPixmap>
 #include <QGestureEvent>
 #include <QPinchGesture>
+#include <QDebug> //removethis
 
 #include "kineticmodel.h"
 #include "MarbleGlobal.h"
@@ -229,7 +230,22 @@ void MarbleDefaultInputHandler::lmbTimeout()
 {
     if (!selectionRubber()->isVisible())
     {
+        qreal clickedLon = 0;
+        qreal clickedLat = 0;
+
+        bool isPointOnGlobe = MarbleInputHandler::d->m_marblePresenter->map()->geoCoordinates( d->m_leftPressedX, d->m_leftPressedY,
+                                                                        clickedLon, clickedLat,
+                                                                        GeoDataCoordinates::Degree );
         emit lmbRequest(d->m_leftPressedX, d->m_leftPressedY);
+
+        /**
+         * emit mouse click only when the clicked
+         * position is within the globe.
+         */
+        if ( isPointOnGlobe ) {
+            emit mouseClickGeoPosition( clickedLon, clickedLat,
+                                        GeoDataCoordinates::Degree );
+        }
     }
 }
 
@@ -258,9 +274,16 @@ void MarbleDefaultInputHandler::hideSelectionIfCtrlReleased(QEvent *e)
 
 bool MarbleDefaultInputHandler::handleDoubleClick(QMouseEvent *event)
 {
-    d->m_lmbTimer.stop();
-    MarbleInputHandler::d->m_marblePresenter->moveTo(event->pos(), 0.67);
-    MarbleInputHandler::d->m_mouseWheelTimer->start(400);
+    qreal mouseLon;
+    qreal mouseLat;
+    const bool isMouseAboveMap = MarbleInputHandler::d->m_marblePresenter->map()->geoCoordinates(event->x(), event->y(),
+                                             mouseLon, mouseLat, GeoDataCoordinates::Radian);
+    if(isMouseAboveMap)
+    {
+        d->m_lmbTimer.stop();
+        MarbleInputHandler::d->m_marblePresenter->moveTo(event->pos(), 0.67);
+        MarbleInputHandler::d->m_mouseWheelTimer->start(400);
+    }
     return acceptMouse();
 }
 
@@ -441,11 +464,9 @@ void MarbleDefaultInputHandler::handleLeftMouseButtonPress(QMouseEvent *event)
         }
     }
 
-    MarbleInputHandler::d->m_marblePresenter->setViewContext(Animation);
-
     if (event->modifiers() & Qt::ControlModifier)
     {
-        qDebug("Marble: Starting selection");
+        mDebug() << Q_FUNC_INFO << "Starting selection";
         d->m_lmbTimer.stop();
         d->m_selectionOrigin = event->pos();
         selectionRubber()->setGeometry(QRect(d->m_selectionOrigin, QSize()));
@@ -507,7 +528,7 @@ void MarbleDefaultInputHandler::handleMouseButtonRelease(QMouseEvent *event)
     if (event->type() == QEvent::MouseButtonRelease && event->button() == Qt::LeftButton
          && selectionRubber()->isVisible())
     {
-        qDebug("Marble: Leaving selection");
+        mDebug() << Q_FUNC_INFO << "Leaving selection";
         MarbleInputHandler::d->m_marblePresenter->setSelection(selectionRubber()->geometry());
         selectionRubber()->hide();
     }
@@ -643,7 +664,7 @@ QPoint MarbleDefaultInputHandler::mouseMovedOutside(QMouseEvent *event)
     }
 
     if (event->button() == Qt::LeftButton && event->type() == QEvent::MouseButtonPress
-            && panViaArrowsEnabled())
+            && panViaArrowsEnabled() && !d->m_kineticSpinning.hasVelocity())
     {
         d->m_lmbTimer.stop();
         qreal moveStep = MarbleInputHandler::d->m_marblePresenter->moveStep();
@@ -719,6 +740,8 @@ bool MarbleDefaultInputHandler::handleMouseEvent(QMouseEvent *event)
                  || abs(deltay) > d->m_dragThreshold
                  || !d->m_lmbTimer.isActive())
             {
+                MarbleInputHandler::d->m_marblePresenter->setViewContext(Animation);
+
                 d->m_lmbTimer.stop();
 
                 const qreal posLon = d->m_leftPressedLon - 90.0 * d->m_leftPressedDirection * deltax / radius;
@@ -854,5 +877,5 @@ QPoint MarbleDefaultInputHandler::toolTipPosition()
 
 }
 
-#include "MarbleInputHandler.moc"
+#include "moc_MarbleInputHandler.cpp"
 

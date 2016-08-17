@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 //
 
 #ifndef MARBLE_MONAVMAPSMODEL_H
@@ -39,7 +39,7 @@ public:
 
     QString payload( int index ) const;
 
-    void setInstallableVersions( const QMap<QString, QString> localMaps );
+    void setInstallableVersions( const QMap<QString, QString> &remoteMaps );
 
 private:
     QVector<MonavMap> m_data;

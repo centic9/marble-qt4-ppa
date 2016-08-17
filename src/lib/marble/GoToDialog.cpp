@@ -5,7 +5,7 @@
 // find a copy of this license in LICENSE.txt in the top directory of
 // the source code.
 //
-// Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
+// Copyright 2010      Dennis Nienhüser <nienhueser@kde.org>
 // Copyright 2011      Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
@@ -135,7 +135,7 @@ QVector<GeoDataPlacemark> TargetModel::viaPoints() const
     RouteRequest* request = m_marbleModel->routingManager()->routeRequest();
     QVector<GeoDataPlacemark> result;
     for ( int i = 0; i < request->size(); ++i ) {
-        if ( request->at( i ).longitude() != 0.0 || request->at( i ).latitude() != 0.0 ) {
+        if ( request->at( i ).isValid() ) {
             GeoDataPlacemark placemark;
             placemark.setCoordinate( request->at( i ) );
             placemark.setName( request->name( i ) );
@@ -161,8 +161,8 @@ int TargetModel::rowCount ( const QModelIndex & parent ) const
 
 QVariant TargetModel::currentLocationData ( int role ) const
 {
-    PositionTracking* tracking = m_marbleModel->positionTracking();
-    if ( tracking && tracking->status() == PositionProviderStatusAvailable ) {
+    const PositionTracking* tracking = m_marbleModel->positionTracking();
+    if ( tracking->status() == PositionProviderStatusAvailable ) {
         GeoDataCoordinates currentLocation = tracking->currentLocation();
         switch( role ) {
         case Qt::DisplayRole: return tr( "Current Location: %1" ).arg( currentLocation.toString() ) ;
@@ -444,4 +444,4 @@ void GoToDialogPrivate::updateResultMessage( int results )
 
 }
 
-#include "GoToDialog.moc"
+#include "moc_GoToDialog.cpp"
