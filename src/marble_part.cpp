@@ -1239,7 +1239,7 @@ void MarblePart::showDownloadRegionDialog()
                  SLOT( disconnectDownloadRegionDialog() ));
     }
     // FIXME: get allowed range from current map theme
-    m_downloadRegionDialog->setAllowedTileLevelRange( 0, 18 );
+    m_downloadRegionDialog->setAllowedTileLevelRange( 0, 16 );
     m_downloadRegionDialog->setSelectionMethod( DownloadRegionDialog::VisibleRegionMethod );
     ViewportParams const * const viewport = marbleWidget->viewport();
     m_downloadRegionDialog->setSpecifiedLatLonAltBox( viewport->viewLatLonAltBox() );
@@ -1258,7 +1258,9 @@ void MarblePart::downloadRegion()
     QString const sourceDir = mapThemeId.left( mapThemeId.lastIndexOf( '/' ));
     kDebug() << "downloadRegion mapThemeId:" << mapThemeId << sourceDir;
     QVector<TileCoordsPyramid> const pyramid = m_downloadRegionDialog->region();
-    m_controlView->marbleWidget()->downloadRegion( sourceDir, pyramid );
+    if ( !pyramid.isEmpty() ) {
+        m_controlView->marbleWidget()->downloadRegion( sourceDir, pyramid );
+    }
 }
 
 void MarblePart::showStatusBarContextMenu( const QPoint& pos )
