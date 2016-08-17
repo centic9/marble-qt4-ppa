@@ -8,32 +8,13 @@
 // Copyright 2011       Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
-#include <QtCore/QMetaType>
-#include <QtTest/QtTest>
 #include "Quaternion.h"
-#include "global.h"
+#include "MarbleGlobal.h"
+#include "TestUtils.h"
+
+#include <QMetaType>
 
 Q_DECLARE_METATYPE( Marble::Quaternion )
-
-namespace QTest
-{
-
-bool qCompare(qreal val1, qreal val2, qreal epsilon, const char *actual, const char *expected, const char *file, int line)
-{
-    return ( qAbs( val1 - val2 ) < epsilon )
-        ? compare_helper( true, "COMPARE()", file, line )
-        : compare_helper( false, "Compared qreals are not the same", toString( val1 ), toString( val2 ), actual, expected, file, line );
-}
-
-}
-
-#define QFUZZYCOMPARE(actual, expected, epsilon) \
-do {\
-    if (!QTest::qCompare(actual, expected, epsilon, #actual, #expected, __FILE__, __LINE__))\
-        return;\
-} while (0)
-
-#define addRow() QTest::newRow( QString("line %1").arg( __LINE__ ).toAscii().data() )
 
 namespace Marble
 {

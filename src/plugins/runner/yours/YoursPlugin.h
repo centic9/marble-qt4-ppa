@@ -12,20 +12,35 @@
 #ifndef MARBLE_YOURSPLUGIN_H
 #define MARBLE_YOURSPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "RoutingRunnerPlugin.h"
 
 namespace Marble
 {
 
-class YoursPlugin : public RunnerPlugin
+class YoursPlugin : public RoutingRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.YoursPlugin" )
+    Q_INTERFACES( Marble::RoutingRunnerPlugin )
 
 public:
     explicit YoursPlugin( QObject *parent = 0 );
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    QString name() const;
+
+    QString guiString() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    virtual RoutingRunner *newRunner() const;
 
     virtual bool supportsTemplate(RoutingProfilesModel::ProfileTemplate profileTemplate) const;
 };

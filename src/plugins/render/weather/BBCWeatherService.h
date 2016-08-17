@@ -13,6 +13,7 @@
 
 #include "AbstractWeatherService.h"
 
+#include <QStringList>
 
 namespace Marble
 {
@@ -27,14 +28,16 @@ class BBCWeatherService : public AbstractWeatherService
     Q_OBJECT
  
  public:
-    BBCWeatherService( QObject *parent );
+    explicit BBCWeatherService( const MarbleModel *model, QObject *parent );
     ~BBCWeatherService();
+
+    void setFavoriteItems( const QStringList& favorite );
     
  public Q_SLOTS:
     void getAdditionalItems( const GeoDataLatLonAltBox& box,
-                             const MarbleModel *model,
                              qint32 number = 10 );
- 
+    virtual void getItem( const QString &id );
+
  private Q_SLOTS:
     void fetchStationList();
     void createItem( BBCStation station );
@@ -42,6 +45,7 @@ class BBCWeatherService : public AbstractWeatherService
  private:
     void setupList();
 
+    QList<BBCStation> m_stationList;
     bool m_parsingStarted;
     StationListParser *m_parser;
     BBCItemGetter *m_itemGetter;

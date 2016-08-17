@@ -13,16 +13,16 @@
 #ifndef POSITION_MARKER_H
 #define POSITION_MARKER_H
 
-#include <QtCore/QObject>
-#include <QtCore/QHash>
-#include <QtCore/QVector>
-#include <QtGui/QColor>
-#include <QtGui/QAbstractButton>
+#include <QObject>
+#include <QHash>
+#include <QVector>
+#include <QColor>
+#include <QAbstractButton>
 
+#include "DialogConfigurationInterface.h"
 #include "RenderPlugin.h"
 #include "GeoDataCoordinates.h"
 #include "GeoDataLatLonAltBox.h"
-#include "PluginAboutDialog.h"
 
 namespace Ui
 {
@@ -32,13 +32,15 @@ namespace Ui
 namespace Marble
 {
 
-class PositionMarker  : public RenderPlugin
+class PositionMarker  : public RenderPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.PositionMarker" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( PositionMarker )
  public:
-    PositionMarker ();
+    explicit PositionMarker( const MarbleModel *marbleModel = 0 );
     ~PositionMarker ();
 
     QStringList renderPosition() const;
@@ -53,11 +55,15 @@ class PositionMarker  : public RenderPlugin
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
 
-    QIcon icon () const;
+    QString copyrightYears() const;
 
-    QDialog *aboutDialog();
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QIcon icon () const;
 
     QDialog *configDialog();
 
@@ -67,8 +73,6 @@ class PositionMarker  : public RenderPlugin
 
     bool render( GeoPainter *painter, ViewportParams *viewport,
                  const QString& renderPos, GeoSceneLayer * layer = 0 );
-
-    void update( const ViewportParams *viewport );
 
     // Overriding LayerInterface to paint on top of the route
     virtual qreal zValue() const;
@@ -81,13 +85,13 @@ class PositionMarker  : public RenderPlugin
     /**
      * Set the settings of the item.
      */
-    virtual void setSettings( QHash<QString,QVariant> settings );
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
 
 
  public slots:
     void readSettings();
     void writeSettings();
-    void updateSettings();
+
     void setPosition( const GeoDataCoordinates &position );
     void chooseCustomCursor();
     void chooseColor();
@@ -96,16 +100,18 @@ class PositionMarker  : public RenderPlugin
  private:
     Q_DISABLE_COPY( PositionMarker )
 
+    void loadCustomCursor( const QString& filename, bool useCursor );
+    void loadDefaultCursor();
+
     bool           m_isInitialized;
     bool           m_useCustomCursor;
-    
-    QString m_defaultCursorPath;
+
+    const QString m_defaultCursorPath;
     GeoDataLatLonAltBox m_lastBoundingBox;
     GeoDataCoordinates  m_currentPosition;
     GeoDataCoordinates  m_previousPosition;
     
     Ui::PositionMarkerConfigWidget *ui_configWidget;
-    PluginAboutDialog *m_aboutDialog;
     QDialog *m_configDialog;
     QString m_cursorPath;
 
@@ -113,10 +119,10 @@ class PositionMarker  : public RenderPlugin
     QPolygonF           m_previousArrow;
     QRegion             m_dirtyRegion;
     QPixmap             m_customCursor;
+    QPixmap             m_customCursorTransformed;
     QPixmap             m_defaultCursor;
-    QHash<QString,QVariant> m_settings;
     float               m_cursorSize;
-    QColor              m_acColor;
+    QColor              m_accuracyColor;
     QColor              m_trailColor;
     qreal               m_heading;
     QVector<GeoDataCoordinates> m_trail;
@@ -126,9 +132,6 @@ class PositionMarker  : public RenderPlugin
     static const int sm_defaultSizeStep;
     static const int sm_numResizeSteps;
     static const float sm_resizeSteps[];
-
-    void loadCustomCursor( const QString& filename, bool useCursor );
-    void loadDefaultCursor();
 };
 
 }

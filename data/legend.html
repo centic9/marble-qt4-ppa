@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html
-    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!DOCTYPE html>
+<html>
 <head>
   <title>Marble: Legend</title>
+  %!{bootstrap}%
   <link href="legend.css" rel="stylesheet" type="text/css" />
 </head>
-<body>
+<body onload="1">
 
 <!-- 
     To add a custom checkbox that can be monitored through 
@@ -19,7 +17,8 @@
     string of your choice.
 -->
 
-<H4> <!--Locations checkbox--><a href="checkbox:cities"><span style="text-decoration: none"><img src="checkbox:cities">&nbsp;</span></a> Populated Places</H4>
+<div class="well well-small well-legend">
+  <label class="section-head"><a href="checkbox:cities"/><span>Populated Places</span></label>
   <div>
     <i>Population:</i>
   </div>
@@ -87,7 +86,7 @@
       </td>
     </tr>
   </table>
-<p>
+<br/>
   <div>
     <i>Capitals:</i>
   </div>
@@ -103,7 +102,7 @@
   <div>
     White:&nbsp;None
   </div>
-
+</div>
 <!-- The following comment gives a hint to the MarbleLegendBrowser where further 
      legend items which get generated from DGML should get inserted.
      So DO NOT DELETE this comment: -->

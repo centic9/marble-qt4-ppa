@@ -17,8 +17,6 @@
 using namespace Marble;
 /* TRANSLATOR Marble::GpsdPositionProviderPlugin */
 
-using namespace std;
-
 QString GpsdPositionProviderPlugin::name() const
 {
     return tr( "Gpsd position provider Plugin" );
@@ -34,9 +32,26 @@ QString GpsdPositionProviderPlugin::guiString() const
     return tr( "gpsd" );
 }
 
+QString GpsdPositionProviderPlugin::version() const
+{
+    return "1.0";
+}
+
 QString GpsdPositionProviderPlugin::description() const
 {
     return tr( "Reports the position of a GPS device." );
+}
+
+QString GpsdPositionProviderPlugin::copyrightYears() const
+{
+    return "2009";
+}
+
+QList<PluginAuthor> GpsdPositionProviderPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Eckhart Wörner" ), "ewoerner@kde.org" );
+
 }
 
 QIcon GpsdPositionProviderPlugin::icon() const
@@ -50,10 +65,10 @@ void GpsdPositionProviderPlugin::initialize()
     emit statusChanged( m_status );
 
     m_thread = new GpsdThread;
-    connect( m_thread, SIGNAL( gpsdInfo( gps_data_t ) ),
-             this, SLOT( update( gps_data_t ) ) );
-    connect( m_thread, SIGNAL( statusChanged( PositionProviderStatus ) ),
-             this, SIGNAL( statusChanged( PositionProviderStatus ) ) );
+    connect( m_thread, SIGNAL(gpsdInfo(gps_data_t)),
+             this, SLOT(update(gps_data_t)) );
+    connect( m_thread, SIGNAL(statusChanged(PositionProviderStatus)),
+             this, SIGNAL(statusChanged(PositionProviderStatus)) );
     m_thread->start();
 }
 
@@ -61,7 +76,7 @@ void GpsdPositionProviderPlugin::update( gps_data_t data )
 {
     PositionProviderStatus oldStatus = m_status;
     GeoDataCoordinates oldPosition = m_position;
-    if ( data.status == STATUS_NO_FIX )
+    if ( data.status == STATUS_NO_FIX || isnan( data.fix.longitude ) || isnan( data.fix.latitude ) )
         m_status = PositionProviderStatusUnavailable;
     else {
         m_status = PositionProviderStatusAvailable;
@@ -93,6 +108,11 @@ void GpsdPositionProviderPlugin::update( gps_data_t data )
         if( !isnan( data.fix.track ) )
         {
             m_track = data.fix.track;
+        }
+
+        if ( !isnan( data.fix.time ) )
+        {
+            m_timestamp = QDateTime::fromMSecsSinceEpoch( data.fix.time * 1000 );
         }
     }
     if (m_status != oldStatus)
@@ -155,6 +175,11 @@ qreal GpsdPositionProviderPlugin::speed() const
 qreal GpsdPositionProviderPlugin::direction() const
 {
     return m_track;
+}
+
+QDateTime GpsdPositionProviderPlugin::timestamp() const
+{
+    return m_timestamp;
 }
 
 

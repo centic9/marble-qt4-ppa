@@ -9,36 +9,31 @@
 
 #include "LatLonRunner.h"
 
-#include "MarbleAbstractRunner.h"
 #include "GeoDataFeature.h"
 #include "GeoDataPlacemark.h"
 #include "GeoDataCoordinates.h"
 
 #include "MarbleDebug.h"
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-#include <QtCore/QVector>
+#include <QString>
+#include <QStringList>
+#include <QVector>
 
-#include <QtCore/QtDebug>
+#include <QtDebug>
 
 namespace Marble
 {
 
-LatLonRunner::LatLonRunner(QObject *parent) : MarbleAbstractRunner(parent)
+LatLonRunner::LatLonRunner(QObject *parent) :
+    SearchRunner(parent)
 {
 }
 
-
-GeoDataFeature::GeoDataVisualCategory LatLonRunner::category() const
-{
-    return GeoDataFeature::Coordinate;
-}
 
 LatLonRunner::~LatLonRunner()
 {
 }
 
-void LatLonRunner::search( const QString &searchTerm )
+void LatLonRunner::search( const QString &searchTerm, const GeoDataLatLonAltBox & )
 {
     QVector<GeoDataPlacemark*> vector;
 
@@ -51,9 +46,9 @@ void LatLonRunner::search( const QString &searchTerm )
         qreal lon, lat;
         coord.geoCoordinates( lon, lat );
         placemark->setCoordinate( lon, lat );
-        placemark->setVisualCategory( category() );
+        placemark->setVisualCategory( GeoDataFeature::Coordinate );
         placemark->setPopularity( 1000000000 );
-        placemark->setPopularityIndex( 18 );
+        placemark->setZoomLevel( 1 );
         vector.append( placemark );
     }
 

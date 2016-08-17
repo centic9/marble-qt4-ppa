@@ -16,12 +16,17 @@
 #include "MarbleModel.h"
 #include "GeoPainter.h"
 #include "SunLocator.h"
-#include "MarbleModel.h"
 
 namespace Marble
 {
 
 SunPlugin::SunPlugin()
+    : RenderPlugin( 0 )
+{
+}
+
+SunPlugin::SunPlugin( const MarbleModel *marbleModel )
+    : RenderPlugin( marbleModel )
 {
     setVisible( false );
 }
@@ -57,9 +62,27 @@ QString SunPlugin::nameId() const
     return QString( "sun" );
 }
 
+QString SunPlugin::version() const
+{
+    return "1.0";
+}
+
 QString SunPlugin::description() const
 {
     return tr( "A plugin that shows the Sun." );
+}
+
+QString SunPlugin::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> SunPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Torsten Rahn", "tackat@kde.org" )
+            << PluginAuthor( "Bernhard Beschow", "bbeschow@cs.tu-berlin.de")
+            << PluginAuthor( "Harshit Jain", "hjain.itbhu@gmail.com" );
 }
 
 QIcon SunPlugin::icon () const
@@ -70,7 +93,7 @@ QIcon SunPlugin::icon () const
 
 void SunPlugin::initialize ()
 {
-    m_pixmap = QPixmap( MarbleDirs::path( "svg/sunshine.png" ) ).scaled( QSize( 30, 30 ) );
+    m_pixmap = QPixmap( MarbleDirs::path( "svg/sunshine.png" ) ).scaled( QSize(22,22) );
 }
 
 bool SunPlugin::isInitialized () const

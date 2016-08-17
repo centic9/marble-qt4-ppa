@@ -26,12 +26,9 @@ class MarbleModel : QObject
 
 public:
     QString                 mapThemeId () const;
-    void                    addPlacemarkFile (const QString& filename);
-    void                    addPlacemarkData (const QString& data, const QString& key = "data");
-    void                    removePlacemarkKey (const QString& key);
     qreal                   planetRadius () const;
     QString                 planetName () const;
-    const Marble::SunLocator*     sunLocator () const;
+    const Marble::SunLocator*  sunLocator () const;
 //ig    quint64                 volatileTileCacheLimit () const;
     const Marble::Planet*   planet () const;
     void                    clearPersistentTileCache ();
@@ -44,7 +41,6 @@ public:
     virtual ~MarbleModel ();
 //ig    Marble::GeoSceneDocument*  mapTheme () const;
 //ig    HttpDownloadManager*    downloadManager () const;
-    void                    openGpxFile (const QString& filename);
     void                    setHome (qreal lon, qreal lat, int zoom = 1050);
     void                    setHome (const Marble::GeoDataCoordinates& homePoint, int zoom = 1050);
     void                    addGeoDataFile (const QString& filename);
@@ -67,14 +63,13 @@ public:
     QString                 planetId () const;
     explicit                MarbleModel (QObject* parent /TransferThis/ = 0);
 //ig    GeoDataTreeModel*       treeModel ();
-    QAbstractItemModel*     placemarkModel ();
+//ig    QAbstractItemModel*     placemarkModel ();
     QItemSelectionModel*    placemarkSelectionModel ();
 //ig    GeoSceneDocument*       mapTheme ();
     void                    home (qreal& lon, qreal& lat, int& zoom) const;
     Marble::MapThemeManager*  mapThemeManager ();
 //ig    HttpDownloadManager*    downloadManager ();
 //ig    FileManager*            fileManager ();
-//ig    FileViewModel*          fileViewModel ();
 //ig    MarbleClock*            clock ();
 //ig    Marble::SunLocator*     sunLocator ();
 //ig    const RoutingManager*   routingManager () const;
@@ -90,6 +85,13 @@ signals:
     void                    trackedPlacemarkChanged (const Marble::GeoDataPlacemark* placemark);
 public:
     void                    setMapThemeId (const QString& mapThemeId);
+//ig    PluginManager*          pluginManager ();
+signals:
+    void                    homeChanged (const Marble::GeoDataCoordinates newHomePoint);
+public:
+    const Marble::GeoDataTreeModel*  treeModel () const;
+    const QAbstractItemModel*  placemarkModel () const;
+    void                    updateProperty (const QString& property, bool value);
 };
 // MarbleModel
 

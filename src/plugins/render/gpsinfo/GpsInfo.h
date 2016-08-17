@@ -15,8 +15,8 @@
 #ifndef MARBLEGPSINFO_H
 #define MARBLEGPSINFO_H
 
-#include <QtCore/QObject>
-#include <QtCore/QHash>
+#include <QObject>
+#include <QHash>
 
 #include "AbstractFloatItem.h"
 
@@ -37,12 +37,13 @@ class MarbleLocale;
 class GpsInfo : public AbstractFloatItem
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.GpsInfo" )
     Q_INTERFACES( Marble::RenderPluginInterface )
     MARBLE_PLUGIN( GpsInfo )
     
  public:
-    explicit GpsInfo( const QPointF &point = QPointF( 10.5, 110 ),
-                          const QSizeF &size = QSizeF( 135.0, 80.0 ) );
+    GpsInfo();
+    explicit GpsInfo( const MarbleModel *marbleModel );
     ~GpsInfo();
 
     QStringList backendTypes() const;
@@ -53,7 +54,13 @@ class GpsInfo : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon () const;
 
@@ -70,8 +77,6 @@ class GpsInfo : public AbstractFloatItem
     MarbleLocale* m_locale;
     Ui::GpsInfoPlugin m_widget;
     WidgetGraphicsItem* m_widgetItem;
-
-
 };
 
 }

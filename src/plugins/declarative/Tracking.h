@@ -13,58 +13,65 @@
 
 #include "PositionSource.h"
 
-#include <QtCore/QObject>
-#include <QtDeclarative/QtDeclarative>
-
-namespace Marble
-{
-
-class AdjustNavigation;
-
-namespace Declarative
-{
+#include <QObject>
+#if QT_VERSION < 0x050000
+  #include <QtDeclarative/qdeclarative.h>
+#else
+  #include <QtQml/qqml.h>
+#endif
 
 class MarbleWidget;
+
+namespace Marble {
+class AutoNavigation;
+}
 
 class Tracking : public QObject
 {
     Q_OBJECT
+    Q_ENUMS( PositionMarkerType )
 
-    Q_PROPERTY( bool showPosition READ showPosition WRITE setShowPosition NOTIFY showPositionChanged )
+    Q_PROPERTY( MarbleWidget* map READ map WRITE setMap NOTIFY mapChanged )
     Q_PROPERTY( bool showTrack READ showTrack WRITE setShowTrack NOTIFY showTrackChanged )
     Q_PROPERTY( bool autoCenter READ autoCenter WRITE setAutoCenter NOTIFY autoCenterChanged )
     Q_PROPERTY( bool autoZoom READ autoZoom WRITE setAutoZoom NOTIFY autoZoomChanged )
-    Q_PROPERTY( Marble::Declarative::PositionSource* positionSource READ positionSource WRITE setPositionSource NOTIFY positionSourceChanged )
+    Q_PROPERTY( PositionSource* positionSource READ positionSource WRITE setPositionSource NOTIFY positionSourceChanged )
     Q_PROPERTY( QObject* positionMarker READ positionMarker WRITE setPositionMarker NOTIFY positionMarkerChanged )
     Q_PROPERTY( bool hasLastKnownPosition READ hasLastKnownPosition NOTIFY hasLastKnownPositionChanged )
-    Q_PROPERTY( Marble::Declarative::Coordinate* lastKnownPosition READ lastKnownPosition WRITE setLastKnownPosition NOTIFY lastKnownPositionChanged )
+    Q_PROPERTY( Coordinate* lastKnownPosition READ lastKnownPosition WRITE setLastKnownPosition NOTIFY lastKnownPositionChanged )
+    Q_PROPERTY( PositionMarkerType positionMarkerType READ positionMarkerType WRITE setPositionMarkerType NOTIFY positionMarkerTypeChanged )
+    Q_PROPERTY( double distance READ distance NOTIFY distanceChanged )
 
 public:
-    explicit Tracking( QObject* parent = 0);
+    enum PositionMarkerType {
+        None,
+        Circle,
+        Arrow
+    };
 
-    bool showPosition() const;
-
-    void setShowPosition( bool show );
+    explicit Tracking( QObject* parent = 0 );
 
     bool showTrack() const;
 
     void setShowTrack( bool show );
 
-    Marble::Declarative::PositionSource* positionSource();
+    PositionSource* positionSource();
 
-    void setPositionSource( Marble::Declarative::PositionSource* source );
+    void setPositionSource( PositionSource* source );
 
     QObject* positionMarker();
 
     void setPositionMarker( QObject* marker );
 
-    void setMarbleWidget( Marble::Declarative::MarbleWidget* widget );
+    MarbleWidget* map();
+
+    void setMap( MarbleWidget* widget );
 
     bool hasLastKnownPosition() const;
 
     Coordinate *lastKnownPosition();
 
-    void setLastKnownPosition( Marble::Declarative::Coordinate* lastKnownPosition );
+    void setLastKnownPosition( Coordinate* lastKnownPosition );
 
     bool autoCenter() const;
 
@@ -74,6 +81,12 @@ public:
 
     void setAutoZoom( bool enabled );
 
+    PositionMarkerType positionMarkerType() const;
+
+    void setPositionMarkerType( PositionMarkerType type );
+
+    double distance() const;
+
 public Q_SLOTS:
     void saveTrack( const QString &fileName );
 
@@ -82,7 +95,7 @@ public Q_SLOTS:
     void clearTrack();
 
 Q_SIGNALS:
-    void showPositionChanged();
+    void mapChanged();
 
     void showTrackChanged();
 
@@ -98,6 +111,10 @@ Q_SIGNALS:
 
     void autoZoomChanged();
 
+    void positionMarkerTypeChanged();
+
+    void distanceChanged();
+
 private Q_SLOTS:
     void updatePositionMarker();
 
@@ -108,25 +125,22 @@ private Q_SLOTS:
 private:
     void setShowPositionMarkerPlugin( bool visible );
 
-    bool m_showPosition;
-
     bool m_showTrack;
 
-    Marble::Declarative::PositionSource* m_positionSource;
+    PositionSource* m_positionSource;
 
     QObject* m_positionMarker;
 
-    Marble::Declarative::MarbleWidget* m_marbleWidget;
+    MarbleWidget* m_marbleWidget;
 
     bool m_hasLastKnownPosition;
 
-    Marble::Declarative::Coordinate m_lastKnownPosition;
+    Coordinate m_lastKnownPosition;
 
-    Marble::AdjustNavigation* m_autoNavigation;
+    Marble::AutoNavigation* m_autoNavigation;
+
+    PositionMarkerType m_positionMarkerType;
 };
 
-}
-
-}
 
 #endif

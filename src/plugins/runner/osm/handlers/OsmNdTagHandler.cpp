@@ -12,11 +12,9 @@
 
 #include "GeoParser.h"
 #include "OsmNodeFactory.h"
-#include "GeoDataDocument.h"
-#include "GeoDataPlacemark.h"
-#include "GeoDataParser.h"
+#include "GeoDataCoordinates.h"
 #include "GeoDataLineString.h"
-#include "MarbleDebug.h"
+#include "GeoDataPoint.h"
 #include "OsmElementDictionary.h"
 
 namespace Marble
@@ -41,7 +39,7 @@ GeoNode* OsmNdTagHandler::parse( GeoParser& parser ) const
         quint64 id = parser.attribute( "ref" ).toULongLong();
         if ( GeoDataPoint *p = osm::OsmNodeFactory::getPoint( id ) )
         {
-            s->append( GeoDataCoordinates( p->longitude(), p->latitude() ) );
+            s->append( GeoDataCoordinates( p->coordinates().longitude(), p->coordinates().latitude() ) );
         }
 
         return 0;

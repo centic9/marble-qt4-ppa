@@ -47,12 +47,8 @@ GeoNode* GPXtrkTagHandler::parse(GeoParser& parser) const
         placemark->setGeometry(multigeometry);
         placemark->setStyleUrl("#map-track");
 
-#ifdef DEBUG_TAGS
-        mDebug() << "Parsed <" << gpxTag_trk << "> trk: " << doc->size();
-#endif
         return placemark;
     }
-    mDebug() << "trk parsing with parentitem" << parentItem.qualifiedName();
     return 0;
 }
 

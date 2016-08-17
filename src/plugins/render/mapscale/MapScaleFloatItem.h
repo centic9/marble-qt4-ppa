@@ -11,10 +11,10 @@
 #ifndef MAPSCALEFLOATITEM_H
 #define MAPSCALEFLOATITEM_H
 
-#include <QtCore/QObject>
+#include <QObject>
 
 #include "AbstractFloatItem.h"
-#include "PluginAboutDialog.h"
+#include "DialogConfigurationInterface.h"
 
 namespace Ui
 {
@@ -24,21 +24,20 @@ namespace Ui
 namespace Marble
 {
 
-class PluginAboutDialog;
-
 /**
  * @short The class that creates a map scale.
  *
  */
 
-class MapScaleFloatItem : public AbstractFloatItem
+class MapScaleFloatItem : public AbstractFloatItem, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.MapScaleFloatItem" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( MapScaleFloatItem )
  public:
-    explicit MapScaleFloatItem( const QPointF &point = QPointF( 10.5, -10.5 ),
-                                const QSizeF &size = QSizeF( 0.0, 40.0 ) );
+    explicit MapScaleFloatItem( const MarbleModel *marbleModel = 0 );
     ~MapScaleFloatItem();
 
     QStringList backendTypes() const;
@@ -49,12 +48,15 @@ class MapScaleFloatItem : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
 
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
     QIcon icon () const;
-
-    QDialog *aboutDialog();
-
 
     void initialize ();
 
@@ -62,8 +64,7 @@ class MapScaleFloatItem : public AbstractFloatItem
 
     void changeViewport( ViewportParams *viewport );
 
-    void paintContent( GeoPainter *painter, ViewportParams *viewport,
-                       const QString& renderPos, GeoSceneLayer * layer = 0 );
+    void paintContent( QPainter *painter );
 
 
     QDialog *configDialog();
@@ -76,17 +77,16 @@ class MapScaleFloatItem : public AbstractFloatItem
     void readSettings();
     void writeSettings();
     void toggleRatioScaleVisibility();
+    void toggleMinimized();
+
+private:
+    void calcScaleBar();
 
  private:
-    int   invScale() const            { return m_invScale; }
-    void  setInvScale( int invScale ) { m_invScale = invScale; }
-
-    PluginAboutDialog *m_aboutDialog;
     QDialog *m_configDialog;
     Ui::MapScaleConfigWidget *ui_configWidget;
 
     int      m_radius;
-    int      m_invScale;
 
     QString  m_target;
 
@@ -97,11 +97,11 @@ class MapScaleFloatItem : public AbstractFloatItem
     int      m_scaleBarHeight;
     qreal    m_scaleBarDistance;
 
+    qreal    m_pixel2Length;
     int      m_bestDivisor;
     int      m_pixelInterval;
     int      m_valueInterval;
 
-    QString  m_unit;
     QString m_ratioString;
 
     bool     m_scaleInitDone;
@@ -110,7 +110,9 @@ class MapScaleFloatItem : public AbstractFloatItem
 
     QMenu*   m_contextMenu;
 
-    void calcScaleBar();
+    QAction  *m_minimizeAction;
+    bool m_minimized;
+    int m_widthScaleFactor;
 };
 
 }

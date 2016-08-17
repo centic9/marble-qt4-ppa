@@ -50,12 +50,13 @@ Rectangle {
 
         // The grouped property tracking provides access to tracking related
         // properties
-        tracking {
+        property Tracking tracking: Tracking {
             // We connect the position source from above with the map
             positionSource: gpsd
+            map: map
 
             // Don't show the default Marble position indicator (arrow)
-            showPosition: false
+            positionMarkerType: Tracking.Circle
 
             // Initially we don't show the track
             showTrack: false

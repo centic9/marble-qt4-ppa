@@ -4,7 +4,7 @@
 *
 *    this file contains a function to read two line element sets. while 
 *    not formerly part of the sgp4 mathematical theory, it is 
-*    required for practical implemenation.
+*    required for practical implementation.
 *
 *                            companion code for
 *               fundamentals of astrodynamics and applications
@@ -76,8 +76,8 @@ void twoline2rv
       elsetrec& satrec
      )
      {
-       const double deg2rad  =   pi / 180.0;         //   0.0174532925199433
-       const double xpdotp   =  1440.0 / (2.0 *pi);  // 229.1831180523293
+       const double deg2rad  =   M_PI / 180.0;         //   0.0174532925199433
+       const double xpdotp   =  1440.0 / (2.0 *M_PI);  // 229.1831180523293
 
        double sec, mu, radiusearthkm, tumin, xke, j2, j3, j4, j3oj2;
        double startsec, stopsec, startdayofyr, stopdayofyr, jdstart, jdstop;
@@ -85,7 +85,7 @@ void twoline2rv
            starthr, stophr, startmin, stopmin;
        int cardnumb, numb, j;
        long revnum = 0, elnum = 0;
-       char classification, intldesg[11], tmpstr[80];
+       char classification, intldesg[11];
        int year = 0;
        int mon, day, hr, minute, nexp, ibexp;
 
@@ -217,9 +217,9 @@ void twoline2rv
            if (typeinput == 'd')
              {
                printf("input start year dayofyr \n");
-               scanf( "%li %lf",&startyear, &startdayofyr );
+               scanf( "%i %lf",&startyear, &startdayofyr );
                printf("input stop year dayofyr \n");
-               scanf( "%li %lf",&stopyear, &stopdayofyr );
+               scanf( "%i %lf",&stopyear, &stopdayofyr );
 
                days2mdhms ( startyear,startdayofyr, mon,day,hr,minute,sec );
                jday( startyear,mon,day,hr,minute,sec, jdstart );

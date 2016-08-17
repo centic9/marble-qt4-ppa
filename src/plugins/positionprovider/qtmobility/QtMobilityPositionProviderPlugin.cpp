@@ -6,13 +6,14 @@
 // the source code.
 //
 // Copyright 2011        Daniel Marth <danielmarth@gmx.at>
+// Copyright 2012        Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
 #include "QtMobilityPositionProviderPlugin.h"
 
-#include <QtLocation/QGeoPositionInfoSource>
-#include <QtLocation/QGeoPositionInfo>
-#include <QtLocation/QGeoCoordinate>
+#include <QGeoPositionInfoSource>
+#include <QGeoPositionInfo>
+#include <QGeoCoordinate>
 
 QTM_USE_NAMESPACE
 
@@ -22,45 +23,20 @@ class QtMobilityPositionProviderPluginPrivate
 {
 public:
     QtMobilityPositionProviderPluginPrivate();
-    ~QtMobilityPositionProviderPluginPrivate();
-    QGeoPositionInfoSource *source();
-    const PositionProviderStatus& status() const;
-    void setStatus( const PositionProviderStatus& newStatus );
 
-private:
-    QGeoPositionInfoSource *m_source;
+    QGeoPositionInfoSource *const m_source;
     PositionProviderStatus m_status;
 };
 
 QtMobilityPositionProviderPluginPrivate::QtMobilityPositionProviderPluginPrivate() :
-        m_source( 0 ), m_status( PositionProviderStatusAcquiring )
+    m_source( QGeoPositionInfoSource::createDefaultSource( 0 ) ),
+    m_status( PositionProviderStatusAcquiring )
 {
-    m_source = QGeoPositionInfoSource::createDefaultSource( 0 );
-}
-
-QtMobilityPositionProviderPluginPrivate::~QtMobilityPositionProviderPluginPrivate()
-{
-}
-
-QGeoPositionInfoSource *QtMobilityPositionProviderPluginPrivate::source()
-{
-    return m_source;
-}
-
-
-const PositionProviderStatus& QtMobilityPositionProviderPluginPrivate::status() const
-{
-    return m_status;
-}
-
-void QtMobilityPositionProviderPluginPrivate::setStatus( const PositionProviderStatus& newStatus )
-{
-    m_status = newStatus;
 }
 
 QString QtMobilityPositionProviderPlugin::name() const
 {
-    return "Qt Mobility Position Provider Plugin"; /** @todo FIXME I18N ... */
+    return tr( "Qt Mobility Position Provider Plugin" );
 }
 
 QString QtMobilityPositionProviderPlugin::nameId() const
@@ -70,12 +46,28 @@ QString QtMobilityPositionProviderPlugin::nameId() const
 
 QString QtMobilityPositionProviderPlugin::guiString() const
 {
-    return "Qt Mobility Location"; /** @todo FIXME I18N ... */
+    return tr( "Qt Mobility Location" );
+}
+
+QString QtMobilityPositionProviderPlugin::version() const
+{
+    return "1.0";
 }
 
 QString QtMobilityPositionProviderPlugin::description() const
 {
-    return "Reports the GPS position of a QtMobility compatible device."; /** @todo FIXME I18N ... */
+    return tr( "Reports the GPS position of a QtMobility compatible device." );
+}
+
+QString QtMobilityPositionProviderPlugin::copyrightYears() const
+{
+    return "2011";
+}
+
+QList<PluginAuthor> QtMobilityPositionProviderPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( "Daniel Marth", "danielmarth@gmx.at" );
 }
 
 QIcon QtMobilityPositionProviderPlugin::icon() const
@@ -90,37 +82,41 @@ PositionProviderPlugin* QtMobilityPositionProviderPlugin::newInstance() const
 
 PositionProviderStatus QtMobilityPositionProviderPlugin::status() const
 {
-    return d->status();
+    return d->m_status;
 }
 
 GeoDataCoordinates QtMobilityPositionProviderPlugin::position() const
 {
-    QGeoCoordinate p = d->source()->lastKnownPosition().coordinate();
-    if( p.isValid() ) {
-        return GeoDataCoordinates( p.longitude(), p.latitude(),
-                                   p.altitude(), GeoDataCoordinates::Degree );
+    if ( d->m_source == 0 ) {
+        return GeoDataCoordinates();
     }
-    return GeoDataCoordinates();
+
+    const QGeoCoordinate p = d->m_source->lastKnownPosition().coordinate();
+    if( !p.isValid() ) {
+        return GeoDataCoordinates();
+    }
+
+    return GeoDataCoordinates( p.longitude(), p.latitude(),
+                               p.altitude(), GeoDataCoordinates::Degree );
 }
 
 GeoDataAccuracy QtMobilityPositionProviderPlugin::accuracy() const
 {
-    GeoDataAccuracy result;
-    QGeoPositionInfo info = d->source()->lastKnownPosition();
-
-    if( info.hasAttribute( QGeoPositionInfo::HorizontalAccuracy ) &&
-        info.hasAttribute( QGeoPositionInfo::VerticalAccuracy ) ) {
-        result.level = GeoDataAccuracy::Detailed;
-        result.horizontal = info.attribute( QGeoPositionInfo::HorizontalAccuracy );
-        result.vertical = info.attribute( QGeoPositionInfo::VerticalAccuracy );
-    }
-    else {
-        result.level = GeoDataAccuracy::none;
-        result.horizontal = 0;
-        result.vertical = 0;
+    if ( d->m_source == 0 ) {
+        return GeoDataAccuracy();
     }
 
-    return result;
+    const QGeoPositionInfo info = d->m_source->lastKnownPosition();
+
+    if( !info.hasAttribute( QGeoPositionInfo::HorizontalAccuracy ) ||
+        !info.hasAttribute( QGeoPositionInfo::VerticalAccuracy ) ) {
+        return GeoDataAccuracy();
+    }
+
+    const qreal horizontal = info.attribute( QGeoPositionInfo::HorizontalAccuracy );
+    const qreal vertical = info.attribute( QGeoPositionInfo::VerticalAccuracy );
+
+    return GeoDataAccuracy( GeoDataAccuracy::Detailed, horizontal, vertical );
 }
 
 QtMobilityPositionProviderPlugin::QtMobilityPositionProviderPlugin() :
@@ -135,39 +131,58 @@ QtMobilityPositionProviderPlugin::~QtMobilityPositionProviderPlugin()
 
 void QtMobilityPositionProviderPlugin::initialize()
 {
-    if( d->source() ) {
-        connect( d->source(), SIGNAL( positionUpdated ( const QGeoPositionInfo& ) ), this, SLOT( update() ) );
-        d->source()->setUpdateInterval( 1000 );
-        d->source()->startUpdates();
+    if( d->m_source ) {
+        connect( d->m_source, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(update()) );
+        d->m_source->setUpdateInterval( 1000 );
+        d->m_source->startUpdates();
     }
 }
 
 bool QtMobilityPositionProviderPlugin::isInitialized() const
 {
-    return d->source() != 0;
+    return d->m_source != 0;
 }
 
 qreal QtMobilityPositionProviderPlugin::speed() const
 {
-    if( d->source()->lastKnownPosition().hasAttribute( QGeoPositionInfo::GroundSpeed ) ) {
-        return d->source()->lastKnownPosition().attribute( QGeoPositionInfo::GroundSpeed );
+    if ( d->m_source == 0 ) {
+        return 0.0;
     }
-    return 0.0;
+
+    if( !d->m_source->lastKnownPosition().hasAttribute( QGeoPositionInfo::GroundSpeed ) ) {
+        return 0.0;
+    }
+
+    return d->m_source->lastKnownPosition().attribute( QGeoPositionInfo::GroundSpeed );
 }
 
 qreal QtMobilityPositionProviderPlugin::direction() const
 {
-    if( d->source()->lastKnownPosition().hasAttribute( QGeoPositionInfo::Direction ) ) {
-        return d->source()->lastKnownPosition().attribute( QGeoPositionInfo::Direction );
+    if ( d->m_source == 0 ) {
+        return 0.0;
     }
-    return 0.0;
+
+    if( !d->m_source->lastKnownPosition().hasAttribute( QGeoPositionInfo::Direction ) ) {
+        return 0.0;
+    }
+
+    return d->m_source->lastKnownPosition().attribute( QGeoPositionInfo::Direction );
+}
+
+QDateTime QtMobilityPositionProviderPlugin::timestamp() const
+{
+    if ( d->m_source == 0 ) {
+        return QDateTime();
+    }
+
+    return d->m_source->lastKnownPosition().timestamp();
 }
 
 void QtMobilityPositionProviderPlugin::update()
 {
     PositionProviderStatus newStatus = PositionProviderStatusAcquiring;
-    if ( d->source() ) {
-        if ( d->source()->lastKnownPosition().isValid() ) {
+    if ( d->m_source ) {
+        if ( d->m_source->lastKnownPosition().isValid() ) {
             newStatus = PositionProviderStatusAvailable;
         }
         else {
@@ -175,8 +190,8 @@ void QtMobilityPositionProviderPlugin::update()
         }
     }
 
-    if ( newStatus != d->status() ) {
-        d->setStatus( newStatus );
+    if ( newStatus != d->m_status ) {
+        d->m_status = newStatus;
         emit statusChanged( newStatus );
     }
 

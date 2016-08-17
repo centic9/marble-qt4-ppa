@@ -47,49 +47,39 @@
                 </texture>
             </layer>
 
-            <layer name="mwdbii" backend="vector" role="polyline">
-                <vector name="pcoast" feature="coast">
-                    <sourcefile format="PNT"> earth/mwdbii/PCOAST.PNT </sourcefile>
+            <layer name="mwdbii" backend="vector">
+                <vector name="pcoast" feature="coastlines">
+                    <sourcefile> mwdbii/PCOAST.PNT </sourcefile>
                     <pen color="#ffff00" />
+                    <brush color="transparent" />
                 </vector>
-                <vector name="international dateline" feature="border">
-                    <sourcefile format="PNT"> earth/mwdbii/DATELINE.PNT </sourcefile>
-                    <pen color="#ffffff" />
-                </vector>
-                <vector name="rivers" feature="river" connect="waterbodies">
-                    <sourcefile format="PNT"> earth/mwdbii/RIVER.PNT </sourcefile>
+                <vector name="rivers" feature="waterbodies">
+                    <sourcefile> mwdbii/RIVER.PNT </sourcefile>
                     <pen color="#ffffff" />
                 </vector>
             </layer>
                             
             <layer name="standardplaces" backend="geodata">
                 <geodata name="cityplacemarks">
-                    <sourcefile format="KML">cityplacemarks.kml</sourcefile>
-                    <pick>placemark</pick> <!-- picks certain features from a
-                                            file -->
+                    <sourcefile>cityplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="baseplacemarks">
-                    <sourcefile format="KML">baseplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>baseplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="elevplacemarks">
-                    <sourcefile format="KML">elevplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>elevplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="otherplacemarks">
-                    <sourcefile
-                    format="KML">otherplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>otherplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="boundaryplacemarks">
-                    <sourcefile format="KML">boundaryplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>boundaryplacemarks.cache</sourcefile>
                 </geodata>
             </layer>
         </map>
 
         <settings>
--            <group name="Places">
+            <group name="Places">
                 <property name="places">
                     <value>true</value>
                     <available>true</available>
@@ -108,35 +98,12 @@
                 </property>
             </group>
 
--            <group name="Boundaries">
-                <property name="borders">
-                    <value>false</value>
-                    <available>false</available>
-                </property>
-                <property name="international-boundaries">
-                    <available>false</available>
-                    <value>false</value>
-                </property>
-                <property name="state-boundaries">
-                    <available>false</available>
-                    <value>false</value>
-                </property>
-            </group>
-
             <group name="Water Bodies">
                 <property name="coastlines">
                     <available>true</available>
                     <value>false</value>
                 </property>
                 <property name="waterbodies">
-                    <available>false</available>
-                    <value>false</value>
-                </property>
-                <property name="lakes">
-                    <available>false</available>
-                    <value>false</value>
-                </property>
-                <property name="rivers">
                     <available>false</available>
                     <value>false</value>
                 </property>

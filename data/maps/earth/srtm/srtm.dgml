@@ -12,9 +12,7 @@
             <visible> true </visible>
         
             <!-- The description allows for rich text of course: -->
-            <description><![CDATA[<p>A <i>classic topographic map</i>.<p>It uses vector lines to
-                        mark coastlines, country borders etc. and bitmap
-                        graphics to create the height relief.]]></description>
+            <description><![CDATA[<p>A <i>classic topographic map</i>.</p><p>It uses vector lines to mark coastlines, country borders etc. and bitmap graphics to create the height relief.</p>]]></description>
     
             <zoom>
                 <minimum>   900  </minimum>
@@ -29,9 +27,8 @@
             <!-- Now we create the layer structure that gets handled by the
     layer management class -->
         
-        <map bgcolor="#000000">
+        <map bgcolor="#99b3cc">
             <canvas/>
-            <!-- In this place one could e.g. insert a sky plugin -->
             <target/>
         
             <!-- This layer creates the elevation model -->
@@ -42,86 +39,103 @@
                     <storageLayout maximumTileLevel="5"/>
                 </texture>
             </layer>
-            
-            <!-- This layer creates the coastlines that are needed to
-                colorize the elevation model properly -->
-            <layer name="mwdbii-canvas" backend="vector" role="filterhelper">
-                <vector name="pcoast" feature="land">
-                    <sourcefile format="PNT"> earth/mwdbii/PCOAST.PNT </sourcefile>
-                </vector>
-                <vector name="pisland" feature="land">
-                    <sourcefile format="PNT"> earth/mwdbii/PISLAND.PNT </sourcefile>
-                </vector>
-                <vector name="plakeisland" feature="land" connect="waterbodies">
-                    <sourcefile format="PNT"> earth/mwdbii/PLAKEISLAND.PNT </sourcefile>
-                </vector>
-                <vector name="plake" feature="sea" connect="waterbodies">
-                    <sourcefile format="PNT"> earth/mwdbii/PLAKE.PNT </sourcefile>
-                </vector>
-                <vector name="pglacier" feature="sea">
-                    <sourcefile format="PNT"> earth/mwdbii/PGLACIER.PNT </sourcefile>
-                </vector>
-            </layer>
-        
+
             <!-- This layer provides the colorization -->
             <layer name="colorme" backend="filter">
                 <filter name="texturecolorizer" type="colorize">
-                    <dem>srtm</dem>
-                    <coastline>mwdbii</coastline>
-                    <!-- If these don't get defined the default palettes get
-                    used -->
                     <palette type="sea">seacolors.leg</palette>
                     <palette type="land">landcolors.leg</palette>
                 </filter>
             </layer>
+            
+            <!-- This layer creates the coastlines that are needed to
+                colorize the elevation model properly -->
+            <layer name="naturalearth-canvas" backend="geodata">
+                <geodata name="coast" property="land" colorize="land">
+                    <sourcefile> naturalearth/ne_50m_land.pn2 </sourcefile>
+                </geodata>
+                <geodata name="lake" property="waterbodies" colorize="sea">
+                    <sourcefile> naturalearth/ne_50m_lakes.pn2 </sourcefile>
+                    <brush color="f00e0eff" />
+                    <pen color="transparent" style="nopen"/>
+                </geodata>
+                <geodata name="glacier" property="ice" colorize="sea">
+                    <sourcefile> naturalearth/ne_50m_glaciated_areas.pn2 </sourcefile>
+                    <brush color="ffffffff" />
+                    <pen color="transparent" style="nopen"/>
+                </geodata>
+            </layer>
         
-            <layer name="mwdbii" backend="vector" role="polyline">
-                <vector name="pdiffborder" feature="border" connect="borders">
-                    <sourcefile format="PNT"> earth/mwdbii/PDIFFBORDER.PNT </sourcefile>
-                    <pen color="#f86649" />
-                </vector>
-                <vector name="pusa48" feature="border" connect="borders">
-                    <sourcefile format="PNT"> earth/mwdbii/PUSA48.DIFF.PNT </sourcefile>
-                    <pen color="#f86649" />
-                </vector>
-                <vector name="international dateline" feature="border">
-                    <sourcefile format="PNT"> earth/mwdbii/DATELINE.PNT </sourcefile>
+        
+            <layer name="naturalearth" backend="geodata">
+                <geodata name="lakeshistoric" property="waterbodies">
+                    <sourcefile> naturalearth/ne_50m_lakes_historic.pn2 </sourcefile>
+                    <pen color="#bfd5ee" style="dotline"/>
+                    <brush color="transparent" />
+                </geodata>
+                <geodata name="playas" property="waterbodies">
+                    <sourcefile> naturalearth/ne_50m_playas.pn2 </sourcefile>
+                    <pen color="#89b0da" style="dashline"/>
+                    <brush color="#bfd5ee" alpha="0.3" />
+                </geodata>
+                <geodata name="antarciticiceshelves" property="ice">
+                    <sourcefile> naturalearth/ne_50m_antarctic_ice_shelves_polys.pn2 </sourcefile>
+                    <pen color="#5182b4" style="dashline"/>
+                    <brush color="transparent" />
+                </geodata>
+                <geodata name="border" property="borders">
+                    <sourcefile> naturalearth/ne_50m_admin_0_boundary_lines_land.pn2 </sourcefile>
+                    <pen color="#f86649" width="1.0" />
+                </geodata>
+                <geodata name="maritimeindicators" property="borders">
+                    <sourcefile> naturalearth/ne_50m_admin_0_boundary_lines_maritime_indicator.pn2 </sourcefile>
+                    <pen color="#d47d79" width="1.0" />
+                </geodata>
+                <geodata name="breakawaydisputed" property="borders">
+                    <sourcefile> naturalearth/ne_50m_admin_0_breakaway_disputed_areas.pn2 </sourcefile>
+                    <pen color="#c173b0" width="1" />
+                    <brush color="#c173b0" alpha="0.20" />
+                </geodata>
+                <geodata name="purbanareas" property="urbanareas">
+                    <sourcefile> naturalearth/ne_50m_urban_areas.pn2 </sourcefile>
+                    <pen color="#dfc5af" />
+                    <brush color="#dfc5af" alpha="0.60" />
+                </geodata>
+                <geodata name="admin1" property="borders">
+                    <sourcefile> naturalearth/ne_50m_admin_1_states_provinces_lines.pn2 </sourcefile>
+                    <pen color="#f86649" style="dashdotline" />
+                </geodata>
+                <geodata name="international dateline" property="borders">
+                    <sourcefile> mwdbii/DATELINE.PNT </sourcefile>
                     <pen color="#000000" />
-                </vector>
-                <vector name="rivers" feature="river" connect="waterbodies">
-                    <sourcefile format="PNT"> earth/mwdbii/RIVER.PNT </sourcefile>
+                </geodata>
+                <geodata name="rivers" property="waterbodies">
+                    <sourcefile> naturalearth/ne_50m_rivers_lake_centerlines.pn2 </sourcefile>
                     <pen color="#637bff" />
-                </vector>
+                </geodata>
             </layer>
         
             <layer name="standardplaces" backend="geodata">
                 <geodata name="cityplacemarks">
-                    <sourcefile format="KML">cityplacemarks.kml</sourcefile>
-                    <pick>placemark</pick> <!-- picks certain features from a
-                                            file -->
+                    <sourcefile>cityplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="baseplacemarks">
-                    <sourcefile format="KML">baseplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>baseplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="elevplacemarks">
-                    <sourcefile format="KML">elevplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>elevplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="otherplacemarks">
-                    <sourcefile
-                    format="KML">otherplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>otherplacemarks.cache</sourcefile>
                 </geodata>
                 <geodata name="boundaryplacemarks">
-                    <sourcefile format="KML">boundaryplacemarks.kml</sourcefile>
-                    <pick>placemark</pick>
+                    <sourcefile>boundaryplacemarks.cache</sourcefile>
                 </geodata>
             </layer>
         </map>
 
         <settings>
--            <group name="Places">
+             <group name="Places">
                 <property name="places">
                     <value>true</value>
                     <available>true</available>
@@ -140,30 +154,21 @@
                 </property>
             </group>
 
--            <group name="Boundaries">
+            <group name="UrbanAreas">
+                <property name="urbanareas">
+                    <value>false</value>
+                    <available>true</available>
+                </property>
+            </group>
+
+            <group name="Boundaries">
                 <property name="borders">
                     <value>true</value>
                     <available>true</available>
                 </property>
-                <property name="international-boundaries">
-                    <available>true</available>
-                    <value>true</value>
-                </property>
-                <property name="state-boundaries">
-                    <available>true</available>
-                    <value>true</value>
-                </property>
             </group>
             <group name="Water Bodies">
                 <property name="waterbodies">
-                    <available>true</available>
-                    <value>true</value>
-                </property>
-                <property name="lakes">
-                    <available>true</available>
-                    <value>true</value>
-                </property>
-                <property name="rivers">
                     <available>true</available>
                     <value>true</value>
                 </property>
@@ -183,24 +188,21 @@
                 <value>true</value>
                 <available>true</available>
             </property>
-            <property name="overviewmap">
-                <value>true</value>
-                <available>true</available>
-            </property>
-            <property name="compass">
-                <value>true</value>
-                <available>true</available>
-            </property>
-            <property name="scalebar">
-                <value>true</value>
-                <available>true</available>
-            </property>
         </settings>
         
         <!-- At last we define some legend properties -->
         
         <legend>
-            <section name="terrain" checkable="true" connect="terrain" spacing="12">
+            <section name="urbanareassection" checkable="true" connect="urbanareas" spacing="12">
+                <heading>Urban Areas</heading>
+
+                <item name="urbanareasitem">
+                    <icon pixmap="bitmaps/urban_area.png"/>
+                    <text>Urban Areas</text>
+                </item>
+            </section>
+
+            <section name="terrainsection" checkable="true" connect="terrain" spacing="12">
                 <heading>Terrain</heading>
 
                 <item name="mountain">
@@ -213,7 +215,7 @@
                 </item>
             </section>
 
-            <section name="otherplaces" checkable="true" connect="otherplaces" spacing="12">
+            <section name="otherplacessection" checkable="true" connect="otherplaces" spacing="12">
                 <heading>Places of Interest</heading>
 
                 <item name="geographic-pole">
@@ -238,33 +240,65 @@
                 </item>
             </section>
 
-            <section name="borders" checkable="true" connect="borders" spacing="12">
+            <section name="borders-section" checkable="true" connect="borders" spacing="12">
                 <heading>Boundaries</heading>
 
-                <item name="international-boundary">
+                <item name="international-boundary-item">
                     <icon color="#f29b68" pixmap="bitmaps/border_1.png"/>
                     <text>International</text>
                 </item>
-                <item name="state">
+                <item name="state-item">
                     <icon color="#f29b68" pixmap="bitmaps/border_2.png"/>
                     <text>State</text>
                 </item>
+                <item name="disputed-areas-item">
+                    <icon color="#c173b0" pixmap="bitmaps/border_disputed.png"/>
+                    <text>Disputed Areas</text>
+                </item>
+                <item name="maritime-borders-item">
+                    <icon color="#d47d79" pixmap="bitmaps/border_maritime.png"/>
+                    <text>Maritime Borders</text>
+                </item>
             </section>
     
-            <section name="waterbodies" checkable="true" connect="waterbodies" spacing="12">
+            <section name="waterbodies-section" checkable="true" connect="waterbodies" spacing="12">
                 <heading>Water Bodies</heading>
 
-                <item name="lake">
+                <item name="lake-item">
                     <icon color="#d0dff1" pixmap="bitmaps/lake.png"/>
                     <text>Lake</text>
                 </item>
-                <item name="river">
+                <item name="historic-lake-item">
+                    <icon color="#bfd5ee" pixmap="bitmaps/lake_historic.png"/>
+                    <text>Historic Lake</text>
+                </item>
+                <item name="playa-item">
+                    <icon color="#bfd5ee" pixmap="bitmaps/playa.png"/>
+                    <text>Playa</text>
+                </item>
+                <item name="river-item">
                     <icon color="#637bff" pixmap="bitmaps/river.png"/>
                     <text>River</text>
                 </item>
             </section>
     
-            <section name="elevation" checkable="false" spacing="12">
+            <section name="ice-section" checkable="true" connect="ice" spacing="12">
+                <heading>Ice and Glaciers</heading>
+                <item name="glaciers-item">
+                    <icon color="#d0dff1" pixmap="bitmaps/glacier.png"/>
+                    <text>Glaciers</text>
+                </item>
+                <item name="antarctic-iceshelves-item">
+                    <icon color="#637bff" pixmap="bitmaps/antarctic_shelves.png"/>
+                    <text>Antarctic Iceshelves</text>
+                </item>
+            </section>
+
+            <section name="reliefsection" checkable="true" connect="relief" spacing="12">
+                <heading>Relief</heading>
+            </section>
+
+            <section name="elevation-section" checkable="false" spacing="12">
                 <heading>Elevation</heading>
 
                 <item name="topography7000">
@@ -333,15 +367,8 @@
                 </item>
             </section>
 
-            <section name="ice" checkable="true" connect="ice" spacing="12">
-                <heading>Ice and Glaciers</heading>
-            </section>
 
-            <section name="relief" checkable="true" connect="relief" spacing="12">
-                <heading>Relief</heading>
-            </section>
-
-            <section name="coordinate-grid" checkable="true" connect="coordinate-grid" spacing="12">
+            <section name="coordinate-grid-section" checkable="true" connect="coordinate-grid" spacing="12">
                 <heading>Coordinate Grid</heading>
             </section>
         </legend>

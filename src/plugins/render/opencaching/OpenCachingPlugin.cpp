@@ -12,20 +12,24 @@
 #include "OpenCachingModel.h"
 #include "ui_OpenCachingConfigWidget.h"
 
-#include <QtGui/QPushButton>
+#include <QPushButton>
 
 namespace Marble {
 
 OpenCachingPlugin::OpenCachingPlugin()
     : m_isInitialized( false ),
-      m_aboutDialog( 0 ),
       m_configDialog( 0 )
 {
     setNameId( "opencaching" );
+    setVersion( "1.0" );
+    setCopyrightYear( 2011 );
+    addAuthor( "Daniel Marth", "danielmarth@gmx.at" );
+    setDataText( tr( "Cache positions by opencaching.de." ) );
+
     setEnabled( true );  // Plugin is enabled by default
     setVisible( false ); // Plugin is invisible by default
-    connect( this, SIGNAL( settingsChanged( QString ) ),
-             this, SLOT( updateSettings() ) );
+    connect( this, SIGNAL(settingsChanged(QString)),
+             this, SLOT(updateSettings()) );
 }
 
 void OpenCachingPlugin::initialize()
@@ -62,31 +66,6 @@ QIcon OpenCachingPlugin::icon() const
     return QIcon();
 }
 
-QDialog* OpenCachingPlugin::aboutDialog()
-{
-    if ( !m_aboutDialog )
-    {
-        // Initializing about dialog
-        m_aboutDialog = new PluginAboutDialog();
-        m_aboutDialog->setName( "OpenCaching Plugin" );
-        m_aboutDialog->setVersion( "0.1" );
-        // FIXME: Can we store this string for all of Marble
-        m_aboutDialog->setAboutText( tr( "<br />(c) 2009, 2010, 2011 The Marble Project<br /><br /><a href=\"http://edu.kde.org/marble\">http://edu.kde.org/marble</a>" ) );
-        QList<Author> authors;
-        Author daniel;
-
-        daniel.name = QString::fromUtf8( "Daniel Marth" );
-        daniel.task = tr( "Developer" );
-        daniel.email= tr( "danielmarth@gmx.at" );
-        authors.append( daniel );
-        m_aboutDialog->setAuthors( authors );
-        m_aboutDialog->setDataText( tr( "Cache positions by opencaching.de." ) );
-
-        m_aboutDialog->setLicense( PluginAboutDialog::License_LGPL_V2 );
-    }
-    return m_aboutDialog;
-}
-
 QDialog *OpenCachingPlugin::configDialog()
 {
     if ( !m_configDialog ) {
@@ -95,19 +74,19 @@ QDialog *OpenCachingPlugin::configDialog()
         m_ui = new Ui::OpenCachingConfigWidget;
         m_ui->setupUi( m_configDialog );
         readSettings();
-        connect( m_ui->m_buttonBox, SIGNAL( accepted() ),
-                 SLOT( writeSettings() ) );
-        connect( m_ui->m_buttonBox, SIGNAL( rejected() ),
-                 SLOT( readSettings() ) );
-        connect( m_ui->m_buttonBox->button( QDialogButtonBox::Reset ), SIGNAL( clicked () ),
-                 SLOT( restoreDefaultSettings() ) );
+        connect( m_ui->m_buttonBox, SIGNAL(accepted()),
+                 SLOT(writeSettings()) );
+        connect( m_ui->m_buttonBox, SIGNAL(rejected()),
+                 SLOT(readSettings()) );
+        connect( m_ui->m_buttonBox->button( QDialogButtonBox::Reset ), SIGNAL(clicked()),
+                 SLOT(restoreDefaultSettings()) );
         QPushButton *applyButton = m_ui->m_buttonBox->button( QDialogButtonBox::Apply );
-        connect( applyButton, SIGNAL( clicked() ),
-                 SLOT( writeSettings() ) );
-        connect( m_ui->m_endDate, SIGNAL( dateTimeChanged ( const QDateTime& ) ),
-                 SLOT( validateDateRange() ) );
-        connect( m_ui->m_maxDifficulty, SIGNAL( valueChanged( double) ),
-                 SLOT( validateDifficultyRange() ) );
+        connect( applyButton, SIGNAL(clicked()),
+                 SLOT(writeSettings()) );
+        connect( m_ui->m_endDate, SIGNAL(dateTimeChanged(QDateTime)),
+                 SLOT(validateDateRange()) );
+        connect( m_ui->m_maxDifficulty, SIGNAL(valueChanged(double)),
+                 SLOT(validateDifficultyRange()) );
     }
     return m_configDialog;
 }

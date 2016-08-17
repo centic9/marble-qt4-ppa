@@ -88,7 +88,6 @@ public:
     void                    notifyMouseClick (int x, int y);
     void                    clearVolatileTileCache ();
     void                    setVolatileTileCacheLimit (quint64 kiloBytes);
-    bool                    mapCoversViewport ();
     Marble::AngleUnit       defaultAngleUnit () const;
     void                    setDefaultAngleUnit (Marble::AngleUnit angleUnit);
     QFont                   defaultFont () const;
@@ -104,7 +103,7 @@ protected:
 
 public:
     virtual ~MarbleMap ();
-    void                    reload () const;
+    void                    reload ();
     Marble::ViewportParams*  viewport ();
     Marble::MapQuality      mapQuality () const;
     void                    setSize (const QSize& size);
@@ -124,7 +123,6 @@ public:
     void                    addLayer (Marble::LayerInterface* layer);
     void                    removeLayer (Marble::LayerInterface* layer);
     void                    setShowBackground (bool visible);
-    void                    downloadRegion (const QString& sourceDir, const QVector<Marble::TileCoordsPyramid>&);
 signals:
     void                    tileLevelChanged (int level);
     void                    repaintNeeded (const QRegion& dirtyRegion = QRegion());
@@ -142,13 +140,19 @@ public:
 //ig    const Marble::ViewportParams*  viewport () const;
     bool                    showSunShading () const;
     bool                    showCityLights () const;
-    bool                    showSunInZenith () const;
     void                    paint (Marble::GeoPainter& painter, const QRect& dirtyRect);
     void                    setShowSunShading (bool visible);
     void                    setShowCityLights (bool visible);
-    void                    setShowSunInZenith (bool visible);
 signals:
     void                    radiusChanged (int radius);
+public:
+//ig    const TextureLayer*     textureLayer () const;
+    void                    setShowRuntimeTrace (bool visible);
+    void                    downloadRegion (const QVector<Marble::TileCoordsPyramid>&);
+    bool                    isLockedToSubSolarPoint () const;
+    bool                    isSubSolarPointIconVisible () const;
+    void                    setLockToSubSolarPoint (bool visible);
+    void                    setSubSolarPointIconVisible (bool visible);
 };
 // MarbleMap
 

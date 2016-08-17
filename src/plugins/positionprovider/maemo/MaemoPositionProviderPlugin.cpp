@@ -10,7 +10,7 @@
 
 #include "MaemoPositionProviderPlugin.h"
 
-#include <QtCore/QTimer>
+#include <QTimer>
 
 #include <location/location-gps-device.h>
 #include <location/location-gpsd-control.h>
@@ -26,6 +26,7 @@ public:
     QTimer m_timer;
     qreal m_speed;
     qreal m_direction;
+    QDateTime m_timestamp;
 
     MaemoPositionProviderPluginPrivate();
 
@@ -60,9 +61,25 @@ QString MaemoPositionProviderPlugin::guiString() const
     return tr( "Maemo" );
 }
 
+QString MaemoPositionProviderPlugin::version() const
+{
+    return "1.0";
+}
+
 QString MaemoPositionProviderPlugin::description() const
 {
     return tr( "Reports the GPS position of a Maemo device (e.g. Nokia N900)." );
+}
+
+QString MaemoPositionProviderPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> MaemoPositionProviderPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
 }
 
 QIcon MaemoPositionProviderPlugin::icon() const
@@ -93,6 +110,9 @@ GeoDataCoordinates MaemoPositionProviderPlugin::position() const
         }
         if ( d->m_device->fix->fields & LOCATION_GPS_DEVICE_TRACK_SET ) {
             d->m_direction = d->m_device->fix->track;
+        }
+        if ( d->m_device->fix->fields & LOCATION_GPS_DEVICE_TIME_SET ) {
+            d->m_timestamp = QDateTime::fromMSecsSinceEpoch( d->m_device->fix->time * 1000 );
         }
 
         return GeoDataCoordinates( d->m_device->fix->longitude,
@@ -131,10 +151,15 @@ GeoDataAccuracy MaemoPositionProviderPlugin::accuracy() const
     return result;
 }
 
+QDateTime MaemoPositionProviderPlugin::timestamp() const
+{
+    return d->m_timestamp;
+}
+
 MaemoPositionProviderPlugin::MaemoPositionProviderPlugin() :
         d( new MaemoPositionProviderPluginPrivate )
 {
-    connect( &d->m_timer, SIGNAL( timeout() ), this, SLOT( update() ) );
+    connect( &d->m_timer, SIGNAL(timeout()), this, SLOT(update()) );
 }
 
 MaemoPositionProviderPlugin::~MaemoPositionProviderPlugin()

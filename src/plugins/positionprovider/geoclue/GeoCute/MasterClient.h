@@ -11,7 +11,7 @@
 #ifndef GEOCUTE_MASTERCLIENT_H
 #define GEOCUTE_MASTERCLIENT_H
 
-#include <QtCore/QObject>
+#include <QObject>
 
 #include "AccuracyLevel.h"
 
@@ -40,7 +40,7 @@ class MasterClient : public QObject
     Q_OBJECT
     
     public:
-        MasterClient(QObject* parent = 0);
+        explicit MasterClient(QObject* parent = 0);
         ~MasterClient();
         PositionProvider* positionProvider();
         void setRequirements(AccuracyLevel, int min_time, SignallingFlags,

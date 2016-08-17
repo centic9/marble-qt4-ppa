@@ -12,14 +12,13 @@
 #define MARBLE_DECLARATIVE_COORDINATE_H
 
 #include "GeoDataCoordinates.h"
+#include <QObject>
 
-#include <QtCore/QObject>
-#include <QtDeclarative/QtDeclarative>
-
-namespace Marble
-{
-namespace Declarative
-{
+#if QT_VERSION < 0x050000
+  #include <QtDeclarative>
+#else
+  #include <QtQml/qqml.h>
+#endif
 
 /**
   * Represents a coordinate with the properties of a name and coordinates
@@ -36,7 +35,7 @@ class Coordinate : public QObject
 
 public:
     /** Constructor */
-    Coordinate( qreal lon = 0.0, qreal lat = 0.0, qreal altitude = 0.0, QObject *parent = 0 );
+    explicit Coordinate( qreal lon = 0.0, qreal lat = 0.0, qreal altitude = 0.0, QObject *parent = 0 );
 
     /** Provides access to the longitude (degree) of the coordinate */
     qreal longitude() const;
@@ -57,10 +56,10 @@ public:
     void setAltitude( qreal alt );
 
     /** Change the altitude of the coordinate */
-    GeoDataCoordinates coordinates() const;
+    Marble::GeoDataCoordinates coordinates() const;
 
     /** Change all coordinates at once */
-    void setCoordinates( const GeoDataCoordinates &coordinates );
+    void setCoordinates( const Marble::GeoDataCoordinates &coordinates );
 
     /** Distance (in meter) to the given coordinate */
     Q_INVOKABLE qreal distance( qreal longitude, qreal latitude ) const;
@@ -78,12 +77,9 @@ Q_SIGNALS:
     void altitudeChanged();
 
 private:
-    GeoDataCoordinates m_coordinate;
+    Marble::GeoDataCoordinates m_coordinate;
 };
 
-}
-}
-
-QML_DECLARE_TYPE( Marble::Declarative::Coordinate )
+QML_DECLARE_TYPE( Coordinate )
 
 #endif // MARBLE_DECLARATIVE_COORDINATE_H

@@ -14,13 +14,48 @@
 namespace Marble
 {
 
-AbstractWeatherService::AbstractWeatherService( QObject *parent )
-    : QObject( parent )
+AbstractWeatherService::AbstractWeatherService( const MarbleModel *model, QObject *parent )
+    : QObject( parent ),
+      m_marbleModel( model ),
+      m_marbleWidget( 0 )
 {
+    Q_ASSERT( m_marbleModel != 0 );
 }
 
 AbstractWeatherService::~AbstractWeatherService()
 {
+}
+
+void AbstractWeatherService::setMarbleWidget( MarbleWidget *widget )
+{
+    m_marbleWidget = widget;
+}
+
+const MarbleModel* AbstractWeatherService::marbleModel() const
+{
+    return m_marbleModel;
+}
+
+MarbleWidget* AbstractWeatherService::marbleWidget()
+{
+    return m_marbleWidget;
+}
+
+void AbstractWeatherService::setFavoriteItems( const QStringList& favorite )
+{
+    if ( m_favoriteItems != favorite) {
+        m_favoriteItems = favorite;
+    }
+}
+
+QStringList AbstractWeatherService::favoriteItems() const
+{
+    return m_favoriteItems;
+}
+
+void AbstractWeatherService::parseFile( const QByteArray& file )
+{
+    Q_UNUSED( file );
 }
 
 } // namespace Marble

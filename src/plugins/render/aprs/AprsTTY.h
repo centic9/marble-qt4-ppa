@@ -12,13 +12,13 @@
 #define APRSTTY_H
 
 #include "AprsSource.h"
-#include <QtCore/QString>
+#include <QString>
 
 namespace Marble {
     class AprsTTY : public AprsSource
     {
       public:
-        AprsTTY( QString ttyName );
+        explicit AprsTTY( QString ttyName );
         ~AprsTTY();
 
         QString sourceName() const;

@@ -12,36 +12,82 @@
 #define PHOTOPLUGIN_H
 
 #include "AbstractDataPlugin.h"
+#include "DialogConfigurationInterface.h"
+#include "RenderPlugin.h"
+#include "RenderPluginInterface.h"
+
+#include <QHash>
 
 class QIcon;
+
+namespace Ui
+{
+    class PhotoConfigWidget;
+}
 
 namespace Marble
 {
 
-class PhotoPlugin : public AbstractDataPlugin
+class PhotoPlugin : public AbstractDataPlugin, public DialogConfigurationInterface
 {
     Q_OBJECT
-
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.PhotoPlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
-
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( PhotoPlugin )
     
  public:
     PhotoPlugin();
-     
+
+    explicit PhotoPlugin( const MarbleModel *marbleModel );
+
+    ~PhotoPlugin();
+
     void initialize();
 
-    bool isInitialized () const;
-    
     QString name() const;
     
     QString guiString() const;
+
+    QString nameId() const;
     
+    QString version() const;
+
     QString description() const;
-    
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
     QIcon icon() const;
+
+    QDialog *configDialog();
+
+    /**
+     * @return: The settings of the item.
+     */
+    virtual QHash<QString,QVariant> settings() const;
+
+    /**
+     * Set the settings of the item.
+     */
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
+
+ protected:
+    bool eventFilter( QObject *object, QEvent *event );
+
+ private Q_SLOTS:
+   void readSettings();
+   void writeSettings();
+
+   void updateSettings();
+   void checkNumberOfItems( quint32 number );
+
  private:
-    bool m_isInitialized;
+    Ui::PhotoConfigWidget *ui_configWidget;
+    QDialog *m_configDialog;
+
+    QStringList m_checkStateList;
 };
 
 }

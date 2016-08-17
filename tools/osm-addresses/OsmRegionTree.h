@@ -13,7 +13,7 @@
 
 #include "OsmRegion.h"
 
-#include <QtCore/QVector>
+#include <QVector>
 
 namespace Marble
 {
@@ -21,7 +21,7 @@ namespace Marble
 class OsmRegionTree
 {
 public:
-    OsmRegionTree( const OsmRegion & node = OsmRegion() );
+    explicit OsmRegionTree( const OsmRegion & node = OsmRegion() );
 
     const OsmRegion &node() const;
 

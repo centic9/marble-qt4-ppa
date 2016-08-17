@@ -25,7 +25,7 @@
  
 ; change this to wherever the files to be packaged reside
 !ifndef srcdir
-!define srcdir "C:\Programme\marble"
+!define srcdir "C:\Program Files\marble"
 !endif
  
 !define company "KDE"
@@ -34,7 +34,7 @@
 !define prodname "Marble"
 !endif
 
-!define exec "marble.exe"
+!define exec "marble-qt.exe"
  
 ; optional stuff
  

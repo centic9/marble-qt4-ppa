@@ -12,20 +12,35 @@
 #ifndef MARBLE_OPENROUTESERVICEPLUGIN_H
 #define MARBLE_OPENROUTESERVICEPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "RoutingRunnerPlugin.h"
 
 namespace Marble
 {
 
-class OpenRouteServicePlugin : public RunnerPlugin
+class OpenRouteServicePlugin : public RoutingRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.OpenRouteServicePlugin" )
+    Q_INTERFACES( Marble::RoutingRunnerPlugin )
 
 public:
     explicit OpenRouteServicePlugin( QObject *parent = 0 );
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    QString name() const;
+
+    QString guiString() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    virtual RoutingRunner *newRunner() const;
 
     ConfigWidget* configWidget();
 

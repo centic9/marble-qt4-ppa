@@ -48,9 +48,8 @@
 
 #include "sgp4unit.h"
 
-const char help = 'n';
 FILE *dbgfile;
-
+#define UNUSED(arg) (void)arg;
 
 /* ----------- local functions - only ever used internally by sgp4 ---------- */
 static void dpper
@@ -215,8 +214,9 @@ static void dpper
        char opsmode
      )
 {
+    UNUSED( inclo );
      /* --------------------- local variables ------------------------ */
-     const double twopi = 2.0 * pi;
+     const double twopi = 2.0 * M_PI;
      double alfdp, betdp, cosip, cosop, dalf, dbet, dls,
           f2,    f3,    pe,    pgh,   ph,   pinc, pl ,
           sel,   ses,   sghl,  sghs,  shll, shs,  sil,
@@ -304,8 +304,9 @@ static void dpper
            nodep  = fmod(nodep, twopi);
            //  sgp4fix for afspc written intrinsic functions
            // nodep used without a trigonometric function ahead
-           if ((nodep < 0.0) && (opsmode == 'a'))
+           if ((nodep < 0.0) && (opsmode == 'a')) {
                nodep = nodep + twopi;
+           }
            xls    = mp + argpp + cosip * nodep;
            dls    = pl + pgh - pinc * nodep * sinip;
            xls    = xls + dls;
@@ -313,13 +314,17 @@ static void dpper
            nodep  = atan2(alfdp, betdp);
            //  sgp4fix for afspc written intrinsic functions
            // nodep used without a trigonometric function ahead
-           if ((nodep < 0.0) && (opsmode == 'a'))
+           if ((nodep < 0.0) && (opsmode == 'a')) {
                nodep = nodep + twopi;
-           if (fabs(xnoh - nodep) > pi)
-             if (nodep < xnoh)
+           }
+           if (fabs(xnoh - nodep) > M_PI) {
+             if (nodep < xnoh) {
                 nodep = nodep + twopi;
-               else
+             }
+             else {
                 nodep = nodep - twopi;
+             }
+           }
            mp    = mp + pl;
            argpp = xls - mp - cosip * nodep;
          }
@@ -428,7 +433,7 @@ static void dscom
      const double zcosis  =  0.91744867;
      const double zcosgs  =  0.1945905;
      const double zsings  = -0.98088458;
-     const double twopi   =  2.0 * pi;
+     const double twopi   =  2.0 * M_PI;
 
      /* --------------------- local variables ------------------------ */
      int lsflg;
@@ -698,7 +703,7 @@ static void dsinit
      )
 {
      /* --------------------- local variables ------------------------ */
-     const double twopi = 2.0 * pi;
+     const double twopi = 2.0 * M_PI;
 
      double ainv2 , aonv=0.0, cosisq, eoc, f220 , f221  , f311  ,
           f321  , f322  , f330  , f441  , f442  , f522  , f523  ,
@@ -740,7 +745,7 @@ static void dsinit
      sghs =  ss4 * zns * (sz31 + sz33 - 6.0);
      shs  = -zns * ss2 * (sz21 + sz23);
      // sgp4fix for 180 deg incl
-     if ((inclm < 5.2359877e-2) || (inclm > pi - 5.2359877e-2))
+     if ((inclm < 5.2359877e-2) || (inclm > M_PI - 5.2359877e-2))
        shs = 0.0;
      if (sinim != 0.0)
        shs = shs / sinim;
@@ -753,7 +758,7 @@ static void dsinit
      sghl = s4 * znl * (z31 + z33 - 6.0);
      shll = -znl * s2 * (z21 + z23);
      // sgp4fix for 180 deg incl
-     if ((inclm < 5.2359877e-2) || (inclm > pi - 5.2359877e-2))
+     if ((inclm < 5.2359877e-2) || (inclm > M_PI - 5.2359877e-2))
          shll = 0.0;
      domdt = sgs + sghl;
      dnodt = shs;
@@ -986,8 +991,8 @@ static void dspace
        double& mm,    double& xni,   double& nodem,  double& dndt,  double& nm
      )
 {
-     const double twopi = 2.0 * pi;
-     int iretn , iret;
+     const double twopi = 2.0 * M_PI;
+     int iretn;
      double delt, ft, theta, x2li, x2omi, xl, xldot , xnddt, xndt, xomi, g22, g32,
           g44, g52, g54, fasx2, fasx4, fasx6, rptim , step2, stepn , stepp;
 
@@ -1047,7 +1052,6 @@ static void dspace
                delt = stepn;
 
          iretn = 381; // added for do loop
-         iret  =   0; // added for loop
          while (iretn == 381)
            {
              /* ------------------- dot terms calculated ------------- */
@@ -1087,7 +1091,6 @@ static void dspace
              // sgp4fix move end checks to end of routine
              if (fabs(t - atime) >= stepp)
                {
-                 iret  = 0;
                  iretn = 381;
                }
                else // exit here
@@ -1184,14 +1187,15 @@ static void initl
        char opsmode
      )
 {
+     UNUSED( satn );
      /* --------------------- local variables ------------------------ */
      double ak, d1, del, adel, po, x2o3, j2, xke,
             tumin, mu, radiusearthkm, j3, j4, j3oj2;
 
      // sgp4fix use old way of finding gst
      double ds70;
-     double ts70, tfrac, c1, thgr70, fk5r, c1p2p, thgr, thgro;
-     const double twopi = 2.0 * pi;
+     double ts70, tfrac, c1, thgr70, fk5r, c1p2p;
+     const double twopi = 2.0 * M_PI;
 
      /* ----------------------- earth constants ---------------------- */
      // sgp4fix identify constants and allow alternate values
@@ -1508,7 +1512,7 @@ bool sgp4init
          satrec.x7thm1  = 7.0 * cosio2 - 1.0;
 
          /* --------------- deep space initialization ------------- */
-         if ((2*pi / satrec.no) >= 225.0)
+         if ((2*M_PI / satrec.no) >= 225.0)
            {
              satrec.method = 'd';
              satrec.isimp  = 1;
@@ -1588,7 +1592,7 @@ bool sgp4init
          }
        } // if omeosq = 0 ...
 
-       /* finally propogate to zero epoch to initialize all others. */
+       /* finally propagate to zero epoch to initialize all others. */
        // sgp4fix take out check to let satellites process until they are actually below earth surface
 //       if(satrec.error == 0)
        sgp4(whichconst, satrec, 0.0, r, v);
@@ -1713,7 +1717,7 @@ bool sgp4
      // the old check used 1.0 + cos(pi-1.0e-9), but then compared it to
      // 1.5 e-12, so the threshold was changed to 1.5e-12 for consistency
      const double temp4 =   1.5e-12;
-     twopi = 2.0 * pi;
+     twopi = 2.0 * M_PI;
      x2o3  = 2.0 / 3.0;
      // sgp4fix identify constants and allow alternate values
      getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
@@ -1842,8 +1846,8 @@ bool sgp4
          if (xincp < 0.0)
            {
              xincp  = -xincp;
-             nodep = nodep + pi;
-             argpp  = argpp - pi;
+             nodep = nodep + M_PI;
+             argpp  = argpp - M_PI;
            }
          if ((ep < 0.0 ) || ( ep > 1.0))
            {
@@ -2004,8 +2008,8 @@ double  gstime
           double jdut1
         )
    {
-     const double twopi = 2.0 * pi;
-     const double deg2rad = pi / 180.0;
+     const double twopi = 2.0 * M_PI;
+     const double deg2rad = M_PI / 180.0;
      double       temp, tut1;
 
      tut1 = (jdut1 - 2451545.0) / 36525.0;

@@ -12,7 +12,7 @@
 #ifndef MARBLE_ROUTINOPLUGIN_H
 #define MARBLE_ROUTINOPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "RoutingRunnerPlugin.h"
 
 namespace Ui {
     class RoutinoConfigWidget;
@@ -20,15 +20,30 @@ namespace Ui {
 namespace Marble
 {
 
-class RoutinoPlugin : public RunnerPlugin
+class RoutinoPlugin : public RoutingRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.RoutinoPlugin" )
+    Q_INTERFACES( Marble::RoutingRunnerPlugin )
 
 public:
     explicit RoutinoPlugin( QObject *parent = 0 );
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    QString name() const;
+
+    QString guiString() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    virtual RoutingRunner *newRunner() const;
 
     ConfigWidget* configWidget();
 
@@ -36,7 +51,7 @@ public:
 
     QHash< QString, QVariant > templateSettings(RoutingProfilesModel::ProfileTemplate profileTemplate) const;
 
-    virtual bool canWork( Capability capability ) const;
+    virtual bool canWork() const;
 };
 
 }

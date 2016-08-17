@@ -8,10 +8,11 @@
 // Copyright 2008 Patrick Spendrin  <ps_ml@gmx.de>
 //
 
-#include <QtTest/QtTest>
 
 #include "MarbleDirs.h"
 #include "PluginManager.h"
+
+#include <QTest>
 
 namespace Marble
 {
@@ -28,13 +29,19 @@ void PluginManagerTest::loadPlugins()
     MarbleDirs::setMarbleDataPath( DATA_PATH );
     MarbleDirs::setMarblePluginPath( PLUGIN_PATH );
 
-    int             pluginNumber = MarbleDirs::pluginEntryList( "", QDir::Files ).size();
-    PluginManager  *pm = new PluginManager( 0 );
-    int renderPlugins = pm->createRenderPlugins().size();
-    int networkPlugins = pm->createNetworkPlugins().size();
-    int positionPlugins = pm->createPositionProviderPlugins().size();
-    int runnerPlugins = pm->runnerPlugins().size();
-    QCOMPARE( renderPlugins + networkPlugins + positionPlugins + runnerPlugins, pluginNumber );
+    const int pluginNumber = MarbleDirs::pluginEntryList( "", QDir::Files ).size();
+
+    PluginManager pm;
+    const int renderPlugins = pm.renderPlugins().size();
+    const int positionPlugins = pm.positionProviderPlugins().size();
+    const int searchRunnerPlugins = pm.searchRunnerPlugins().size();
+    const int reverseGeocodingRunnerPlugins = pm.reverseGeocodingRunnerPlugins().size();
+    const int routingRunnerPlugins = pm.routingRunnerPlugins().size();
+    const int parsingRunnerPlugins = pm.parsingRunnerPlugins().size();
+
+    const int runnerPlugins = searchRunnerPlugins + reverseGeocodingRunnerPlugins + routingRunnerPlugins + parsingRunnerPlugins;
+
+    QCOMPARE( renderPlugins + positionPlugins + runnerPlugins, pluginNumber );
 }
 
 }

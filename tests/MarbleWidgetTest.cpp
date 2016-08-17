@@ -8,13 +8,16 @@
 // Copyright 2008 Patrick Spendrin  <ps_ml@gmx.de>
 //
 
-#include <QtGui/QtGui>
-#include <QtTest/QtTest>
-#include <QtTest/QTestEvent>
+#include <QtGui>
+#include <QTestEvent>
 #include "MarbleDirs.h"
 #include "MarbleWidget.h"
+#include "TestUtils.h"
 
-#define addRow() QTest::newRow( QString("line %1").arg( __LINE__ ).toAscii().data() )
+#if QT_VERSION >= 0x050000
+  #include "qtest_widgets.h"
+  #include "qtestmouse.h"
+#endif
 
 namespace Marble
 {
@@ -24,6 +27,11 @@ class MarbleWidgetTest: public QObject
     Q_OBJECT
 
 private slots:
+    void initTestCase();// will be called before the first testfunction is executed.
+    void cleanupTestCase(){}// will be called after the last testfunction was executed.
+    void init(){}// will be called before each testfunction is executed.
+    void cleanup(){}// will be called after every testfunction.
+
     void mouseMove();
 
     void setMapTheme_data();
@@ -33,12 +41,18 @@ private slots:
 
     void paintEvent_data();
     void paintEvent();
+
+    void runMultipleWidgets();
 };
 
-void MarbleWidgetTest::mouseMove()
+void MarbleWidgetTest::initTestCase()
 {
     MarbleDirs::setMarbleDataPath( DATA_PATH );
     MarbleDirs::setMarblePluginPath( PLUGIN_PATH );
+}
+
+void MarbleWidgetTest::mouseMove()
+{
     MarbleWidget widget;
     widget.setMapThemeId("earth/srtm/srtm.dgml");
 
@@ -111,6 +125,14 @@ void MarbleWidgetTest::paintEvent()
     widget.repaint();
 
     QThreadPool::globalInstance()->waitForDone();  // wait for all runners to terminate
+}
+
+void MarbleWidgetTest::runMultipleWidgets() {
+    MarbleWidget widget1;
+    MarbleWidget widget2;
+
+    QCOMPARE(widget1.mapThemeId(), widget2.mapThemeId());
+    QThreadPool::globalInstance()->waitForDone();
 }
 
 }

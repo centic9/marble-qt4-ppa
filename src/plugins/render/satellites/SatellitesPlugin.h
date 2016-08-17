@@ -6,43 +6,39 @@
 // the source code.
 //
 // Copyright 2011 Guillaume Martres <smarter@ubuntu.com>
+// Copyright 2012 Rene Kuettner <rene@bitkanal.net>
 //
 
 #ifndef MARBLE_SATELLITESPLUGIN_H
 #define MARBLE_SATELLITESPLUGIN_H
 
 #include "RenderPlugin.h"
+#include "SatellitesConfigDialog.h"
+#include "DialogConfigurationInterface.h"
 #include "SatellitesModel.h"
 
-#include "sgp4/sgp4unit.h"
-
-#include <QtCore/QObject>
-
-class QCheckBox;
-
-namespace Ui
-{
-    class SatellitesConfigDialog;
-}
+#include <QObject>
 
 namespace Marble
 {
 
-class PluginAboutDialog;
 class SatellitesConfigModel;
 
 /**
  * @brief This plugin displays satellites and their orbits.
  *
  */
-class SatellitesPlugin : public RenderPlugin
+class SatellitesPlugin : public RenderPlugin,
+                         public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.SatellitesPlugin" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( SatellitesPlugin )
 
 public:
-    SatellitesPlugin();
+    explicit SatellitesPlugin( const MarbleModel *marbleModel = 0 );
     virtual ~SatellitesPlugin();
     
     QStringList backendTypes() const;
@@ -51,42 +47,61 @@ public:
     QString name() const;
     QString nameId() const;
     QString guiString() const;
+    QString version() const;
     QString description() const;
+    QString copyrightYears() const;
+    QList<PluginAuthor> pluginAuthors() const;
+    QString aboutDataText() const;
     QIcon icon() const;
     RenderType renderType() const;
     void initialize();
     bool isInitialized() const;
 
-    bool render( GeoPainter *painter, ViewportParams *viewport, const QString &renderPos, GeoSceneLayer *layer );
+    bool render( GeoPainter *painter,
+                 ViewportParams *viewport,
+                 const QString &renderPos,
+                 GeoSceneLayer *layer );
+
+    bool eventFilter( QObject *object, QEvent *event );
 
     QHash<QString, QVariant> settings() const;
-    void setSettings( QHash<QString, QVariant> settings );
+    void setSettings( const QHash<QString, QVariant> &settings );
 
-    QDialog *aboutDialog();
-    QDialog *configDialog();
+    SatellitesConfigDialog *configDialog();
 
 private Q_SLOTS:
+    void activate();
     void enableModel( bool enabled );
-    void visibleModel( QString, bool visible );
+    void visibleModel( bool visible );
     void readSettings();
     void writeSettings();
     void updateSettings();
+    void updateDataSourceConfig( const QString &source );
+    void dataSourceParsed( const QString &source );
+    void userDataSourceAdded( const QString &source );
+
+    void showOrbit( bool show );
+    void trackPlacemark();
+
+protected:
+    void activateDataSource( const QString &source );
+    void addBuiltInDataSources();
 
 private:
-    void setupConfigModel();
-
-    SatellitesModel *m_model;
+    SatellitesModel *m_satModel;
+    SatellitesConfigModel *m_configModel;
 
     bool m_isInitialized;
     QHash<QString, QVariant> m_settings;
-    QHash<QString, QCheckBox *> m_boxHash;
+    QStringList m_newDataSources;
 
-    PluginAboutDialog *m_aboutDialog;
-    QDialog *m_configDialog;
-    SatellitesConfigModel *m_configModel;
-    Ui::SatellitesConfigDialog *ui_configWidget;
+    SatellitesConfigDialog *m_configDialog;
+
+    QAction *m_showOrbitAction;
+    QAction *m_trackPlacemarkAction;
+    QVector<TrackerPluginItem*> m_trackerList;
 };
 
-}
+} // namespace Marble
 
 #endif // MARBLE_SATELLITESPLUGIN_H

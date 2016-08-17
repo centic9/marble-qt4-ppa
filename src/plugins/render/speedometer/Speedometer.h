@@ -15,8 +15,8 @@
 #ifndef MARBLESpeedometer_H
 #define MARBLESpeedometer_H
 
-#include <QtCore/QObject>
-#include <QtCore/QHash>
+#include <QObject>
+#include <QHash>
 
 #include "AbstractFloatItem.h"
 
@@ -37,12 +37,13 @@ class MarbleLocale;
 class Speedometer : public AbstractFloatItem
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.Speedometer" )
     Q_INTERFACES( Marble::RenderPluginInterface )
     MARBLE_PLUGIN( Speedometer )
     
  public:
-    explicit Speedometer( const QPointF &point = QPointF( 10.5, 110 ),
-                          const QSizeF &size = QSizeF( 135.0, 80.0 ) );
+    Speedometer();
+    explicit Speedometer( const MarbleModel *marbleModel );
     ~Speedometer();
 
     QStringList backendTypes() const;
@@ -53,7 +54,13 @@ class Speedometer : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
+    QString copyrightYears() const;
 
     QIcon icon () const;
 
@@ -68,8 +75,6 @@ class Speedometer : public AbstractFloatItem
     MarbleLocale* m_locale;
     Ui::Speedometer m_widget;
     WidgetGraphicsItem* m_widgetItem;
-
-
 };
 
 }

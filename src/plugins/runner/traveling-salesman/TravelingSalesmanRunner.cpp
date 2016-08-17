@@ -16,9 +16,9 @@
 #include "GeoDataDocument.h"
 #include "GeoDataParser.h"
 
-#include <QtCore/QProcess>
-#include <QtCore/QMap>
-#include <QtCore/QTemporaryFile>
+#include <QProcess>
+#include <QMap>
+#include <QTemporaryFile>
 
 namespace Marble
 {
@@ -127,7 +127,7 @@ GeoDataDocument* TravelingSalesmanRunnerPrivate::createDocument( GeoDataLineStri
     result->append( routePlacemark );
 
     QString name = "%1 %2 (Traveling Salesman)";
-    QString unit = "m";
+    QString unit = 'm';
     qreal length = routeWaypoints->length( EARTH_RADIUS );
     if ( length >= 1000 ) {
         length /= 1000.0;

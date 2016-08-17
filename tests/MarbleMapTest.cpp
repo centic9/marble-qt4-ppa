@@ -8,30 +8,12 @@
 // Copyright 2011       Bernhard Beschow <bbeschow@cs.tu-berlin.de>
 //
 
-#include <QtTest/QtTest>
 #include "GeoPainter.h"
 #include "MarbleMap.h"
 #include "MarbleModel.h"
+#include "TestUtils.h"
 
-namespace QTest
-{
-
-bool qCompare(qreal val1, qreal val2, qreal epsilon, const char *actual, const char *expected, const char *file, int line)
-{
-    return ( qAbs( val1 - val2 ) < epsilon )
-        ? compare_helper( true, "COMPARE()", file, line )
-        : compare_helper( false, "Compared qreals are not the same", toString( val1 ), toString( val2 ), actual, expected, file, line );
-}
-
-}
-
-#define QFUZZYCOMPARE(actual, expected, epsilon) \
-do {\
-    if (!QTest::qCompare(actual, expected, epsilon, #actual, #expected, __FILE__, __LINE__))\
-        return;\
-} while (0)
-
-#define addRow() QTest::newRow( QString("line %1").arg( __LINE__ ).toAscii().data() )
+#include <QThreadPool>
 
 namespace Marble
 {
@@ -498,19 +480,36 @@ void MarbleMapTest::setMapTheme()
 
 void MarbleMapTest::switchMapThemes()
 {
+    QImage image( QSize( 143, 342 ), QImage::Format_ARGB32_Premultiplied );
+
     MarbleMap map;
+    map.setSize( image.size() );
+    map.setRadius( 114003 );
+    map.setViewContext( Animation );
+
+    GeoPainter painter( &image, map.viewport() );
 
     map.setMapThemeId( "earth/plain/plain.dgml" );
     QCOMPARE( map.mapThemeId(), QString( "earth/plain/plain.dgml" ) );
+    QCOMPARE( map.preferredRadiusCeil( 1000 ), 1000 );
+    QCOMPARE( map.preferredRadiusFloor( 1000 ), 1000 );
 
     map.setMapThemeId( "earth/srtm/srtm.dgml" );
     QCOMPARE( map.mapThemeId(), QString( "earth/srtm/srtm.dgml" ) );
+    QCOMPARE( map.preferredRadiusCeil( 1000 ), 1348 );
+    QCOMPARE( map.preferredRadiusFloor( 1000 ), 674 );
 
     map.setMapThemeId( "earth/openstreetmap/openstreetmap.dgml" );
     QCOMPARE( map.mapThemeId(), QString( "earth/openstreetmap/openstreetmap.dgml" ) );
+    QCOMPARE( map.preferredRadiusCeil( 1000 ), 1024 );
+    QCOMPARE( map.preferredRadiusFloor( 1000 ), 512 );
+    map.paint( painter, QRect() ); // loads tiles
 
     map.setMapThemeId( "earth/plain/plain.dgml" );
     QCOMPARE( map.mapThemeId(), QString( "earth/plain/plain.dgml" ) );
+    QCOMPARE( map.preferredRadiusCeil( 1000 ), 1000 );
+    QCOMPARE( map.preferredRadiusFloor( 1000 ), 1000 );
+    map.reload(); // don't crash, please
 
     QThreadPool::globalInstance()->waitForDone();  // wait for all runners to terminate
 }
@@ -589,9 +588,7 @@ void MarbleMapTest::paint()
 
     QVERIFY( map.projection() == Spherical );
 
-    const bool doClip = map.radius() > map.width() / 2 || map.radius() > map.height() / 2;
-
-    GeoPainter painter1( &paintDevice, map.viewport(), map.mapQuality(), doClip );
+    GeoPainter painter1( &paintDevice, map.viewport(), map.mapQuality() );
     map.paint( painter1, QRect() );
 
     QThreadPool::globalInstance()->waitForDone();  // wait for all runners to terminate

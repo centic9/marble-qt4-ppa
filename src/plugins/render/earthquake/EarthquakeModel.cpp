@@ -11,25 +11,24 @@
 #include "EarthquakeModel.h"
 #include "EarthquakeItem.h"
 
-#include "global.h"
+#include "MarbleGlobal.h"
 #include "MarbleModel.h"
 #include "GeoDataCoordinates.h"
 #include "GeoDataLatLonAltBox.h"
 #include "MarbleDebug.h"
 
-#include <QtCore/QDebug>
-#include <QtCore/QString>
-#include <QtCore/QUrl>
-#include <QtGui/QMessageBox>
-#include <QtScript/QScriptEngine>
-#include <QtScript/QScriptValue>
-#include <QtScript/QScriptValueIterator>
+#include <QDebug>
+#include <QString>
+#include <QUrl>
+#include <QMessageBox>
+#include <QScriptEngine>
+#include <QScriptValue>
+#include <QScriptValueIterator>
 
 namespace Marble {
 
-EarthquakeModel::EarthquakeModel( const PluginManager *pluginManager, QObject *parent )
-    : AbstractDataPluginModel( "earthquake", pluginManager, parent ),
-      m_numResults( numberOfItemsOnScreen ),
+EarthquakeModel::EarthquakeModel( const MarbleModel *marbleModel, QObject *parent )
+    : AbstractDataPluginModel( "earthquake", marbleModel, parent ),
       m_minMagnitude( 0.0 ),
       m_startDate( QDateTime::fromString( "2006-02-04", "yyyy-MM-dd" ) ),
       m_endDate( QDateTime::currentDateTime() )
@@ -39,11 +38,6 @@ EarthquakeModel::EarthquakeModel( const PluginManager *pluginManager, QObject *p
 
 EarthquakeModel::~EarthquakeModel()
 {
-}
-
-void EarthquakeModel::setNumResults( int numResults )
-{
-    m_numResults = numResults;
 }
 
 void EarthquakeModel::setMinMagnitude( double minMagnitude )
@@ -61,11 +55,9 @@ void EarthquakeModel::setEndDate( const QDateTime& endDate )
     m_endDate = endDate;
 }
 
-void EarthquakeModel::getAdditionalItems( const GeoDataLatLonAltBox& box, const MarbleModel *model, qint32 number )
+void EarthquakeModel::getAdditionalItems( const GeoDataLatLonAltBox& box, qint32 number )
 {
-    Q_UNUSED( number );
-
-    if( model->planetId() != "earth" ) {
+    if( marbleModel()->planetId() != "earth" ) {
         return;
     }
 
@@ -75,7 +67,8 @@ void EarthquakeModel::getAdditionalItems( const GeoDataLatLonAltBox& box, const 
     geonamesUrl += "&east="    + QString::number( box.east() * RAD2DEG );
     geonamesUrl += "&west="    + QString::number( box.west() * RAD2DEG );
     geonamesUrl += "&date=" + m_endDate.toString( "yyyy-MM-dd" );
-    geonamesUrl += "&maxRows=" + QString::number( m_numResults );
+    geonamesUrl += "&maxRows=" + QString::number( number );
+    geonamesUrl += "&username=marble";
     geonamesUrl += "&formatted=true";
     downloadDescriptionFile( QUrl( geonamesUrl ) );
 }
@@ -86,12 +79,13 @@ void EarthquakeModel::parseFile( const QByteArray& file )
     QScriptEngine engine;
 
     // Qt requires parentheses around json code
-    data = engine.evaluate( "(" + QString( file ) + ")" );
+    data = engine.evaluate( '(' + QString( file ) + ')' );
 
     // Parse if any result exists
     if ( data.property( "earthquakes" ).isArray() ) {
         QScriptValueIterator iterator( data.property( "earthquakes" ) );
         // Add items to the list
+        QList<AbstractDataPluginItem*> items;
         while ( iterator.hasNext() ) {
             iterator.next();
             // Converting earthquake's properties from QScriptValue to appropriate types
@@ -114,11 +108,12 @@ void EarthquakeModel::parseFile( const QByteArray& file )
                     item->setMagnitude( magnitude );
                     item->setDateTime( date );
                     item->setDepth( depth );
-
-                    addItemToList( item );
+                    items << item;
                 }
             }
         }
+
+        addItemsToList( items );
     }
 }
 

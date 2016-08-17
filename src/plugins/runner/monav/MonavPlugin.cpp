@@ -22,13 +22,14 @@
 #include "GeoDataDocument.h"
 #include "GeoDataData.h"
 #include "GeoDataExtendedData.h"
+#include "routing/RouteRequest.h"
 
-#include <QtCore/QProcess>
-#include <QtCore/QDirIterator>
-#include <QtCore/QTimer>
-#include <QtNetwork/QLocalSocket>
-#include <QtCore/QThread>
-#include <QtCore/QTextStream>
+#include <QProcess>
+#include <QDirIterator>
+#include <QTimer>
+#include <QLocalSocket>
+#include <QThread>
+#include <QTextStream>
 
 namespace Marble
 {
@@ -106,7 +107,7 @@ bool MonavPluginPrivate::isDaemonInstalled() const
 {
     QString path = QProcessEnvironment::systemEnvironment().value( "PATH", "/usr/local/bin:/usr/bin:/bin" );
     foreach( const QString &application, QStringList() << "monav-daemon" << "MoNavD" ) {
-        foreach( const QString &dir, path.split( ":" ) ) {
+        foreach( const QString &dir, path.split( QLatin1Char( ':' ) ) ) {
             QFileInfo executable( QDir( dir ), application );
             if ( executable.exists() ) {
                 return true;
@@ -217,15 +218,12 @@ void MonavPluginPrivate::initialize()
     }
 }
 
-MonavPlugin::MonavPlugin( QObject *parent ) : RunnerPlugin( parent ), d( new MonavPluginPrivate )
+MonavPlugin::MonavPlugin( QObject *parent ) :
+    RoutingRunnerPlugin( parent ),
+    d( new MonavPluginPrivate )
 {
     setSupportedCelestialBodies( QStringList() << "earth" );
     setCanWorkOffline( true );
-    setName( tr( "Monav" ) );
-    setNameId( "monav" );
-    setDescription( tr( "Offline routing using the monav daemon" ) );
-    setGuiString( tr( "Monav Routing" ) );
-    setCapabilities( Routing /*| ReverseGeocoding */ );
 
     if ( d->isDaemonInstalled() ) {
         d->initialize();
@@ -236,7 +234,7 @@ MonavPlugin::MonavPlugin( QObject *parent ) : RunnerPlugin( parent ), d( new Mon
         setStatusMessage( tr ( "The monav routing daemon does not seem to be installed on your system." ) );
     }
 
-    connect( qApp, SIGNAL( aboutToQuit() ), this, SLOT( stopDaemon() ) );
+    connect( qApp, SIGNAL(aboutToQuit()), this, SLOT(stopDaemon()) );
 }
 
 MonavPlugin::~MonavPlugin()
@@ -244,7 +242,43 @@ MonavPlugin::~MonavPlugin()
     delete d;
 }
 
-MarbleAbstractRunner* MonavPlugin::newRunner() const
+QString MonavPlugin::name() const
+{
+    return tr( "Monav Routing" );
+}
+
+QString MonavPlugin::guiString() const
+{
+    return tr( "Monav" );
+}
+
+QString MonavPlugin::nameId() const
+{
+    return "monav";
+}
+
+QString MonavPlugin::version() const
+{
+    return "1.0";
+}
+
+QString MonavPlugin::description() const
+{
+    return tr( "Offline routing using the monav daemon" );
+}
+
+QString MonavPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> MonavPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
+RoutingRunner *MonavPlugin::newRunner() const
 {
     d->initialize();
     if ( !d->startDaemon() ) {
@@ -317,7 +351,7 @@ QStringList MonavPlugin::mapDirectoriesForRequest( const RouteRequest* request )
     return result;
 }
 
-RunnerPlugin::ConfigWidget *MonavPlugin::configWidget()
+RoutingRunnerPlugin::ConfigWidget *MonavPlugin::configWidget()
 {
     return new MonavConfigWidget( this );
 }
@@ -334,14 +368,10 @@ void MonavPlugin::reloadMaps()
     d->loadMaps();
 }
 
-bool MonavPlugin::canWork( Capability capability ) const
+bool MonavPlugin::canWork() const
 {
-    if ( supports( capability ) ) {
-        d->initialize();
-        return !d->m_maps.isEmpty();
-    } else {
-       return false;
-    }
+    d->initialize();
+    return !d->m_maps.isEmpty();
 }
 
 bool MonavPlugin::supportsTemplate( RoutingProfilesModel::ProfileTemplate profileTemplate ) const

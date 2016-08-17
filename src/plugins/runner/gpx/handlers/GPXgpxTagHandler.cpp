@@ -31,7 +31,7 @@
 #include "GeoDataStyleMap.h"
 #include "GeoDataHotSpot.h"
 #include "MarbleDirs.h"
-#include "global.h"
+#include "MarbleGlobal.h"
 
 namespace Marble
 {
@@ -45,8 +45,10 @@ GeoNode* GPXgpxTagHandler::parse(GeoParser& parser) const
 
     GeoDataStyle style;
     GeoDataLineStyle lineStyle;
-    lineStyle.setColor( oxygenForestGreen4 );
-    lineStyle.setWidth(2);
+    QColor transparentRed = Oxygen::brickRed6;
+    transparentRed.setAlpha( 200 );
+    lineStyle.setColor( transparentRed );
+    lineStyle.setWidth( 4 );
     style.setLineStyle(lineStyle);
     style.setStyleId("track");
 
@@ -59,8 +61,10 @@ GeoNode* GPXgpxTagHandler::parse(GeoParser& parser) const
     // create a style for routes
     GeoDataStyle routestyle;
     GeoDataLineStyle routeLineStyle;
-    routeLineStyle.setColor( oxygenSkyBlue4 );
-    routeLineStyle.setWidth(2);
+    QColor skyBlue = Oxygen::skyBlue6;
+    skyBlue.setAlpha( 200 );
+    routeLineStyle.setColor( skyBlue );
+    routeLineStyle.setWidth( 5 );
     routestyle.setLineStyle(routeLineStyle);
     routestyle.setStyleId("route");
 
@@ -69,25 +73,6 @@ GeoNode* GPXgpxTagHandler::parse(GeoParser& parser) const
     routeStyleMap.insert("normal", QString("#").append(routestyle.styleId()));
     doc->addStyleMap(routeStyleMap);
     doc->addStyle(routestyle);
-
-    // routepoint style
-    GeoDataStyle routepointStyle;
-    routepointStyle.setStyleId("routepoint");
-
-    GeoDataIconStyle routepointIconStyle;
-    routepointIconStyle.setIconPath(MarbleDirs::path("bitmaps/city_4_white.png"));
-    routepointIconStyle.setHotSpot(QPointF(0.5,0.5), GeoDataHotSpot::Fraction, GeoDataHotSpot::Fraction);
-    routepointStyle.setIconStyle(routepointIconStyle);
-
-    GeoDataLabelStyle routepointLabelStyle;
-    routepointLabelStyle.setAlignment(GeoDataLabelStyle::Corner);
-    routepointStyle.setLabelStyle(routepointLabelStyle);
-
-    GeoDataStyleMap routepointStyleMap;
-    routepointStyleMap.setStyleId("map-routepoint");
-    routepointStyleMap.insert("normal", QString("#").append(routepointStyle.styleId()));
-    doc->addStyleMap(routepointStyleMap);
-    doc->addStyle(routepointStyle);
 
     // create a default style for waypoint icons
     GeoDataStyle waypointStyle;
@@ -107,9 +92,6 @@ GeoNode* GPXgpxTagHandler::parse(GeoParser& parser) const
     doc->addStyleMap(waypointStyleMap);
     doc->addStyle(waypointStyle);
 
-#ifdef DEBUG_TAGS
-    mDebug() << "Parsed <" << gpxTag_gpx << "> document: " << doc;
-#endif
     return doc;
 }
 

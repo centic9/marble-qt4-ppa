@@ -11,25 +11,58 @@
 // Self
 #include "WeatherModel.h"
 
+// Qt
+#include <QTimer>
+#include <QUrl>
+
 // Marble
 #include "BBCWeatherService.h"
 #include "FakeWeatherService.h"
+#include "GeoNamesWeatherService.h"
 #include "AbstractDataPluginItem.h"
 #include "WeatherItem.h"
 #include "MarbleDebug.h"
+#include "MarbleModel.h"
 
 using namespace Marble;
 
-WeatherModel::WeatherModel( const PluginManager *pluginManager,
-                            QObject *parent )
-    : AbstractDataPluginModel( "weather", pluginManager, parent )
+WeatherModel::WeatherModel( const MarbleModel *marbleModel, QObject *parent )
+    : AbstractDataPluginModel( "weather", marbleModel, parent )
 {
-//     addService( new FakeWeatherService( this ) );
-     addService( new BBCWeatherService( this ) );
+    registerItemProperties( WeatherItem::staticMetaObject );
+
+    // addService( new FakeWeatherService( marbleModel(), this ) );
+    addService( new BBCWeatherService( marbleModel, this ) );
+    addService( new GeoNamesWeatherService( marbleModel, this ) );
+
+    m_timer = new QTimer();
+    connect( m_timer, SIGNAL(timeout()), SLOT(clear()) );
+
+    // Default interval = 3 hours
+    setUpdateInterval( 3 );
+
+    m_timer->start();
 }
     
 WeatherModel::~WeatherModel()
 {
+}
+
+void WeatherModel::setFavoriteItems( const QStringList& list )
+{
+    if ( favoriteItems() != list ) {
+        foreach ( AbstractWeatherService *service, m_services ) {
+            service->setFavoriteItems( list );
+        }
+
+        AbstractDataPluginModel::setFavoriteItems( list );
+    }
+}
+
+void WeatherModel::setUpdateInterval( quint32 hours )
+{
+    quint32 msecs = hours * 60 * 60 * 1000;
+    m_timer->setInterval( msecs );
 }
 
 void WeatherModel::downloadItemData( const QUrl& url,
@@ -42,58 +75,68 @@ void WeatherModel::downloadItemData( const QUrl& url,
         if( weatherItem ) {
             weatherItem->request( type );
         }
-        AbstractDataPluginModel::downloadItemData( url, type, item );
+
+        downloadItem( url, type, item );
+        addItemToList( item );
     } else {
         if ( existingItem != item )
             item->deleteLater();
         
         WeatherItem *existingWeatherItem = qobject_cast<WeatherItem*>( existingItem );
         if( existingWeatherItem && existingWeatherItem->request( type ) ) {
-            AbstractDataPluginModel::downloadItemData( url, type, existingWeatherItem );
+            downloadItem( url, type, existingItem );
+            addItemToList( existingItem );
         }
     }
 }
 
-void WeatherModel::addItemToList( AbstractDataPluginItem *item )
-{
-    AbstractDataPluginItem *existingItem = findItem( item->id() );
-    if ( !existingItem ) {
-        AbstractDataPluginModel::addItemToList( item );
-    } else {
-        if ( existingItem != item )
-            item->deleteLater();
-    }
-}
-
 void WeatherModel::getAdditionalItems( const GeoDataLatLonAltBox& box,
-                               const MarbleModel *model,
                                qint32 number )
 {
-    emit additionalItemsRequested( box, model, number );
+    emit additionalItemsRequested( box, number );
+}
+
+void WeatherModel::getItem( const QString &id )
+{
+    foreach( AbstractWeatherService* service, m_services ) {
+        service->getItem( id );
+    }
 }
 
 void WeatherModel::parseFile( const QByteArray& file )
 {
-    // We won't request any description files so we don't need to parse it
-    Q_UNUSED( file );
+    emit parseFileRequested( file );
+}
+
+void WeatherModel::downloadDescriptionFileRequested( const QUrl& url )
+{
+    downloadDescriptionFile( url );
+}
+
+void WeatherModel::setMarbleWidget(MarbleWidget *widget)
+{
+    foreach ( AbstractWeatherService* service, m_services ) {
+        service->setMarbleWidget( widget );
+    }
 }
 
 void WeatherModel::addService( AbstractWeatherService *service )
 {
-    connect( service, SIGNAL( createdItem( AbstractDataPluginItem * ) ),
-             this, SLOT( addItemToList( AbstractDataPluginItem * ) ) );
-    connect( service, SIGNAL( requestedDownload( const QUrl&,
-                                                 const QString&, 
-                                                 AbstractDataPluginItem * ) ),
-             this, SLOT( downloadItemData( const QUrl&,
-                                           const QString&,
-                                           AbstractDataPluginItem * ) ) );
-    connect( this, SIGNAL( additionalItemsRequested( const GeoDataLatLonAltBox &,
-                                                     const MarbleModel *,
-                                                     qint32) ),
-             service, SLOT( getAdditionalItems( const GeoDataLatLonAltBox&,
-                                                const MarbleModel *,
-                                                qint32 ) ) );
+    service->setFavoriteItems( favoriteItems() );
+
+    connect( service, SIGNAL(createdItems(QList<AbstractDataPluginItem*>)),
+             this, SLOT(addItemsToList(QList<AbstractDataPluginItem*>)) );
+    connect( service, SIGNAL(requestedDownload(QUrl,QString,AbstractDataPluginItem*)),
+             this, SLOT(downloadItemData(QUrl,QString,AbstractDataPluginItem*)) );
+    connect( service, SIGNAL(downloadDescriptionFileRequested(QUrl)),
+             this, SLOT(downloadDescriptionFileRequested(QUrl)) );
+
+    connect( this, SIGNAL(additionalItemsRequested(GeoDataLatLonAltBox,qint32)),
+             service, SLOT(getAdditionalItems(GeoDataLatLonAltBox,qint32)) );
+    connect( this, SIGNAL(parseFileRequested(QByteArray)),
+             service, SLOT(parseFile(QByteArray)) );
+
+    m_services.append( service );
 }
 
 #include "WeatherModel.moc"

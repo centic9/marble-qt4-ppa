@@ -12,11 +12,11 @@
 #define STATIONLISTPARSER_H
 
 // Qt
-#include <QtCore/QHash>
-#include <QtCore/QStringList>
-#include <QtCore/QList>
-#include <QtCore/QThread>
-#include <QtCore/QXmlStreamReader>
+#include <QHash>
+#include <QStringList>
+#include <QList>
+#include <QThread>
+#include <QXmlStreamReader>
 
 class QString;
 
@@ -29,7 +29,7 @@ class StationListParser : public QThread, public QXmlStreamReader
 {
     Q_OBJECT
 public:
-    StationListParser( QObject *parent );
+    explicit StationListParser( QObject *parent );
     ~StationListParser();
 
     void read();
@@ -50,7 +50,6 @@ private:
 
     QString m_path;
     QList<BBCStation> m_list;
-    QObject *m_parent;
 };
 
 } // Marble namespace

@@ -11,21 +11,18 @@
 
 #include "PositionSource.h"
 
+#include "MarbleDeclarativeWidget.h"
 #include "MarbleModel.h"
 #include "PluginManager.h"
 #include "PositionTracking.h"
 #include "PositionProviderPlugin.h"
 
-namespace Marble
-{
-namespace Declarative
-{
-
 PositionSource::PositionSource( QObject* parent) : QObject( parent ),
     m_active( false ),
     m_hasPosition( false ),
     m_position( 0 ),
-    m_marbleModel( 0 )
+    m_marbleWidget( 0 ),
+    m_speed( 0.0 )
 {
   // nothing to do
 }
@@ -40,8 +37,8 @@ void PositionSource::setActive( bool active )
     if ( active != m_active ) {
         if ( active ) {
             start();
-        } else if ( m_marbleModel ) {
-            PositionTracking *tracking = m_marbleModel->positionTracking();
+        } else if ( m_marbleWidget ) {
+            Marble::PositionTracking *tracking = m_marbleWidget->model()->positionTracking();
             tracking->setPositionProviderPlugin( 0 );
         }
 
@@ -88,33 +85,39 @@ Coordinate* PositionSource::position()
 
 void PositionSource::start()
 {
-    if ( !m_marbleModel ) {
+    if ( !m_marbleWidget ) {
         return;
     }
 
-    const PluginManager* pluginManager = m_marbleModel->pluginManager();
-    QList<PositionProviderPlugin*> plugins = pluginManager->createPositionProviderPlugins();
-    foreach( const PositionProviderPlugin *plugin, plugins ) {
+    const Marble::PluginManager* pluginManager = m_marbleWidget->model()->pluginManager();
+    foreach( const Marble::PositionProviderPlugin *plugin, pluginManager->positionProviderPlugins() ) {
         if ( m_source.isEmpty() || plugin->nameId() == m_source ) {
-            PositionProviderPlugin* instance = plugin->newInstance();
-            instance->setMarbleModel( m_marbleModel );
-            PositionTracking *tracking = m_marbleModel->positionTracking();
+            Marble::PositionProviderPlugin* instance = plugin->newInstance();
+            instance->setMarbleModel( m_marbleWidget->model() );
+            Marble::PositionTracking *tracking = m_marbleWidget->model()->positionTracking();
             tracking->setPositionProviderPlugin( instance );
             break;
         }
     }
 }
 
-void PositionSource::setMarbleModel( MarbleModel* model )
+MarbleWidget *PositionSource::map()
 {
-    if ( model != m_marbleModel ) {
-        m_marbleModel = model;
+    return m_marbleWidget;
+}
 
-        if ( model ) {
-            connect( model->positionTracking(), SIGNAL( gpsLocation( GeoDataCoordinates, qreal ) ),
-                    this, SLOT( updatePosition() ) );
-            connect( model->positionTracking(), SIGNAL( statusChanged( PositionProviderStatus ) ),
-                    this, SLOT( updatePosition() ) );
+void PositionSource::setMap( MarbleWidget *map )
+{
+    if ( map != m_marbleWidget ) {
+        m_marbleWidget = map;
+
+        if ( m_marbleWidget ) {
+            connect( m_marbleWidget->model()->positionTracking(), SIGNAL(gpsLocation(GeoDataCoordinates,qreal)),
+                    this, SLOT(updatePosition()) );
+            connect( m_marbleWidget->model()->positionTracking(), SIGNAL(statusChanged(PositionProviderStatus)),
+                    this, SLOT(updatePosition()) );
+
+            emit mapChanged();
         }
 
         if ( active() ) {
@@ -123,17 +126,25 @@ void PositionSource::setMarbleModel( MarbleModel* model )
     }
 }
 
+qreal PositionSource::speed() const
+{
+    return m_speed;
+}
+
 void PositionSource::updatePosition()
 {
-    if ( m_marbleModel ) {
-        bool const hasPosition = m_marbleModel->positionTracking()->status() == PositionProviderStatusAvailable;
+    if ( m_marbleWidget ) {
+        bool const hasPosition = m_marbleWidget->model()->positionTracking()->status() == Marble::PositionProviderStatusAvailable;
 
         if ( hasPosition ) {
-            GeoDataCoordinates position = m_marbleModel->positionTracking()->currentLocation();
-            m_position.setLongitude( position.longitude( GeoDataCoordinates::Degree ) );
-            m_position.setLatitude( position.latitude( GeoDataCoordinates::Degree ) );
+            Marble::GeoDataCoordinates position = m_marbleWidget->model()->positionTracking()->currentLocation();
+            m_position.setLongitude( position.longitude( Marble::GeoDataCoordinates::Degree ) );
+            m_position.setLatitude( position.latitude( Marble::GeoDataCoordinates::Degree ) );
             m_position.setAltitude( position.altitude() );
         }
+
+        m_speed = m_marbleWidget->model()->positionTracking()->speed() * Marble::METER2KM / Marble::SEC2HOUR;
+        emit speedChanged();
 
         if ( hasPosition != m_hasPosition ) {
             m_hasPosition = hasPosition;
@@ -144,10 +155,6 @@ void PositionSource::updatePosition()
             emit positionChanged();
         }
     }
-}
-
-}
-
 }
 
 #include "PositionSource.moc"

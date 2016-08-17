@@ -28,7 +28,7 @@ class GeoDataGeometry : Marble::GeoDataObject
 public:
                             GeoDataGeometry ();
                             GeoDataGeometry (const Marble::GeoDataGeometry& other);
-    virtual EnumGeometryId  geometryId () const;
+    virtual Marble::EnumGeometryId  geometryId () const;
     bool                    extrude () const;
     void                    setExtrude (bool extrude);
     Marble::AltitudeMode    altitudeMode () const;
@@ -42,7 +42,7 @@ public:
 private:
 //ig                            GeoDataGeometry (GeoDataGeometryPrivate* priv);
 public:
-    virtual Marble::GeoDataLatLonAltBox  latLonAltBox () const;
+    virtual const Marble::GeoDataLatLonAltBox&  latLonAltBox () const;
 };
 // GeoDataGeometry
 

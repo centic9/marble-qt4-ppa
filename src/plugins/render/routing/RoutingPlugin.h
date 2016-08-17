@@ -13,22 +13,27 @@
 #define MARBLE_ROUTINGPLUGIN_H
 
 #include "AbstractFloatItem.h"
+#include "DialogConfigurationInterface.h"
 
 namespace Marble
 {
 class RoutingPluginPrivate;
 class PositionProviderPlugin;
 
-class RoutingPlugin : public AbstractFloatItem
+class RoutingPlugin : public AbstractFloatItem, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.RoutingPlugin" )
 
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
 
     MARBLE_PLUGIN( RoutingPlugin )
 
 public:
-    explicit RoutingPlugin( const QPointF &point = QPointF( -10, -10 ) );
+    RoutingPlugin();
+
+    explicit RoutingPlugin( const MarbleModel *marbleModel );
 
     ~RoutingPlugin();
 
@@ -44,7 +49,13 @@ public:
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon() const;
 
@@ -52,7 +63,7 @@ public:
 
     virtual QHash<QString,QVariant> settings() const;
 
-    virtual void setSettings( QHash<QString,QVariant> settings );
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
 
     QDialog *configDialog();
 
@@ -87,6 +98,7 @@ private:
     /** Read settings */
     Q_PRIVATE_SLOT( d, void readSettings() )
 
+    friend class RoutingPluginPrivate;
     RoutingPluginPrivate* const d;
 };
 

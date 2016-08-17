@@ -119,7 +119,7 @@ protected:
     void                    leaveEvent (QEvent* event);
     void                    paintEvent (QPaintEvent* event);
     virtual void            customPaint (Marble::GeoPainter* painter);
-    void                    resizeEvent (QResizeEvent*);
+    void                    resizeEvent (QResizeEvent* event);
     void                    connectNotify (const char* signal);
     void                    disconnectNotify (const char* signal);
 
@@ -155,12 +155,11 @@ signals:
 public:
     int                     tileZoomLevel () const;
     QList<Marble::AbstractDataPluginItem*>  whichItemAt (const QPoint& curpos) const;
-    void                    downloadRegion (const QString& sourceDir, const QVector<Marble::TileCoordsPyramid>&);
 signals:
     void                    tileLevelChanged (int level);
 public:
-    void                    addLayer (Marble::LayerInterface* layer);
-    void                    removeLayer (Marble::LayerInterface* layer);
+    void                    addLayer (Marble::LayerInterface* layer /Transfer/);
+    void                    removeLayer (Marble::LayerInterface* layer /TransferBack/);
     qreal                   radiusFromDistance (qreal distance) const;
     qreal                   distanceFromRadius (qreal radius) const;
     qreal                   zoomFromDistance (qreal distance) const;
@@ -173,11 +172,9 @@ public:
 //ig    MarbleWidgetPopupMenu*  popupMenu ();
     bool                    showSunShading () const;
     bool                    showCityLights () const;
-    bool                    showSunInZenith () const;
     void                    centerOn (const Marble::GeoDataPlacemark& placemark, bool animated = 0);
     void                    setShowSunShading (bool visible);
     void                    setShowCityLights (bool visible);
-    void                    setShowSunInZenith (bool visible);
     QRegion                 mapRegion () const;
     bool                    screenCoordinates (qreal lon, qreal lat, qreal& x, qreal& y) const;
     bool                    geoCoordinates (int x, int y, qreal& lon, qreal& lat, Marble::GeoDataCoordinates::Unit = Marble::GeoDataCoordinates::Degree) const;
@@ -186,6 +183,17 @@ public:
     void                    setFocusPoint (const Marble::GeoDataCoordinates& focusPoint);
     void                    resetFocusPoint ();
     Marble::MapQuality      mapQuality (Marble::ViewContext = Marble::Still) const;
+//ig    const TextureLayer*     textureLayer () const;
+    void                    setShowRuntimeTrace (bool visible);
+    void                    downloadRegion (const QVector<Marble::TileCoordsPyramid>&);
+
+// FIXME
+//ig    PopupLayer*             popupLayer ();
+    bool                    isLockedToSubSolarPoint () const;
+    bool                    isSubSolarPointIconVisible () const;
+    void                    setZoom (int zoom, Marble::FlyToMode mode = Marble::Instant);
+    void                    setLockToSubSolarPoint (bool visible);
+    void                    setSubSolarPointIconVisible (bool visible);
 };
 // MarbleWidget
 

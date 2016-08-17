@@ -10,41 +10,36 @@
 
 #include "OpenRouteServiceRunner.h"
 
-#include "MarbleAbstractRunner.h"
 #include "MarbleDebug.h"
-#include "MarbleLocale.h"
 #include "GeoDataDocument.h"
 #include "GeoDataPlacemark.h"
 #include "TinyWebBrowser.h"
+#include "GeoDataData.h"
+#include "GeoDataExtendedData.h"
+#include "routing/RouteRequest.h"
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtCore/QUrl>
-#include <QtCore/QTime>
-#include <QtCore/QTimer>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtXml/QDomDocument>
+#include <QString>
+#include <QVector>
+#include <QUrl>
+#include <QTime>
+#include <QTimer>
+#include <QNetworkReply>
+#include <QDomDocument>
 
 namespace Marble
 {
 
 OpenRouteServiceRunner::OpenRouteServiceRunner( QObject *parent ) :
-        MarbleAbstractRunner( parent ),
-        m_networkAccessManager( new QNetworkAccessManager( this ) )
+        RoutingRunner( parent ),
+        m_networkAccessManager()
 {
-    connect( m_networkAccessManager, SIGNAL( finished( QNetworkReply * ) ),
-             this, SLOT( retrieveData( QNetworkReply * ) ) );
+    connect( &m_networkAccessManager, SIGNAL(finished(QNetworkReply*)),
+             this, SLOT(retrieveData(QNetworkReply*)));
 }
 
 OpenRouteServiceRunner::~OpenRouteServiceRunner()
 {
     // nothing to do
-}
-
-GeoDataFeature::GeoDataVisualCategory OpenRouteServiceRunner::category() const
-{
-    return GeoDataFeature::OsmSite;
 }
 
 void OpenRouteServiceRunner::retrieveRoute( const RouteRequest *route )
@@ -90,21 +85,27 @@ void OpenRouteServiceRunner::retrieveRoute( const RouteRequest *route )
     m_requestData = request.toLatin1();
 
     QEventLoop eventLoop;
+    QTimer timer;
+    timer.setSingleShot( true );
+    timer.setInterval( 15000 );
 
-    connect( this, SIGNAL( routeCalculated( GeoDataDocument* ) ),
-             &eventLoop, SLOT( quit() ) );
+    connect( &timer, SIGNAL(timeout()),
+             &eventLoop, SLOT(quit()));
+    connect( this, SIGNAL(routeCalculated(GeoDataDocument*)),
+             &eventLoop, SLOT(quit()));
 
     // @todo FIXME Must currently be done in the main thread, see bug 257376
-    QTimer::singleShot( 0, this, SLOT( get() ) );
+    QTimer::singleShot( 0, this, SLOT(get()));
+    timer.start();
 
     eventLoop.exec();
 }
 
 void OpenRouteServiceRunner::get()
 {
-    QNetworkReply *reply = m_networkAccessManager->post( m_request, m_requestData );
-    connect( reply, SIGNAL( error( QNetworkReply::NetworkError ) ),
-             this, SLOT( handleError( QNetworkReply::NetworkError ) ), Qt::DirectConnection );
+    QNetworkReply *reply = m_networkAccessManager.post( m_request, m_requestData );
+    connect( reply, SIGNAL(error(QNetworkReply::NetworkError)),
+             this, SLOT(handleError(QNetworkReply::NetworkError)), Qt::DirectConnection);
 }
 
 void OpenRouteServiceRunner::retrieveData( QNetworkReply *reply )
@@ -135,38 +136,9 @@ QString OpenRouteServiceRunner::xmlHeader() const
     result += "xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" ";
     result += "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ";
     result += "xsi:schemaLocation=\"http://www.opengis.net/xls ";
-    result += "http://schemas.opengis.net/ols/1.1.0/RouteService.xsd\" version=\"1.1\" xls:lang=\"%1\">\n";
+    result += "http://schemas.opengis.net/ols/1.1.0/RouteService.xsd\" version=\"1.1\" xls:lang=\"en\">\n";
     result += "<xls:RequestHeader/>\n";
-
-    // See KDE bug 296382
-    static QMap<QString,QString> availableLanguageCodes;
-    if ( availableLanguageCodes.isEmpty() ) {
-        QStringList const matches = QStringList() << "bg" << "ca" << "cs" << "de"
-                                                  << "da" << "en" << "es" << "fi"
-                                                  << "hr" << "hu" << "it" << "ja"
-                                                  << "nl" << "pl" << "pt" << "lt"
-                                                  << "ro" << "ru" << "tr" << "vi";
-        foreach( const QString &match, matches ) {
-            availableLanguageCodes[match] = match;
-        }
-
-        // The problematic ones
-        availableLanguageCodes["nb"] = "no";
-        availableLanguageCodes["nn"] = "no";
-        availableLanguageCodes["sv"] = "se";
-    }
-
-    QString const languageCode = MarbleLocale::languageCode();
-    QString orsCode = "en";
-    QMap<QString, QString>::const_iterator iter = availableLanguageCodes.constBegin();
-    for ( ; iter != availableLanguageCodes.constEnd(); ++iter ) {
-        if ( languageCode.startsWith( iter.key() ) ) {
-            orsCode = iter.value();
-            break;
-        }
-    }
-
-    return result.arg( orsCode );
+    return result;
 }
 
 QString OpenRouteServiceRunner::requestHeader( const QString &unit, const QString &routePreference ) const
@@ -243,7 +215,12 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
         // The code below can be used to parse OpenGis errors reported by ORS
         // and may be useful in the future
 
-        for ( unsigned int i = 0; i < errors.length(); ++i ) {
+#if QT_VERSION < 0x050000
+    unsigned int i=0;
+#else
+    int i=0;
+#endif
+        for ( ; i < errors.length(); ++i ) {
             QDomNode node = errors.item( i );
             QString errorMessage = node.attributes().namedItem( "message" ).nodeValue();
             QRegExp regexp = QRegExp( "^(.*) Please Check your Position: (-?[0-9]+.[0-9]+) (-?[0-9]+.[0-9]+) !" );
@@ -254,7 +231,7 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
                     GeoDataCoordinates position;
                     position.setLongitude( regexp.capturedTexts().at( 2 ).toDouble(), GeoDataCoordinates::Degree );
                     position.setLatitude( regexp.capturedTexts().at( 3 ).toDouble(), GeoDataCoordinates::Degree );
-                    placemark->setCoordinate( GeoDataPoint(position) );
+                    placemark->setCoordinate( position );
                     result->append( placemark );
                 }
             } else {
@@ -271,14 +248,14 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
 
     GeoDataPlacemark* routePlacemark = new GeoDataPlacemark;
     routePlacemark->setName( "Route" );
-
+    QTime time;
     QDomNodeList summary = root.elementsByTagName( "xls:RouteSummary" );
     if ( summary.size() > 0 ) {
-        QDomNodeList time = summary.item( 0 ).toElement().elementsByTagName( "xls:TotalTime" );
+        QDomNodeList timeNodeList = summary.item( 0 ).toElement().elementsByTagName( "xls:TotalTime" );
         QDomNodeList distance = summary.item( 0 ).toElement().elementsByTagName( "xls:TotalDistance" );
-        if ( time.size() == 1 && distance.size() == 1 ) {
+        if ( timeNodeList.size() == 1 && distance.size() == 1 ) {
             QRegExp regexp = QRegExp( "^P(?:(\\d+)D)?T(?:(\\d+)H)?(?:(\\d+)M)?(\\d+)S" );
-            if ( regexp.indexIn( time.item( 0 ).toElement().text() ) == 0 ) {
+            if ( regexp.indexIn( timeNodeList.item( 0 ).toElement().text() ) == 0 ) {
                 QStringList matches = regexp.capturedTexts();
                 unsigned int hours( 0 ), minutes( 0 ), seconds( 0 );
                 switch ( matches.size() ) {
@@ -295,10 +272,10 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
                     seconds = regexp.cap( matches.size() - 1 ).toInt();
                     break;
                 default:
-                    mDebug() << "Unable to parse time string " << time.item( 0 ).toElement().text();
+                    mDebug() << "Unable to parse time string " << timeNodeList.item( 0 ).toElement().text();
                 }
 
-                QTime time( hours, minutes, seconds, 0 );
+                time = QTime( hours, minutes, seconds, 0 );
                 qreal totalDistance = distance.item( 0 ).attributes().namedItem( "value" ).nodeValue().toDouble();
                 QString unit = distance.item( 0 ).attributes().namedItem( "uom" ).nodeValue();
                 if ( unit == "M" ) {
@@ -318,7 +295,12 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
     QDomNodeList geometry = root.elementsByTagName( "xls:RouteGeometry" );
     if ( geometry.size() > 0 ) {
         QDomNodeList waypoints = geometry.item( 0 ).toElement().elementsByTagName( "gml:pos" );
-        for ( unsigned int i = 0; i < waypoints.length(); ++i ) {
+#if QT_VERSION < 0x050000
+    unsigned int i=0;
+#else
+    int i=0;
+#endif
+        for ( ; i < waypoints.length(); ++i ) {
             QDomNode node = waypoints.item( i );
             QStringList content = node.toElement().text().split( ' ' );
             if ( content.length() == 2 ) {
@@ -331,21 +313,23 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
     }
     routePlacemark->setGeometry( routeWaypoints );
 
-    QString name = "%1 %2 (OpenRouteService)";
-    QString unit = "m";
     qreal length = routeWaypoints->length( EARTH_RADIUS );
-    if (length >= 1000) {
-        length /= 1000.0;
-        unit = "km";
-    }
-    result->setName( name.arg( length, 0, 'f', 1 ).arg( unit ) );
+    const QString name = nameString( "ORS", length, time );
+    const GeoDataExtendedData data = routeData( length, time );
+    routePlacemark->setExtendedData( data );
+    result->setName( name );
 
     result->append( routePlacemark );
 
     QDomNodeList instructionList = root.elementsByTagName( "xls:RouteInstructionsList" );
     if ( instructionList.size() > 0 ) {
         QDomNodeList instructions = instructionList.item( 0 ).toElement().elementsByTagName( "xls:RouteInstruction" );
-        for ( unsigned int i = 0; i < instructions.length(); ++i ) {
+#if QT_VERSION < 0x050000
+    unsigned int i=0;
+#else
+    int i=0;
+#endif
+        for ( ; i < instructions.length(); ++i ) {
             QDomElement node = instructions.item( i ).toElement();
 
             QDomNodeList textNodes = node.elementsByTagName( "xls:Instruction" );
@@ -365,8 +349,25 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
                     }
 
                     GeoDataPlacemark* instruction = new GeoDataPlacemark;
-                    instruction->setName( textNodes.item( 0 ).toElement().text() );
-                    //instruction->setCoordinate( GeoDataPoint( position ) );
+
+                    QString const text = textNodes.item( 0 ).toElement().text();
+                    GeoDataExtendedData extendedData;
+                    GeoDataData turnTypeData;
+                    turnTypeData.setName( "turnType" );
+                    QString road;
+                    RoutingInstruction::TurnType turnType = parseTurnType( text, &road );
+                    turnTypeData.setValue( turnType );
+                    extendedData.addValue( turnTypeData );
+                    if ( !road.isEmpty() ) {
+                        GeoDataData roadName;
+                        roadName.setName( "roadName" );
+                        roadName.setValue( road );
+                        extendedData.addValue( roadName );
+                    }
+
+                    QString const instructionText = turnType == RoutingInstruction::Unknown ? text : RoutingInstruction::generateRoadInstruction( turnType, road );
+                    instruction->setName( instructionText );
+                    instruction->setExtendedData( extendedData );
                     instruction->setGeometry( lineString );
                     result->append( instruction );
                 }
@@ -377,6 +378,41 @@ GeoDataDocument* OpenRouteServiceRunner::parse( const QByteArray &content ) cons
     return result;
 }
 
+RoutingInstruction::TurnType OpenRouteServiceRunner::parseTurnType( const QString &text, QString *road ) const
+{
+    QRegExp syntax( "^(Go|Drive) (half left|left|sharp left|straight forward|half right|right|sharp right)( on )?(.*)?$", Qt::CaseSensitive, QRegExp::RegExp2 );
+    QString instruction;
+    if ( syntax.indexIn( text ) == 0 ) {
+        if ( syntax.captureCount() > 1 ) {
+            instruction = syntax.cap( 2 );
+            if ( syntax.captureCount() == 4 ) {
+                *road = syntax.cap( 4 ).remove(QLatin1String( " - Arrived at destination!"));
+            }
+        }
+    }
+
+    if ( instruction == "Continue" ) {
+        return RoutingInstruction::Straight;
+    } else if ( instruction == "half right" ) {
+        return RoutingInstruction::SlightRight;
+    } else if ( instruction == "right" ) {
+        return RoutingInstruction::Right;
+    } else if ( instruction == "sharp right" ) {
+        return RoutingInstruction::SharpRight;
+    } else if ( instruction == "straight forward" ) {
+        return RoutingInstruction::Straight;
+    } else if ( instruction == "turn" ) {
+        return RoutingInstruction::TurnAround;
+    } else if ( instruction == "sharp left" ) {
+        return RoutingInstruction::SharpLeft;
+    } else if ( instruction == "left" ) {
+        return RoutingInstruction::Left;
+    } else if ( instruction == "half left" ) {
+        return RoutingInstruction::SlightLeft;
+    }
+
+    return RoutingInstruction::Unknown;
+}
 
 } // namespace Marble
 

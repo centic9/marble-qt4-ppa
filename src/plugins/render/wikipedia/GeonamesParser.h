@@ -11,21 +11,23 @@
 #ifndef GEONAMESPARSER_H
 #define GEONAMESPARSER_H
 
-#include <QtCore/QList>
-#include <QtCore/QXmlStreamReader>
+#include <QList>
+#include <QXmlStreamReader>
 
 class QByteArray;
 class QObject;
 
 namespace Marble
 {
-    
+
+class MarbleWidget;
 class WikipediaItem;
 
 class GeonamesParser : public QXmlStreamReader
 {
 public:
-    GeonamesParser( QList<WikipediaItem *> *list,
+    GeonamesParser( MarbleWidget* widget,
+                    QList<WikipediaItem *> *list,
                     QObject *parent );
 
     bool read( const QByteArray& data );
@@ -40,7 +42,9 @@ private:
     void readUrl( WikipediaItem *item );
     void readSummary( WikipediaItem *item );
     void readThumbnailImage( WikipediaItem *item );
+    void readRank( WikipediaItem *item );
 
+    MarbleWidget* m_marbleWidget;
     QList<WikipediaItem *> *m_list;
     QObject *m_parent;
 };

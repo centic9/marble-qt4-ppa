@@ -22,18 +22,18 @@
 #include "WeatherData.h"
 #include "WeatherModel.h"
 #include "MarbleDebug.h"
-#include "global.h"
+#include "MarbleGlobal.h"
 
 // Qt
-#include <QtCore/QFile>
-#include <QtCore/QList>
-#include <QtCore/QTime>
-#include <QtCore/QUrl>
+#include <QFile>
+#include <QList>
+#include <QTime>
+#include <QUrl>
 
 using namespace Marble;
 
-BBCWeatherService::BBCWeatherService( QObject *parent ) 
-    : AbstractWeatherService( parent ),
+BBCWeatherService::BBCWeatherService( const MarbleModel *model, QObject *parent )
+    : AbstractWeatherService( model, parent ),
       m_parsingStarted( false ),
       m_parser( 0 ),
       m_itemGetter( new BBCItemGetter( this ) )
@@ -44,25 +44,53 @@ BBCWeatherService::BBCWeatherService( QObject *parent )
 BBCWeatherService::~BBCWeatherService()
 {
 }
-    
+
+void BBCWeatherService::setFavoriteItems( const QStringList& favorite )
+{
+    if ( favoriteItems() != favorite ) {
+        m_parsingStarted = false;
+
+        delete m_itemGetter;
+        m_itemGetter = new BBCItemGetter( this );
+
+        AbstractWeatherService::setFavoriteItems( favorite );
+    }
+}
+
 void BBCWeatherService::getAdditionalItems( const GeoDataLatLonAltBox& box,
-                                            const MarbleModel *model,
                                             qint32 number )
 {
     if ( !m_parsingStarted ) {
         setupList();
     }
 
-    m_itemGetter->setSchedule( box, model, number );
+    m_itemGetter->setSchedule( box, number );
+}
+
+void BBCWeatherService::getItem( const QString &id )
+{
+    if ( id.startsWith( QLatin1String( "bbc" ) ) ) {
+        BBCStation const station = m_itemGetter->station( id );
+        if ( station.bbcId() > 0 ) {
+            createItem( station );
+        }
+    }
 }
 
 void BBCWeatherService::fetchStationList()
 {
+    if ( !m_parser ) {
+        return;
+    }
+
     connect( m_itemGetter,
-             SIGNAL( foundStation( BBCStation ) ),
+             SIGNAL(foundStation(BBCStation)),
              this,
-             SLOT( createItem( BBCStation ) ) );
-    m_itemGetter->setStationList( m_parser->stationList() );
+             SLOT(createItem(BBCStation)) );
+
+    m_stationList = m_parser->stationList();
+    m_itemGetter->setStationList( m_stationList );
+
     delete m_parser;
     m_parser = 0;
 }
@@ -70,11 +98,13 @@ void BBCWeatherService::fetchStationList()
 void BBCWeatherService::createItem( BBCStation station )
 {
     BBCWeatherItem *item = new BBCWeatherItem( this );
+    item->setMarbleWidget( marbleWidget() );
     item->setBbcId( station.bbcId() );
     item->setCoordinate( station.coordinate() );
     item->setPriority( station.priority() );
     item->setStationName( station.name() );
     item->setTarget( "earth" );
+
     emit requestedDownload( item->observationUrl(), "bbcobservation", item );
     emit requestedDownload( item->forecastUrl(),    "bbcforecast",    item );
 }
@@ -85,8 +115,8 @@ void BBCWeatherService::setupList()
 
     m_parser = new StationListParser( this );
     m_parser->setPath( MarbleDirs::path( "weather/bbc-stations.xml" ) );
-    connect( m_parser, SIGNAL( finished() ),
-             this,     SLOT( fetchStationList() ) );
+    connect( m_parser, SIGNAL(finished()),
+             this,     SLOT(fetchStationList()) );
     if ( m_parser->wait( 100 ) ) {
         m_parser->start( QThread::IdlePriority );
     }

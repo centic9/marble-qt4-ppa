@@ -1,7 +1,17 @@
+//
+// This file is part of the Marble Virtual Globe.
+//
+// This program is free software licensed under the GNU LGPL. You can
+// find a copy of this license in LICENSE.txt in the top directory of
+// the source code.
+//
+// Copyright 2010 Wes Hardaker <hardaker@users.sourceforge.net>
+//
+
 #ifndef GEOAPRSCOORDINATES_H
 #define GEOAPRSCOORDINATES_H
 
-#include <QtCore/QTime>
+#include <QTime>
 #include "GeoDataCoordinates.h"
 
 namespace Marble
@@ -18,10 +28,7 @@ namespace Marble
             Directly = 0x08
         };
 
-        GeoAprsCoordinates( qreal lon, qreal lat, qreal alt = 0,
-                            GeoDataCoordinates::Unit unit =
-                            GeoDataCoordinates::Radian,
-                            int where = FromNowhere );
+        GeoAprsCoordinates( qreal lon, qreal lat, int where );
         ~GeoAprsCoordinates();
 
         void  addSeenFrom( int where );

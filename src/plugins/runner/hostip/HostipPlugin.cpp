@@ -10,26 +10,64 @@
 
 #include "HostipPlugin.h"
 #include "HostipRunner.h"
+#include "MarbleGlobal.h"
 
 namespace Marble
 {
 
-HostipPlugin::HostipPlugin( QObject *parent ) : RunnerPlugin( parent )
+HostipPlugin::HostipPlugin( QObject *parent ) :
+    SearchRunnerPlugin( parent )
+{
+    setSupportedCelestialBodies( QStringList() << "earth" );
+    setCanWorkOffline( false );
+}
+
+QString HostipPlugin::name() const
+{
+    return tr( "Hostip.info Search" );
+}
+
+QString HostipPlugin::guiString() const
+{
+    return tr( "Hostip.info" );
+}
+
+QString HostipPlugin::nameId() const
+{
+    return "hostip";
+}
+
+QString HostipPlugin::version() const
+{
+    return "1.0";
+}
+
+QString HostipPlugin::description() const
+{
+    return tr( "Host name and IP geolocation search using the hostip.info service" );
+}
+
+QString HostipPlugin::copyrightYears() const
+{
+    return "2010";
+}
+
+QList<PluginAuthor> HostipPlugin::pluginAuthors() const
+{
+    return QList<PluginAuthor>()
+            << PluginAuthor( QString::fromUtf8( "Dennis Nienhüser" ), "earthwings@gentoo.org" );
+}
+
+SearchRunner* HostipPlugin::newRunner() const
+{
+    return new HostipRunner;
+}
+
+bool HostipPlugin::canWork() const
 {
     bool const smallScreen = MarbleGlobal::getInstance()->profiles() & MarbleGlobal::SmallScreen;
     // Disabled on small screen devices to save resources
-    setCapabilities( smallScreen ? None : Search );
-    setSupportedCelestialBodies( QStringList() << "earth" );
-    setCanWorkOffline( false );
-    setName( tr( "Hostip.info" ) );
-    setNameId( "hostip" );
-    setDescription( tr( "Host name and IP geolocation search using the hostip.info service" ) );
-    setGuiString( tr( "Hostip.info Search")  );
-}
-
-MarbleAbstractRunner* HostipPlugin::newRunner() const
-{
-    return new HostipRunner;
+    return !smallScreen;
 }
 
 }

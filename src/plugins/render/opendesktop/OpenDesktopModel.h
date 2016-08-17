@@ -13,33 +13,36 @@
  
 #include "AbstractDataPluginModel.h"
 #include "GeoDataLatLonAltBox.h"
+#include "MarbleWidget.h"
  
 namespace Marble {
  
 class MarbleModel;
- 
-// The maximum number of items we want to show on the screen.
-const quint32 numberOfItemsOnScreen = 20;
  
 class OpenDesktopModel : public AbstractDataPluginModel
 {
     Q_OBJECT
  
 public:
-    explicit OpenDesktopModel( const PluginManager *pluginManager, QObject *parent = 0 );
+    explicit OpenDesktopModel( const MarbleModel *marbleModel, QObject *parent = 0 );
     ~OpenDesktopModel();
+
+    void setMarbleWidget(MarbleWidget *widget);
 
 protected:
     /**
      * Generates the download url for the description file from the web service depending on
      * the @p box surrounding the view and the @p number of files to show.
      **/
-    void getAdditionalItems(const Marble::GeoDataLatLonAltBox& box, const Marble::MarbleModel* model, qint32 number = 10);
+    void getAdditionalItems(const Marble::GeoDataLatLonAltBox& box, qint32 number = 10);
     /**
      * Parses the @p file which getAdditionalItems downloads and
      * prepares the data for usage.
      **/
     void parseFile(const QByteArray& file);
+
+private:
+    MarbleWidget *m_marbleWidget;
 };
  
 }

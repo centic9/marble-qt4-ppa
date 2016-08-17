@@ -26,6 +26,7 @@
 #include "GeoDataDocument.h"
 #include "GeoDataPlacemark.h"
 #include "GeoDataPoint.h"
+#include "GeoDataTrack.h"
 
 namespace Marble
 {
@@ -42,15 +43,11 @@ GeoNode* GPXtrksegTagHandler::parse(GeoParser& parser) const
     {
         GeoDataPlacemark* placemark = parentItem.nodeAs<GeoDataPlacemark>();
         GeoDataMultiGeometry *multigeometry = static_cast<GeoDataMultiGeometry*>(placemark->geometry());
-        GeoDataLineString *linestring = new GeoDataLineString;
+        GeoDataTrack *track = new GeoDataTrack;
 
-        multigeometry->append(linestring);
-#ifdef DEBUG_TAGS
-        mDebug() << "Parsed <" << gpxTag_trkseg << "> trkseg: " << multigeometry->size();
-#endif
-        return linestring;
+        multigeometry->append( track );
+        return track;
     }
-    mDebug() << "trkseg parsing with parentitem" << parentItem.qualifiedName();
     return 0;
 }
 

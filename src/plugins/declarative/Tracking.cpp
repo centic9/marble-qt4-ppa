@@ -15,41 +15,26 @@
 #include "PositionTracking.h"
 #include "RenderPlugin.h"
 #include "ViewportParams.h"
-#include "routing/AdjustNavigation.h"
+#include "AutoNavigation.h"
 
-namespace Marble
-{
-namespace Declarative
-{
+#if QT_VERSION < 0x050000
+  #include <QDeclarativeItem>
+  typedef QDeclarativeItem QQuickItem;
+#else
+  #include <QQuickItem>
+#endif
 
 Tracking::Tracking( QObject* parent) : QObject( parent ),
-    m_showPosition( true ),
     m_showTrack( true ),
     m_positionSource( 0 ),
     m_positionMarker( 0 ),
     m_marbleWidget( 0 ),
     m_hasLastKnownPosition( false ),
-    m_autoNavigation( 0 )
+    m_autoNavigation( 0 ),
+    m_positionMarkerType( None )
 {
-    connect( &m_lastKnownPosition, SIGNAL( longitudeChanged() ), this, SLOT( setHasLastKnownPosition() ) );
-    connect( &m_lastKnownPosition, SIGNAL( latitudeChanged() ), this, SLOT( setHasLastKnownPosition() ) );
-}
-
-bool Tracking::showPosition() const
-{
-    return m_showPosition;
-}
-
-void Tracking::setShowPosition( bool show )
-{
-    if ( show != m_showPosition ) {
-        if ( m_marbleWidget ) {
-            setShowPositionMarkerPlugin( show && !m_positionMarker );
-        }
-
-        m_showPosition = show;
-        emit showPositionChanged();
-    }
+    connect( &m_lastKnownPosition, SIGNAL(longitudeChanged()), this, SLOT(setHasLastKnownPosition()) );
+    connect( &m_lastKnownPosition, SIGNAL(latitudeChanged()), this, SLOT(setHasLastKnownPosition()) );
 }
 
 bool Tracking::showTrack() const
@@ -80,34 +65,38 @@ void Tracking::setPositionSource( PositionSource* source )
     if ( source != m_positionSource ) {
         m_positionSource = source;
         if ( source ) {
-            source->setMarbleModel( m_marbleWidget->model() );
-            connect( source, SIGNAL( positionChanged() ),
-                    this, SLOT( updatePositionMarker() ) );
-            connect( source, SIGNAL( positionChanged() ),
-                    this, SLOT( updateLastKnownPosition() ) );
-            connect( source, SIGNAL( hasPositionChanged() ),
-                    this, SLOT( updatePositionMarker() ) );
-            connect( m_marbleWidget, SIGNAL( visibleLatLonAltBoxChanged() ),
-                    this, SLOT( updatePositionMarker() ) );
+            connect( source, SIGNAL(positionChanged()),
+                    this, SLOT(updatePositionMarker()) );
+            connect( source, SIGNAL(positionChanged()),
+                    this, SLOT(updateLastKnownPosition()) );
+            connect( source, SIGNAL(hasPositionChanged()),
+                    this, SLOT(updatePositionMarker()) );
+            connect( source, SIGNAL(positionChanged()),
+                     this, SIGNAL(distanceChanged()) );
         }
         emit positionSourceChanged();
     }
 }
 
-void Tracking::setMarbleWidget( MarbleWidget* widget )
+MarbleWidget* Tracking::map()
+{
+    return m_marbleWidget;
+}
+
+void Tracking::setMap( MarbleWidget* widget )
 {
     if ( widget != m_marbleWidget ) {
-        if ( widget ) {
-            widget->model()->positionTracking()->setTrackVisible( showTrack() );
-            setShowPositionMarkerPlugin( showPosition() );
-        }
-
-        if ( m_positionSource ) {
-            m_positionSource->setMarbleModel( widget->model() );
-        }
-
         m_marbleWidget = widget;
-        connect( m_marbleWidget, SIGNAL( mapThemeChanged() ), this, SLOT( updatePositionMarker() ) );
+
+        if ( m_marbleWidget ) {
+            m_marbleWidget->model()->positionTracking()->setTrackVisible( showTrack() );
+            setShowPositionMarkerPlugin( m_positionMarkerType == Arrow );
+
+            connect( m_marbleWidget, SIGNAL(visibleLatLonAltBoxChanged()), this, SLOT(updatePositionMarker()) );
+            connect( m_marbleWidget, SIGNAL(mapThemeChanged()), this, SLOT(updatePositionMarker()) );
+        }
+
+        emit mapChanged();
     }
 }
 
@@ -126,7 +115,7 @@ QObject* Tracking::positionMarker()
 
 void Tracking::updatePositionMarker()
 {
-    if ( m_marbleWidget && m_positionMarker ) {
+    if ( m_marbleWidget && m_positionMarker && m_positionMarkerType == Circle ) {
         Coordinate* position = 0;
         bool visible = m_marbleWidget->model()->planetId() == "earth";
         if ( m_positionSource && m_positionSource->hasPosition() ) {
@@ -138,13 +127,22 @@ void Tracking::updatePositionMarker()
         }
 
         qreal x(0), y(0);
-        visible = visible && m_marbleWidget->viewport()->screenCoordinates( position->longitude(), position->latitude(), x, y );
-        QDeclarativeItem* item = qobject_cast<QDeclarativeItem*>( m_positionMarker );
-        if ( item ) {
-            item->setVisible( visible );
-            if ( visible ) {
-                item->setPos( x - item->width() / 2.0, y - item->height() / 2.0 );
+        if ( position ) {
+            Marble::GeoDataCoordinates const pos( position->longitude(), position->latitude(), 0.0, GeoDataCoordinates::Degree );
+            visible = visible && m_marbleWidget->viewport()->screenCoordinates( pos.longitude(), pos.latitude(), x, y );
+            QQuickItem* item = qobject_cast<QQuickItem*>( m_positionMarker );
+            if ( item ) {
+                item->setVisible( visible );
+                if ( visible ) {
+                    item->setX( x - item->width() / 2.0 );
+                    item->setY( y - item->height() / 2.0 );
+                }
             }
+        }
+    } else if ( m_positionMarkerType != Circle ) {
+        QQuickItem* item = qobject_cast<QQuickItem*>( m_positionMarker );
+        if ( item ) {
+            item->setVisible( false );
         }
     }
 }
@@ -167,14 +165,16 @@ void Tracking::setHasLastKnownPosition()
 void Tracking::setShowPositionMarkerPlugin( bool visible )
 {
     if ( m_marbleWidget ) {
-        QList<RenderPlugin *> const renderPlugins = m_marbleWidget->renderPlugins();
-        foreach( RenderPlugin* renderPlugin, renderPlugins ) {
+        QList<QObject*> const renderPlugins = m_marbleWidget->renderPlugins();
+        foreach( QObject* object, renderPlugins ) {
+            Marble::RenderPlugin* renderPlugin = qobject_cast<Marble::RenderPlugin*>( object );
+            Q_ASSERT( renderPlugin );
             if ( renderPlugin->nameId() == "positionMarker" ) {
-                renderPlugin->setEnabled( visible );
+                renderPlugin->setEnabled( true );
                 renderPlugin->setVisible( visible );
             }
         }
-    }
+   }
 }
 
 bool Tracking::hasLastKnownPosition() const
@@ -182,12 +182,12 @@ bool Tracking::hasLastKnownPosition() const
     return m_hasLastKnownPosition;
 }
 
-Marble::Declarative::Coordinate * Tracking::lastKnownPosition()
+Coordinate * Tracking::lastKnownPosition()
 {
     return &m_lastKnownPosition;
 }
 
-void Tracking::setLastKnownPosition( Marble::Declarative::Coordinate* lastKnownPosition )
+void Tracking::setLastKnownPosition( Coordinate* lastKnownPosition )
 {
     if ( lastKnownPosition && *lastKnownPosition != m_lastKnownPosition ) {
         m_lastKnownPosition.setCoordinates( lastKnownPosition->coordinates() );
@@ -198,7 +198,7 @@ void Tracking::setLastKnownPosition( Marble::Declarative::Coordinate* lastKnownP
 bool Tracking::autoCenter() const
 {
     if ( m_autoNavigation ) {
-        return m_autoNavigation->recenterMode() != AdjustNavigation::DontRecenter;
+        return m_autoNavigation->recenterMode() != Marble::AutoNavigation::DontRecenter;
     }
 
     return false;
@@ -208,20 +208,20 @@ void Tracking::setAutoCenter( bool enabled )
 {
     if ( autoCenter() != enabled ) {
         if ( enabled && !m_autoNavigation && m_marbleWidget ) {
-            m_autoNavigation = new AdjustNavigation( m_marbleWidget->model(), m_marbleWidget->viewport(), this );
-            connect( m_autoNavigation, SIGNAL( zoomIn( FlyToMode ) ),
-                     m_marbleWidget, SLOT( zoomIn( FlyToMode ) ) );
-            connect( m_autoNavigation, SIGNAL( zoomOut( FlyToMode ) ),
-                     m_marbleWidget, SLOT( zoomOut( FlyToMode ) ) );
-            connect( m_autoNavigation, SIGNAL( centerOn( const GeoDataCoordinates &, bool ) ),
-                     m_marbleWidget, SLOT( centerOn( const GeoDataCoordinates &, bool ) ) );
+            m_autoNavigation = new Marble::AutoNavigation( m_marbleWidget->model(), m_marbleWidget->viewport(), this );
+            connect( m_autoNavigation, SIGNAL(zoomIn(FlyToMode)),
+                     m_marbleWidget, SLOT(zoomIn()) );
+            connect( m_autoNavigation, SIGNAL(zoomOut(FlyToMode)),
+                     m_marbleWidget, SLOT(zoomOut()) );
+            connect( m_autoNavigation, SIGNAL(centerOn(GeoDataCoordinates,bool)),
+                     m_marbleWidget, SLOT(centerOn(GeoDataCoordinates)) );
 
-            connect( m_marbleWidget, SIGNAL( visibleLatLonAltBoxChanged() ),
-                     m_autoNavigation, SLOT( inhibitAutoAdjustments() ) );
+            connect( m_marbleWidget, SIGNAL(visibleLatLonAltBoxChanged()),
+                     m_autoNavigation, SLOT(inhibitAutoAdjustments()) );
         }
 
         if ( m_autoNavigation ) {
-            m_autoNavigation->setRecenter( AdjustNavigation::RecenterOnBorder );
+            m_autoNavigation->setRecenter( Marble::AutoNavigation::RecenterOnBorder );
         }
 
         emit autoCenterChanged();
@@ -241,16 +241,16 @@ void Tracking::setAutoZoom( bool enabled )
 {
     if ( autoZoom() != enabled ) {
         if ( enabled && !m_autoNavigation && m_marbleWidget ) {
-            m_autoNavigation = new AdjustNavigation( m_marbleWidget->model(), m_marbleWidget->viewport(), this );
-            connect( m_autoNavigation, SIGNAL( zoomIn( FlyToMode ) ),
-                     m_marbleWidget, SLOT( zoomIn( FlyToMode ) ) );
-            connect( m_autoNavigation, SIGNAL( zoomOut( FlyToMode ) ),
-                     m_marbleWidget, SLOT( zoomOut( FlyToMode ) ) );
-            connect( m_autoNavigation, SIGNAL( centerOn( const GeoDataCoordinates &, bool ) ),
-                     m_marbleWidget, SLOT( centerOn( const GeoDataCoordinates &, bool ) ) );
+            m_autoNavigation = new Marble::AutoNavigation( m_marbleWidget->model(), m_marbleWidget->viewport(), this );
+            connect( m_autoNavigation, SIGNAL(zoomIn(FlyToMode)),
+                     m_marbleWidget, SLOT(zoomIn()) );
+            connect( m_autoNavigation, SIGNAL(zoomOut(FlyToMode)),
+                     m_marbleWidget, SLOT(zoomOut()) );
+            connect( m_autoNavigation, SIGNAL(centerOn(GeoDataCoordinates,bool)),
+                     m_marbleWidget, SLOT(centerOn(GeoDataCoordinates)) );
 
-            connect( m_marbleWidget, SIGNAL( visibleLatLonAltBoxChanged() ),
-                     m_autoNavigation, SLOT( inhibitAutoAdjustments() ) );
+            connect( m_marbleWidget, SIGNAL(visibleLatLonAltBoxChanged()),
+                     m_autoNavigation, SLOT(inhibitAutoAdjustments()) );
         }
 
         if ( m_autoNavigation ) {
@@ -261,11 +261,30 @@ void Tracking::setAutoZoom( bool enabled )
     }
 }
 
+Tracking::PositionMarkerType Tracking::positionMarkerType() const
+{
+    return m_positionMarkerType;
+}
+
+void Tracking::setPositionMarkerType( Tracking::PositionMarkerType type )
+{
+    setShowPositionMarkerPlugin( type == Arrow );
+    if ( type != m_positionMarkerType ) {
+        m_positionMarkerType = type;
+        emit positionMarkerTypeChanged();
+    }
+}
+
+double Tracking::distance() const
+{
+    return m_marbleWidget ? m_marbleWidget->model()->positionTracking()->length( m_marbleWidget->model()->planetRadius() ) : 0.0;
+}
+
 void Tracking::saveTrack( const QString &fileName )
 {
     if ( m_marbleWidget ) {
         /** @todo FIXME: replace the file:// prefix on QML side */
-        QString target = fileName.startsWith( "file://" ) ? fileName.mid( 7 ) : fileName;
+        QString target = fileName.startsWith( QLatin1String( "file://" ) ) ? fileName.mid( 7 ) : fileName;
         m_marbleWidget->model()->positionTracking()->saveTrack( target );
     }
 }
@@ -274,7 +293,7 @@ void Tracking::openTrack(const QString &fileName)
 {
     if ( m_marbleWidget ) {
         /** @todo FIXME: replace the file:// prefix on QML side */
-        QString target = fileName.startsWith( "file://" ) ? fileName.mid( 7 ) : fileName;
+        QString target = fileName.startsWith( QLatin1String( "file://" ) ) ? fileName.mid( 7 ) : fileName;
         m_marbleWidget->model()->addGeoDataFile( target );
     }
 }
@@ -284,9 +303,6 @@ void Tracking::clearTrack()
     if ( m_marbleWidget ) {
         m_marbleWidget->model()->positionTracking()->clearTrack();
     }
-}
-
-}
 }
 
 #include "Tracking.moc"

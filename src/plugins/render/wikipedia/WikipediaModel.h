@@ -13,12 +13,12 @@
 
 #include "AbstractDataPluginModel.h"
 
-#include <QtGui/QIcon>
+#include <QIcon>
 
 namespace Marble
 {
 
-class MarbleModel;
+class MarbleWidget;
 
 const quint32 numberOfArticlesPerFetch = 7;
   
@@ -27,18 +27,19 @@ class WikipediaModel : public AbstractDataPluginModel
     Q_OBJECT
     
  public:
-    explicit WikipediaModel( const PluginManager *pluginManager, QObject *parent = 0 );
+    explicit WikipediaModel( const MarbleModel *marbleModel, QObject *parent = 0 );
     ~WikipediaModel();
 
     void setShowThumbnail( bool show );
- 
+
+    void setMarbleWidget( MarbleWidget* widget );
+
  protected:
     /**
      * Generates the download url for the description file from the web service depending on
      * the @p box surrounding the view and the @p number of files to show.
      **/
     void getAdditionalItems( const GeoDataLatLonAltBox& box,
-                             const MarbleModel *model,
                              qint32 number = 10 );
        
     /**
@@ -49,6 +50,7 @@ class WikipediaModel : public AbstractDataPluginModel
     void parseFile( const QByteArray& file );
     
  private:
+    MarbleWidget* m_marbleWidget;
     QIcon m_wikipediaIcon;
     QString m_languageCode;
 

@@ -10,7 +10,7 @@
 
 #include "MonavMapsModel.h"
 
-#include <QtCore/QDate>
+#include <QDate>
 
 namespace Marble
 {
@@ -28,7 +28,8 @@ void MonavMapsModel::deleteMapFiles( int row )
 void MonavMapsModel::setInstallableVersions( const QMap<QString, QString> remoteMaps )
 {
     m_remoteMaps = remoteMaps;
-    reset();
+    beginResetModel();
+    endResetModel();
 }
 
 MonavMapsModel::MonavMapsModel( const QVector<MonavMap> &data, QObject * parent ) :
@@ -52,8 +53,7 @@ QVariant MonavMapsModel::headerData ( int section, Qt::Orientation orientation, 
         case 4:
             return tr( "Delete" );
         case 5:
-            /** @todo: Change to 'Date' after string freeze */
-            return tr( "Update" );
+            return tr( "Date" );
         }
     }
 
@@ -120,3 +120,5 @@ QString MonavMapsModel::payload( int index ) const
 }
 
 }
+
+#include "MonavMapsModel.moc"

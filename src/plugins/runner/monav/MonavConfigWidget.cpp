@@ -15,18 +15,18 @@
 #include "MarbleDirs.h"
 #include "MarbleDebug.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QProcess>
-#include <QtCore/QSignalMapper>
-#include <QtGui/QStringListModel>
-#include <QtGui/QComboBox>
-#include <QtGui/QPushButton>
-#include <QtGui/QShowEvent>
-#include <QtGui/QSortFilterProxyModel>
-#include <QtGui/QMessageBox>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtXml/QDomDocument>
+#include <QFile>
+#include <QProcess>
+#include <QSignalMapper>
+#include <QStringListModel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QShowEvent>
+#include <QSortFilterProxyModel>
+#include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QDomDocument>
 
 namespace Marble
 {
@@ -73,7 +73,7 @@ public:
 
     MonavPlugin* m_plugin;
 
-    QNetworkAccessManager* m_networkAccessManager;
+    QNetworkAccessManager m_networkAccessManager;
 
     QNetworkReply* m_currentReply;
 
@@ -142,7 +142,7 @@ QString MonavStuffEntry::payload() const
 void MonavStuffEntry::setName( const QString &name )
 {
     m_name = name;
-    QStringList parsed = name.split( "/" );
+    QStringList parsed = name.split( QLatin1Char( '/' ) );
     int size = parsed.size();
     m_continent = size > 0 ? parsed.at( 0 ).trimmed() : QString();
     m_state = size > 1 ? parsed.at( 1 ).trimmed() : QString();
@@ -193,7 +193,7 @@ QString MonavStuffEntry::transport() const
 
 bool MonavStuffEntry::isValid() const
 {
-    return !m_continent.isEmpty() && !m_state.isEmpty() && m_payload.startsWith( "http://" );
+    return !m_continent.isEmpty() && !m_state.isEmpty() && m_payload.startsWith( QLatin1String( "http://" ) );
 }
 
 MonavConfigWidgetPrivate::MonavConfigWidgetPrivate( MonavConfigWidget* parent, MonavPlugin* plugin ) :
@@ -214,7 +214,12 @@ void MonavConfigWidgetPrivate::parseNewStuff( const QByteArray &data )
 
     QDomElement root = xml.documentElement();
     QDomNodeList items = root.elementsByTagName( "stuff" );
-    for ( unsigned int i = 0; i < items.length(); ++i ) {
+#if QT_VERSION < 0x050000
+    unsigned int i=0;
+#else
+    int i=0;
+#endif
+    for ( ; i < items.length(); ++i ) {
         MonavStuffEntry item;
         QDomNode node = items.item( i );
 
@@ -323,6 +328,8 @@ MonavConfigWidget::MonavConfigWidget( MonavPlugin* plugin ) :
         d( new MonavConfigWidgetPrivate( this, plugin ) )
 {
     setupUi( this );
+    m_statusLabel->setText( plugin->statusMessage() );
+    m_statusLabel->setHidden( m_statusLabel->text().isEmpty() );
     d->setBusy( false );
     m_installedMapsListView->setModel( d->m_mapsModel );
     m_configureMapsListView->setModel( d->m_filteredModel );
@@ -330,18 +337,20 @@ MonavConfigWidget::MonavConfigWidget( MonavPlugin* plugin ) :
 
     updateComboBoxes();
 
-    connect( m_continentComboBox, SIGNAL( currentIndexChanged( int ) ),
-             this, SLOT( updateStates() ) );
-    connect( m_transportTypeComboBox, SIGNAL( currentIndexChanged( QString ) ),
-             this, SLOT( updateTransportTypeFilter( QString ) ) );
-    connect( m_stateComboBox, SIGNAL( currentIndexChanged( int ) ),
-             this, SLOT( updateRegions() ) );
-    connect( m_installButton, SIGNAL( clicked() ), this, SLOT( downloadMap() ) );
-    connect( m_cancelButton, SIGNAL( clicked() ), this, SLOT( cancelOperation() ) );
-    connect( &d->m_removeMapSignalMapper, SIGNAL( mapped( int ) ),
-             this, SLOT( removeMap( int ) ) );
-    connect( &d->m_upgradeMapSignalMapper, SIGNAL( mapped( int ) ),
-             this, SLOT( upgradeMap( int ) ) );
+    connect( m_continentComboBox, SIGNAL(currentIndexChanged(int)),
+             this, SLOT(updateStates()) );
+    connect( m_transportTypeComboBox, SIGNAL(currentIndexChanged(QString)),
+             this, SLOT(updateTransportTypeFilter(QString)) );
+    connect( m_stateComboBox, SIGNAL(currentIndexChanged(int)),
+             this, SLOT(updateRegions()) );
+    connect( m_installButton, SIGNAL(clicked()), this, SLOT(downloadMap()) );
+    connect( m_cancelButton, SIGNAL(clicked()), this, SLOT(cancelOperation()) );
+    connect( &d->m_removeMapSignalMapper, SIGNAL(mapped(int)),
+             this, SLOT(removeMap(int)) );
+    connect( &d->m_upgradeMapSignalMapper, SIGNAL(mapped(int)),
+             this, SLOT(upgradeMap(int)) );
+    connect( &d->m_networkAccessManager, SIGNAL(finished(QNetworkReply*)),
+             this, SLOT(retrieveMapList(QNetworkReply*)) );
 }
 
 MonavConfigWidget::~MonavConfigWidget()
@@ -389,23 +398,41 @@ QHash<QString, QVariant> MonavConfigWidget::settings() const
 void MonavConfigWidget::retrieveMapList( QNetworkReply *reply )
 {
     if ( reply->isReadable() && d->m_currentDownload.isEmpty() ) {
-        disconnect( d->m_networkAccessManager, SIGNAL( finished( QNetworkReply * ) ),
-                     this, SLOT( retrieveMapList( QNetworkReply * ) ) );
-        d->parseNewStuff( reply->readAll() );
-        updateComboBoxes();
+        // check if we are redirected
+        QVariant const redirectionAttribute = reply->attribute( QNetworkRequest::RedirectionTargetAttribute );
+        if ( !redirectionAttribute.isNull() ) {
+            d->m_networkAccessManager.get( QNetworkRequest( redirectionAttribute.toUrl() ) );
+        } else {
+            disconnect( &d->m_networkAccessManager, SIGNAL(finished(QNetworkReply*)),
+                         this, SLOT(retrieveMapList(QNetworkReply*)) );
+            d->parseNewStuff( reply->readAll() );
+            updateComboBoxes();
+        }
     }
 }
 
 void MonavConfigWidget::retrieveData()
 {
     if ( d->m_currentReply && d->m_currentReply->isReadable() && !d->m_currentDownload.isEmpty() ) {
-        d->m_currentFile.write( d->m_currentReply->readAll() );
-        if ( d->m_currentReply->isFinished() ) {
-            d->m_currentReply->deleteLater();
-            d->m_currentReply = 0;
-            d->m_currentFile.close();
-            d->installMap();
-            d->m_currentDownload = QString();
+        // check if we are redirected
+        QVariant const redirectionAttribute = d->m_currentReply->attribute( QNetworkRequest::RedirectionTargetAttribute );
+        if ( !redirectionAttribute.isNull() ) {
+            d->m_currentReply = d->m_networkAccessManager.get( QNetworkRequest( redirectionAttribute.toUrl() ) );
+            connect( d->m_currentReply, SIGNAL(readyRead()),
+                         this, SLOT(retrieveData()) );
+            connect( d->m_currentReply, SIGNAL(readChannelFinished()),
+                         this, SLOT(retrieveData()) );
+            connect( d->m_currentReply, SIGNAL(downloadProgress(qint64,qint64)),
+                     this, SLOT(updateProgressBar(qint64,qint64)) );
+        } else {
+            d->m_currentFile.write( d->m_currentReply->readAll() );
+            if ( d->m_currentReply->isFinished() ) {
+                d->m_currentReply->deleteLater();
+                d->m_currentReply = 0;
+                d->m_currentFile.close();
+                d->installMap();
+                d->m_currentDownload.clear();
+            }
         }
     }
 }
@@ -457,7 +484,7 @@ void MonavConfigWidget::cancelOperation()
         d->m_currentReply->abort();
         d->m_currentReply->deleteLater();
         d->m_currentReply = 0;
-        d->m_currentDownload = QString();
+        d->m_currentDownload.clear();
         d->setBusy( false );
         d->m_currentFile.close();
     }
@@ -473,13 +500,13 @@ void MonavConfigWidgetPrivate::install()
             QFileInfo file( m_currentFile );
             QString message = QObject::tr( "Downloading %1" ).arg( file.fileName() );
             setBusy( true, message );
-            m_currentReply = m_networkAccessManager->get( QNetworkRequest( m_currentDownload ) );
-            QObject::connect( m_currentReply, SIGNAL( readyRead() ),
-                         m_parent, SLOT( retrieveData() ) );
-            QObject::connect( m_currentReply, SIGNAL( readChannelFinished() ),
-                         m_parent, SLOT( retrieveData() ) );
-            QObject::connect( m_currentReply, SIGNAL( downloadProgress( qint64, qint64 ) ),
-                     m_parent, SLOT( updateProgressBar( qint64, qint64 ) ) );
+            m_currentReply = m_networkAccessManager.get( QNetworkRequest( m_currentDownload ) );
+            QObject::connect( m_currentReply, SIGNAL(readyRead()),
+                         m_parent, SLOT(retrieveData()) );
+            QObject::connect( m_currentReply, SIGNAL(readChannelFinished()),
+                         m_parent, SLOT(retrieveData()) );
+            QObject::connect( m_currentReply, SIGNAL(downloadProgress(qint64,qint64)),
+                     m_parent, SLOT(updateProgressBar(qint64,qint64)) );
         } else {
             mDebug() << "Failed to write to " << localFile;
         }
@@ -493,21 +520,21 @@ void MonavConfigWidgetPrivate::installMap()
         delete m_unpackProcess;
         m_unpackProcess = 0;
         m_parent->m_installButton->setEnabled( true );
-    } else if ( m_currentFile.fileName().endsWith( "tar.gz" ) && canExecute( "tar" ) ) {
+    } else if ( m_currentFile.fileName().endsWith( QLatin1String( "tar.gz" ) ) && canExecute( "tar" ) ) {
         QFileInfo file( m_currentFile );
         QString message = QObject::tr( "Installing %1" ).arg( file.fileName() );
         setBusy( true, message );
         m_parent->m_progressBar->setMaximum( 0 );
         if ( file.exists() && file.isReadable() ) {
             m_unpackProcess = new QProcess;
-            QObject::connect( m_unpackProcess, SIGNAL( finished( int ) ),
-                     m_parent, SLOT( mapInstalled( int ) ) );
+            QObject::connect( m_unpackProcess, SIGNAL(finished(int)),
+                     m_parent, SLOT(mapInstalled(int)) );
             QStringList arguments = QStringList() << "-x" << "-z" << "-f" << file.fileName();
             m_unpackProcess->setWorkingDirectory( file.dir().absolutePath() );
             m_unpackProcess->start( "tar", arguments );
         }
     } else {
-        if ( !m_currentFile.fileName().endsWith( "tar.gz" ) ) {
+        if ( !m_currentFile.fileName().endsWith( QLatin1String( "tar.gz" ) ) ) {
             mDebug() << "Can only handle tar.gz files";
         } else {
             mDebug() << "Cannot extract archive: tar executable not found in PATH.";
@@ -528,7 +555,7 @@ void MonavConfigWidget::updateProgressBar( qint64 bytesReceived, qint64 bytesTot
 bool MonavConfigWidgetPrivate::canExecute( const QString &executable ) const
 {
     QString path = QProcessEnvironment::systemEnvironment().value( "PATH", "/usr/local/bin:/usr/bin:/bin" );
-    foreach( const QString &dir, path.split( ":" ) ) {
+    foreach( const QString &dir, path.split( QLatin1Char( ':' ) ) ) {
         QFileInfo application( QDir( dir ), executable );
         if ( application.exists() ) {
             return true;
@@ -556,15 +583,12 @@ void MonavConfigWidget::mapInstalled( int exitStatus )
 void MonavConfigWidget::showEvent ( QShowEvent * event )
 {
     // Lazy initialization
-    RunnerPlugin::ConfigWidget::showEvent( event );
+    RoutingRunnerPlugin::ConfigWidget::showEvent( event );
     if ( !event->spontaneous() && !d->m_initialized ) {
         d->m_initialized = true;
         d->updateInstalledMapsView();
-        d->m_networkAccessManager = new QNetworkAccessManager( this );
-        connect( d->m_networkAccessManager, SIGNAL( finished( QNetworkReply * ) ),
-                     this, SLOT( retrieveMapList( QNetworkReply * ) ) );
         QUrl url = QUrl( "http://files.kde.org/marble/newstuff/maps-monav.xml" );
-        d->m_networkAccessManager->get( QNetworkRequest( url ) );
+        d->m_networkAccessManager.get( QNetworkRequest( url ) );
     }
 }
 
@@ -601,7 +625,7 @@ void MonavConfigWidgetPrivate::updateInstalledMapsViewButtons()
             QModelIndex index = m_mapsModel->index( i, 3 );
             m_parent->m_installedMapsListView->setIndexWidget( index, button );
             m_upgradeMapSignalMapper.setMapping( button, index.row() );
-            QObject::connect( button, SIGNAL( clicked() ), &m_upgradeMapSignalMapper, SLOT( map() ) );
+            QObject::connect( button, SIGNAL(clicked()), &m_upgradeMapSignalMapper, SLOT(map()) );
             bool upgradable = m_mapsModel->data( index ).toBool();
             QString canUpgradeText = QObject::tr( "An update is available. Click to install it." );
             QString isLatestText = QObject::tr( "No update available. You are running the latest version." );
@@ -614,7 +638,7 @@ void MonavConfigWidgetPrivate::updateInstalledMapsViewButtons()
             QModelIndex index = m_mapsModel->index( i, 4 );
             m_parent->m_installedMapsListView->setIndexWidget( index, button );
             m_removeMapSignalMapper.setMapping( button, index.row() );
-            QObject::connect( button, SIGNAL( clicked() ), &m_removeMapSignalMapper, SLOT( map() ) );
+            QObject::connect( button, SIGNAL(clicked()), &m_removeMapSignalMapper, SLOT(map()) );
             bool const writable = m_mapsModel->data( index ).toBool();
             button->setEnabled( writable );
         }

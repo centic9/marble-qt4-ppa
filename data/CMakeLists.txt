@@ -17,11 +17,11 @@ FILE (GLOB BITMAP_POI_FILES bitmaps/poi/*.png)
 install (FILES ${BITMAP_POI_FILES}
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps/poi)
 
-FILE (GLOB BITMAP_FILES bitmaps/*.jpg)
-install (FILES ${BITMAP_FILES}
-DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps)
+FILE (GLOB BITMAP_STAR_FILES bitmaps/stars/*.png)
+install (FILES ${BITMAP_STAR_FILES}
+DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps/stars)
 
-FILE (GLOB BITMAP_FILES bitmaps/*.xpm)
+FILE (GLOB BITMAP_FILES bitmaps/*.jpg)
 install (FILES ${BITMAP_FILES}
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/bitmaps)
 
@@ -37,10 +37,14 @@ svg/application-x-marble.png
 svg/application-x-marble-gray.png
 svg/worldmap.svg
 svg/lunarmap.svg
+svg/marsmap.svg
 svg/coordinate.svg
 svg/wikipedia.svg
 svg/wikipedia_shadow.svg
 svg/sunshine.png
+svg/sun.png
+svg/moon.png
+svg/glow.png
 svg/track_turtle.svg
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/svg)
 
@@ -66,10 +70,7 @@ maps/earth/clouds/0/000000/000000_000000.jpg
 maps/earth/clouds/0/000000/000000_000001.jpg
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/clouds/0/000000)
 
-install (FILES
-maps/earth/srtm/srtm.dgml
-maps/earth/srtm/srtm-preview.png
-DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/srtm)
+install (DIRECTORY maps/earth/srtm DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth)
 
 install (FILES
 maps/earth/srtm2/srtm2.dgml
@@ -79,12 +80,6 @@ install (FILES
 maps/earth/srtm2/0/000000/000000_000000.png
 maps/earth/srtm2/0/000000/000000_000001.png
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/srtm2/0/000000)
-
-if(NOT TILES_AT_COMPILETIME)
-install (FILES
-maps/earth/srtm/srtm.jpg
-DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/srtm)
-endif(NOT TILES_AT_COMPILETIME)
 
 install (FILES
 maps/earth/bluemarble/bluemarble.jpg
@@ -111,30 +106,10 @@ maps/earth/openstreetmap/openstreetmap-preview.png
 maps/earth/openstreetmap/legend.html
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/openstreetmap)
 
-install (FILES
-maps/earth/openstreetmap/legend/airportapron.png
-maps/earth/openstreetmap/legend/motorway.png
-maps/earth/openstreetmap/legend/track.png
-maps/earth/openstreetmap/legend/airportrunway.png
-maps/earth/openstreetmap/legend/primaryroad.png
-maps/earth/openstreetmap/legend/tram.png
-maps/earth/openstreetmap/legend/boundary.png
-maps/earth/openstreetmap/legend/railway.png
-maps/earth/openstreetmap/legend/trunkroad.png
-maps/earth/openstreetmap/legend/bridge.png
-maps/earth/openstreetmap/legend/railwaystation.png
-maps/earth/openstreetmap/legend/tunnel.png
-maps/earth/openstreetmap/legend/bridleway.png
-maps/earth/openstreetmap/legend/secondaryroad.png
-maps/earth/openstreetmap/legend/unclassifiedroad.png
-maps/earth/openstreetmap/legend/byway.png
-maps/earth/openstreetmap/legend/significantbuilding.png
-maps/earth/openstreetmap/legend/unsurfacedroad.png
-maps/earth/openstreetmap/legend/cycleway.png
-maps/earth/openstreetmap/legend/subway.png
-maps/earth/openstreetmap/legend/footway.png
-maps/earth/openstreetmap/legend/summitpeak.png
-DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/openstreetmap/legend)
+FILE(GLOB OSM_LEGEND_ICONS maps/earth/openstreetmap/legend/*.png)
+install (FILES ${OSM_LEGEND_ICONS} DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/openstreetmap/legend)
+FILE(GLOB OSM_LEGEND_ICONS maps/earth/openstreetmap/legend/mapicons/*.png)
+install (FILES ${OSM_LEGEND_ICONS} DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/earth/openstreetmap/legend/mapicons)
 
 install (FILES
 maps/earth/openstreetmap/0/0/0.png
@@ -191,6 +166,9 @@ maps/moon/clementine/legend.html
 maps/moon/clementine/clementine.dgml
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/maps/moon/clementine)
 
+FILE (GLOB_RECURSE DGML_FILES maps/*.dgml)
+MARBLE_ADD_PROJECT_RESOURCES(${DGML_FILES})
+
 install (FILES
 weather/bbc-stations.xml
 weather/weather-clear-night.png
@@ -236,9 +214,12 @@ mwdbii/PUSA48.DIFF.PNT
 mwdbii/RIVER.PNT
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/mwdbii)
 
+FILE (GLOB PN2_FILES naturalearth/*.pn2)
+install (FILES ${PN2_FILES}
+DESTINATION ${MARBLE_DATA_INSTALL_PATH}/naturalearth)
+
 FILE (GLOB STAR_FILES stars/*.dat)
-install (FILES
-  ${STAR_FILES}
+install (FILES ${STAR_FILES} stars/deepsky.png stars/names.csv
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/stars)
 
 install (FILES
@@ -257,18 +238,25 @@ else(MOBILE)
 endif(MOBILE)
 
 if(NOT APPLE AND NOT WIN32)
-  if(QTONLY)
-    set(ICON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/icons)
-  endif(QTONLY)
-    install (FILES icons/hi128-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/128x128/apps/ RENAME marble.png)
-    install (FILES icons/hi64-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/64x64/apps/ RENAME marble.png)
-    install (FILES icons/hi48-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/48x48/apps/ RENAME marble.png)
-    install (FILES icons/hi32-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/32x32/apps/ RENAME marble.png)
-    install (FILES icons/hi22-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/22x22/apps/ RENAME marble.png)
-    install (FILES icons/hi16-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/16x16/apps/ RENAME marble.png)
+  install (FILES icons/hi128-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/128x128/apps/ RENAME marble.png)
+  install (FILES icons/hi64-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/64x64/apps/ RENAME marble.png)
+  install (FILES icons/hi48-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/48x48/apps/ RENAME marble.png)
+  install (FILES icons/hi32-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/32x32/apps/ RENAME marble.png)
+  install (FILES icons/hi22-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/22x22/apps/ RENAME marble.png)
+  install (FILES icons/hi16-app-marble.png DESTINATION ${ICON_INSTALL_DIR}/hicolor/16x16/apps/ RENAME marble.png)
 endif(NOT APPLE AND NOT WIN32 )
 
 FILE (GLOB AUDIO_FILES audio/*.ogg)
 install (FILES
   ${AUDIO_FILES}
 DESTINATION ${MARBLE_DATA_INSTALL_PATH}/audio)
+
+add_subdirectory(lang)
+
+# shared-mime-info 0.40 is mandatory for generic-icon
+set( SHARED_MIME_INFO_MINIMUM_VERSION "0.40" )
+find_package( SharedMimeInfo QUIET )
+IF( SHAREDMIMEINFO_FOUND )
+  install( FILES mimetypes/geo.xml  DESTINATION ${XDG_MIME_INSTALL_DIR} )
+  update_xdg_mimetypes( ${XDG_MIME_INSTALL_DIR} )
+ENDIF()

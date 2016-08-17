@@ -8,22 +8,19 @@
 // Copyright 2008 Torsten Rahn <tackat@kde.org>
 //
 
-//
-// This class is a test plugin.
-//
-
 #ifndef MARBLEOVERVIEWMAP_H
 #define MARBLEOVERVIEWMAP_H
 
-#include <QtCore/QObject>
-#include <QtCore/QHash>
-#include <QtGui/QColor>
-#include <QtGui/QAbstractButton>
-#include <QtSvg/QSvgWidget>
-#include <QtSvg/QSvgRenderer>
+#include <QObject>
+#include <QHash>
+#include <QColor>
+#include <QAbstractButton>
+#include <QSvgWidget>
+#include <QSvgRenderer>
 
 #include "GeoDataLatLonAltBox.h"
 #include "AbstractFloatItem.h"
+#include "DialogConfigurationInterface.h"
 
 namespace Ui
 {
@@ -38,15 +35,17 @@ namespace Marble
  *
  */
 
-class OverviewMap : public AbstractFloatItem
+class OverviewMap : public AbstractFloatItem, public DialogConfigurationInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.OverviewMap" )
     Q_INTERFACES( Marble::RenderPluginInterface )
+    Q_INTERFACES( Marble::DialogConfigurationInterface )
     MARBLE_PLUGIN( OverviewMap )
     
  public:
-    explicit OverviewMap( const QPointF &point = QPointF( 10.5, 10.5 ),
-                          const QSizeF &size = QSizeF( 166.0, 86.0 ) );
+    OverviewMap();
+    explicit OverviewMap( const MarbleModel *marbleModel );
     ~OverviewMap();
 
     QStringList backendTypes() const;
@@ -57,7 +56,13 @@ class OverviewMap : public AbstractFloatItem
 
     QString nameId() const;
 
+    QString version() const;
+
     QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
 
     QIcon icon () const;
 
@@ -69,8 +74,7 @@ class OverviewMap : public AbstractFloatItem
 
     void changeViewport( ViewportParams *viewport );
 
-    void paintContent( GeoPainter *painter, ViewportParams *viewport,
-                       const QString& renderPos, GeoSceneLayer * layer = 0 );
+    void paintContent( QPainter *painter );
 
     /**
      * @return: The settings of the item.
@@ -80,7 +84,7 @@ class OverviewMap : public AbstractFloatItem
     /**
      * Set the settings of the item.
      */
-    virtual void setSettings( QHash<QString,QVariant> settings );
+    virtual void setSettings( const QHash<QString,QVariant> &settings );
 
  public slots:
     void readSettings();

@@ -10,35 +10,24 @@
 
 #include "AprsObject.h"
 
-#include <QtGui/QPixmap>
+#include <QPixmap>
 
 #include "MarbleDebug.h"
 #include "MarbleDirs.h"
+#include "GeoDataLineString.h"
 #include "GeoPainter.h"
 #include "GeoAprsCoordinates.h"
 
 using namespace Marble;
 
-AprsObject::AprsObject( const GeoAprsCoordinates &at, QString &name )
+AprsObject::AprsObject( const GeoAprsCoordinates &at, const QString &name )
     : m_myName( name ),
-      m_seenFrom( GeoAprsCoordinates::FromNowhere ),
+      m_seenFrom( at.seenFrom() ),
       m_havePixmap ( false ),
       m_pixmapFilename( ),
       m_pixmap( 0 )
 {
     m_history.push_back( at );
-}
-
-AprsObject::AprsObject( const qreal &lon, const qreal &lat,
-                        const QString &name, int where )
-    : m_myName( name ),
-      m_seenFrom( where ),
-      m_havePixmap ( false ),
-      m_pixmapFilename( ),
-      m_pixmap( 0 )
-{
-    m_history.push_back( GeoAprsCoordinates( lon, lat, 0,
-                                             GeoAprsCoordinates::Degree ) );
 }
 
 AprsObject::~AprsObject()
@@ -47,13 +36,13 @@ AprsObject::~AprsObject()
 }
 
 GeoAprsCoordinates
-AprsObject::location()
+AprsObject::location() const
 {
     return m_history.last();
 }
 
 void
-AprsObject::setLocation( GeoAprsCoordinates location )
+AprsObject::setLocation( const GeoAprsCoordinates &location )
 {
     // Not ideal but it's unlikely they'll jump to the *exact* same spot again
     if ( !m_history.contains( location ) ) {
@@ -65,13 +54,8 @@ AprsObject::setLocation( GeoAprsCoordinates location )
         m_history[index].setTimestamp( now );
         m_history[index].addSeenFrom( location.seenFrom() );
     }
-}
 
-void
-AprsObject::setLocation( qreal lon, qreal lat, int from )
-{
-    setLocation( GeoAprsCoordinates( lon, lat, 0,
-                                     GeoAprsCoordinates::Degree, from ) );
+    m_seenFrom = ( m_seenFrom | location.seenFrom() );
 }
 
 void
@@ -88,38 +72,24 @@ AprsObject::setPixmapId( QString &pixmap )
     }
 }
 
-void
-AprsObject::setSeenFrom( int where )
-{
-    m_seenFrom = ( m_seenFrom | where );
-}
-
 QColor
-AprsObject::calculatePaintColor( GeoPainter *painter ) const
-{
-    QTime now;
-    return calculatePaintColor( painter, m_seenFrom, now );
-}
-
-QColor
-AprsObject::calculatePaintColor( GeoPainter *painter, int from, const QTime &time,
-                           int fadeTime ) const
+AprsObject::calculatePaintColor( int from, const QTime &time, int fadeTime ) const
 {
     QColor color;
     if ( from & GeoAprsCoordinates::Directly ) {
-        color = QColor( 0, 201, 0, 255 ); // oxygen green if direct
+        color = Oxygen::emeraldGreen4; // oxygen green if direct
     } else if ( (from & ( GeoAprsCoordinates::FromTCPIP | GeoAprsCoordinates::FromTTY ) ) == ( GeoAprsCoordinates::FromTCPIP | GeoAprsCoordinates::FromTTY ) ) {
-        color = QColor( 176, 0, 141, 255 ); // oxygen purple if both
+        color = Oxygen::burgundyPurple4; // oxygen purple if both
     } else if  ( from & GeoAprsCoordinates::FromTCPIP ) {
-        color = QColor( 255, 0, 0, 255 ); // oxygen red if net
+        color = Oxygen::brickRed4; // oxygen red if net
     } else if  ( from & GeoAprsCoordinates::FromTTY ) {
-        color = QColor( 0, 0, 201, 255 ); // oxygen blue if TNC TTY relay
+        color = Oxygen::seaBlue4; // oxygen blue if TNC TTY relay
     } else if ( from & ( GeoAprsCoordinates::FromFile ) ) {
-        color = QColor( 255, 255, 0, 255 ); // oxygen yellow if file only
+        color = Oxygen::sunYellow3; // oxygen yellow if file only
     } else {
         mDebug() << "**************************************** unknown from: "
                  << from;
-        color = QColor( 0, 0, 0, 255 ); // shouldn't happen but a user
+        color = Oxygen::aluminumGray5;  // shouldn't happen but a user
                                         // could mess up I suppose we
                                         // should at least draw it in
                                         // something.
@@ -129,23 +99,19 @@ AprsObject::calculatePaintColor( GeoPainter *painter, int from, const QTime &tim
         color.setAlpha( 160 );
     }
 
-    painter->setPen( color );
     return color;
 }
 
 void
 AprsObject::render( GeoPainter *painter, ViewportParams *viewport,
-                    const QString& renderPos, GeoSceneLayer * layer,
                     int fadeTime, int hideTime )
 {
     Q_UNUSED( viewport );
-    Q_UNUSED( layer );
-    Q_UNUSED( renderPos );
 
     if ( hideTime > 0 && m_history.last().timestamp().elapsed() > hideTime )
         return;
 
-    QColor baseColor = calculatePaintColor( painter, m_seenFrom,
+    QColor baseColor = calculatePaintColor( m_seenFrom,
                                       m_history.last().timestamp(),
                                       fadeTime );
 
@@ -153,24 +119,27 @@ AprsObject::render( GeoPainter *painter, ViewportParams *viewport,
     
         QList<GeoAprsCoordinates>::iterator spot = m_history.begin();
         QList<GeoAprsCoordinates>::iterator endSpot = m_history.end();
-        QList<GeoAprsCoordinates>::iterator lastspot;
         
-        for( ++spot, lastspot = m_history.begin();
-             spot != endSpot;
-             ++spot, ++lastspot ) {
+        GeoDataLineString lineString;
+        lineString.setTessellate( true );
+        lineString << *spot; // *spot exists because m_history.count() > 1
+
+        for( ++spot; spot != endSpot; ++spot ) {
 
             if ( hideTime > 0 && ( *spot ).timestamp().elapsed() > hideTime )
                 break;
 
-            // draw the line in the base color
-            painter->setPen( baseColor );
-            painter->drawLine( *lastspot, *spot );
+            lineString << *spot;
 
             // draw the new circle in whatever is appropriate for that point
-            calculatePaintColor( painter, ( *spot ).seenFrom(), ( *spot ).timestamp(),
-                           fadeTime );
-            painter->drawRect( *spot, 5, 5, false );
+            const QColor penColor = calculatePaintColor( spot->seenFrom(), spot->timestamp(), fadeTime );
+            painter->setPen( penColor );
+            painter->drawRect( *spot, 5, 5 );
         }
+
+        // draw the line in the base color
+        painter->setPen( baseColor );
+        painter->drawPolyline( lineString );
     }
     
 

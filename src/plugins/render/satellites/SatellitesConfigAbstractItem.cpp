@@ -10,13 +10,16 @@
 
 #include "SatellitesConfigAbstractItem.h"
 
-#include <QtCore/QVariant>
+#include "MarbleDebug.h"
 
-using namespace Marble;
+#include <QVariant>
+
+namespace Marble {
 
 SatellitesConfigAbstractItem::SatellitesConfigAbstractItem( const QString &name )
     : m_name( name ),
-      m_parent( 0 )
+      m_parent( 0 ),
+      m_flags( Qt::ItemIsEnabled | Qt::ItemIsUserCheckable )
 {
 }
 
@@ -50,6 +53,7 @@ void SatellitesConfigAbstractItem::setParent( SatellitesConfigAbstractItem *pare
 
 void SatellitesConfigAbstractItem::loadSettings( QHash<QString, QVariant> settings )
 {
+    Q_UNUSED( settings );
 }
 
 QVariant SatellitesConfigAbstractItem::data( int column, int role ) const
@@ -68,5 +72,25 @@ QVariant SatellitesConfigAbstractItem::data( int column, int role ) const
 
 bool SatellitesConfigAbstractItem::setData( int column, int role, const QVariant &data )
 {
+    Q_UNUSED( column );
+    Q_UNUSED( role );
+    Q_UNUSED( data );
     return false;
 }
+
+Qt::ItemFlags SatellitesConfigAbstractItem::flags() const
+{
+    return m_flags;
+}
+
+void SatellitesConfigAbstractItem::setFlags( Qt::ItemFlags flags )
+{
+    m_flags = flags;
+}
+
+void SatellitesConfigAbstractItem::clear()
+{
+}
+
+} // namespace Marble
+

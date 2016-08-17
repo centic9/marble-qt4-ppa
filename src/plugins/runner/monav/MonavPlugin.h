@@ -11,18 +11,20 @@
 #ifndef MARBLE_MONAVPLUGIN_H
 #define MARBLE_MONAVPLUGIN_H
 
-#include "RunnerPlugin.h"
+#include "RoutingRunnerPlugin.h"
 
 namespace Marble
 {
 
 class MonavMapsModel;
 class MonavPluginPrivate;
+class RouteRequest;
 
-class MonavPlugin : public RunnerPlugin
+class MonavPlugin : public RoutingRunnerPlugin
 {
     Q_OBJECT
-    Q_INTERFACES( Marble::RunnerPlugin )
+    Q_PLUGIN_METADATA( IID "org.kde.edu.marble.MonavPlugin" )
+    Q_INTERFACES( Marble::RoutingRunnerPlugin )
 
 public:
     enum MonavRoutingDaemonVersion
@@ -33,9 +35,23 @@ public:
 
     explicit MonavPlugin( QObject *parent = 0 );
 
+    QString name() const;
+
+    QString guiString() const;
+
+    QString nameId() const;
+
+    QString version() const;
+
+    QString description() const;
+
+    QString copyrightYears() const;
+
+    QList<PluginAuthor> pluginAuthors() const;
+
     ~MonavPlugin();
 
-    virtual MarbleAbstractRunner* newRunner() const;
+    virtual RoutingRunner *newRunner() const;
 
     virtual bool supportsTemplate(RoutingProfilesModel::ProfileTemplate profileTemplate) const;
 
@@ -43,7 +59,7 @@ public:
 
     virtual ConfigWidget *configWidget();
 
-    virtual bool canWork( Capability capability ) const;
+    virtual bool canWork() const;
 
     QString mapDirectoryForRequest( const RouteRequest* request ) const;
 

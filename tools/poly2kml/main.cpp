@@ -8,14 +8,13 @@
 // Copyright 2010      Dennis Nienhüser <earthwings@gentoo.org>
 //
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QTextStream>
-#include <QtCore/QTime>
-#include <QtCore/QDebug>
+#include <QCoreApplication>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QTime>
+#include <QDebug>
 
-#include "geodata/parser/GeoDataParser.h"
 #include "geodata/data/GeoDataLineString.h"
 #include "geodata/data/GeoDataDocument.h"
 #include "geodata/data/GeoDataFolder.h"
@@ -43,9 +42,9 @@ int usage()
 
 QColor randomColor()
 {
-    QVector<QColor> colors = QVector<QColor>() << oxygenAluminumGray4 << oxygenBrickRed4;
-    colors << oxygenBrownOrange4 << oxygenForestGreen4 << oxygenHotOrange4;
-    colors << oxygenSeaBlue2 << oxygenSkyBlue4 << oxygenSunYellow6;
+    QVector<QColor> colors = QVector<QColor>() << Oxygen::aluminumGray4 << Oxygen::brickRed4;
+    colors << Oxygen::hotOrange4 << Oxygen::forestGreen4 << Oxygen::hotOrange4;
+    colors << Oxygen::seaBlue2 << Oxygen::skyBlue4 << Oxygen::sunYellow6;
     return colors.at( qrand() % colors.size() );
 }
 
@@ -65,9 +64,8 @@ void parseBoundingBox( const QFileInfo &file, const QString &name,
         GeoDataLinearRing *box = new GeoDataLinearRing;
         while ( !stream.atEnd() ) {
             bool inside = true;
-            bool skip = false;
             QString line = stream.readLine().trimmed();
-            QStringList entries = line.split( " ", QString::SkipEmptyParts );
+            QStringList entries = line.split( QLatin1Char( ' ' ), QString::SkipEmptyParts );
             if ( entries.size() == 1 ) {
                 if ( entries.first() == "END" && inside ) {
                     inside = false;
@@ -77,8 +75,7 @@ void parseBoundingBox( const QFileInfo &file, const QString &name,
                     }
                 } else if ( entries.first() == "END" && !inside ) {
                     qDebug() << "END not expected here";
-                } else if ( entries.first().startsWith( "!" ) ) {
-                    skip = true;
+                } else if ( entries.first().startsWith( QLatin1String( "!" ) ) ) {
                     qDebug() << "Warning: Negative polygons not supported, skipping";
                 } else {
                     //int number = entries.first().toInt();
