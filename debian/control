@@ -16,7 +16,6 @@ Build-Depends: cmake,
                libx11-dev,
                pkg-config,
                pkg-kde-tools (>= 0.12),
-               qtmobility-dev [linux-any],
                shared-mime-info
 Standards-Version: 3.9.5
 XS-Testsuite: autopkgtest
