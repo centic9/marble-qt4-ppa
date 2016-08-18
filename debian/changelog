@@ -1,3 +1,9 @@
+marble-qt4 (4:4.14.2-1ubuntu0~ppa1) xenial; urgency=medium
+
+  * Try to change to separate package for QT4.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Thu, 18 Aug 2016 19:11:49 +0200
+
 marble (4:4.14.2-1) unstable; urgency=medium
 
   * New upstream release (4.14.2).
