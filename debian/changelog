@@ -1,3 +1,9 @@
+marble-qt4 (4:4.14.2-1ubuntu0~ppa7) xenial; urgency=medium
+
+  * Try to add a separate symbols file for i386.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 20 Aug 2016 23:08:48 +0200
+
 marble-qt4 (4:4.14.2-1ubuntu0~ppa6) xenial; urgency=medium
 
   * Also rename .install/.symbol/.. files for new package names.
