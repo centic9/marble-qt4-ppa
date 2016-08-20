@@ -43,7 +43,7 @@ Package: marble-mobile-qt4
 Architecture: any
 Section: misc
 Depends: ${shlibs:Depends}, ${misc:Depends}, marble-data-qt4 (>= ${source:Version}),
- marble-plugins (= ${binary:Version})
+ marble-plugins-qt4 (= ${binary:Version})
 Suggests: libqt4-sql-sqlite, monav-routing-daemon, routino, gosmore
 Breaks: marble (<< 4:4.13), marble-qt4
 Replaces: marble (<< 4:4.13), marble-qt4
@@ -137,7 +137,7 @@ Description: Marble globe widget library
 Package: libastro1-qt4
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, ${misc:Depends}, marble-data (>= ${source:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, marble-data-qt4 (>= ${source:Version})
 Breaks: libastro1
 Description: Marble astronomy library
  Marble is a generic geographical map widget and framework for KDE
