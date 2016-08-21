@@ -1,3 +1,9 @@
+marble-qt4 (4:4.14.2-1ubuntu0~ppa10) xenial; urgency=medium
+
+  * Use conflicts instead of breaks for the QT5 packages.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sun, 21 Aug 2016 17:05:24 +0200
+
 marble-qt4 (4:4.14.2-1ubuntu0~ppa9) xenial; urgency=medium
 
   * Add dependency on libwlocate-dev.
