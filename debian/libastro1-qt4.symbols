@@ -1,5 +1,5 @@
 # SymbolsHelper-Confirmed: 4:4.12.80 amd64
-libastro.so.1 libastro1 #MINVER#
+libastro.so.1 libastro1-qt4 #MINVER#
  _Z11JupCallistodR4Vec3S0_@Base 4:4.12.80
  _Z11JupGanymededR4Vec3S0_@Base 4:4.12.80
  _Z11PosCallistod@Base 4:4.12.80
