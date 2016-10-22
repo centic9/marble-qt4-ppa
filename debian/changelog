@@ -1,3 +1,10 @@
+marble-qt4 (4:4.14.2-1ubuntu0~ppa12) xenial; urgency=medium
+
+  * Revert previous Conflicts, we should allow both libraries to be installed, we
+    need to control the libraries that are loaded.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 22 Oct 2016 22:01:37 +0200
+
 marble-qt4 (4:4.14.2-1ubuntu0~ppa11) xenial; urgency=medium
 
   * Add Conflicts between libmarblewidget19 and libmarblewidget-qt5-23 to avoid
