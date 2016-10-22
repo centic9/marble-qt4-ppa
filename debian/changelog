@@ -1,3 +1,11 @@
+marble-qt4 (4:4.14.2-1ubuntu0~ppa11) xenial; urgency=medium
+
+  * Add Conflicts between libmarblewidget19 and libmarblewidget-qt5-23 to avoid
+    situations where the wrong marble-lib was installed and kphotoalbum
+    crashed.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 22 Oct 2016 21:54:12 +0200
+
 marble-qt4 (4:4.14.2-1ubuntu0~ppa10) xenial; urgency=medium
 
   * Use conflicts instead of breaks for the QT5 packages.

@@ -128,6 +128,7 @@ Architecture: any
 Section: libs
 Depends: marble-data-qt4 (>= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
 Recommends: marble-plugins-qt4 (= ${binary:Version})
+Conflicts: libmarblewidget-qt5-23
 Description: Marble globe widget library
  Marble is a generic geographical map widget and framework for KDE
  applications. The Marble widget shows the earth as a sphere but does not
